@@ -8,21 +8,21 @@
     <language>en</language>
     <lastBuildDate>Thu, 01 Sep 2022 17:05:49 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>测试</title>
-      <link>https://yefengzhichen.github.io/post/first/</link>
-      <pubDate>Thu, 01 Sep 2022 17:05:49 +0800</pubDate>
+      <title>About</title>
+      <link>https://yefengzhichen.github.io/about/</link>
+      <pubDate>Fri, 02 Sep 2022 15:10:30 +0800</pubDate>
       
-      <guid>https://yefengzhichen.github.io/post/first/</guid>
-      <description>标题 测试内容</description>
+      <guid>https://yefengzhichen.github.io/about/</guid>
+      <description>测试 我的博客网站 test My blog website.</description>
     </item>
     
     <item>
-      <title>About</title>
-      <link>https://yefengzhichen.github.io/about/</link>
-      <pubDate>Thu, 01 Sep 2022 17:03:25 +0800</pubDate>
+      <title>GitHub&#43;Hugo搭建个人博客</title>
+      <link>https://yefengzhichen.github.io/post/hugo_blog/</link>
+      <pubDate>Thu, 01 Sep 2022 17:05:49 +0800</pubDate>
       
-      <guid>https://yefengzhichen.github.io/about/</guid>
-      <description>标题 aa内容</description>
+      <guid>https://yefengzhichen.github.io/post/hugo_blog/</guid>
+      <description>GitHub仓库创建 GitHub Pages 是通过 GitHub 托管和发布的公共网页，首先需要创建一个名为username.github.io的仓库， username是Gi</description>
     </item>
     
   </channel>
