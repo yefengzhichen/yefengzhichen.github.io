@@ -1,0 +1,2 @@
+User-agent: *
+Sitemap: https://yefengzhichen.github.io/sitemap.xml
