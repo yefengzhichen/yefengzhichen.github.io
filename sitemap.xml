@@ -9,13 +9,6 @@
   </url>
   
   <url>
-    <loc>https://yefengzhichen.github.io/</loc>
-    <lastmod>2022-09-01T17:05:49+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
     <loc>https://yefengzhichen.github.io/post/hugo_blog/</loc>
     <lastmod>2022-09-01T17:05:49+08:00</lastmod>
     <changefreq>weekly</changefreq>
@@ -24,6 +17,13 @@
   
   <url>
     <loc>https://yefengzhichen.github.io/post/</loc>
+    <lastmod>2022-09-01T17:05:49+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/</loc>
     <lastmod>2022-09-01T17:05:49+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
