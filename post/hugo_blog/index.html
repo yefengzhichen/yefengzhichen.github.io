@@ -295,7 +295,7 @@ git push origin master
 <p>因此对于文档hugo_blog.md，存放图片的解决办有：</p>
 <ul>
 <li>放在post文件夹：图片存放位置为post/hugo_blog/1.png，markdown引用为 <code>![](./1.png)</code></li>
-<li>放在static文件夹：图片存放位置为static/image/hugo_blog/1.png，markdown引用为 <code>![](image/hugo_blog/1.png)</code></li>
+<li>放在static文件夹：图片存放位置为static/image/hugo_blog/1.png，markdown引用为 <code>![](/image/hugo_blog/1.png)</code></li>
 </ul>
 <p>至于Office Viewer插件中手动选择图片，生成后图片位置在public/post/image/hugo_blog/xxx.png，文档在public/post/hugo_blog下面，因此用image/hugo_blog/xxx.png无法找到。为了存储图片统一管理，推荐第二种方式，统一存储在static文件夹。</p>
 
