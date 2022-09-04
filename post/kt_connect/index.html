@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-  <title>Kt_connect - yefengzhichen</title>
+  <title>使用kt-connect本地调试k8s集群内服务 - yefengzhichen</title>
   <meta name="renderer" content="webkit" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
 
@@ -33,25 +33,25 @@
 <link rel="manifest" href="../../manifest.json">
 <link rel="mask-icon" href="../../safari-pinned-tab.svg" color="#5bbad5">
 
-
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 
 <link href="../../sass/main.min.f92fd13721ddf72129410fd8250e73152cc6f2438082b6c0208dc24ee7c13fc4.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
 
 
-<meta property="og:title" content="Kt_connect" />
+<meta property="og:title" content="使用kt-connect本地调试k8s集群内服务" />
 <meta property="og:description" content="一、kt-connect介绍 背景 影响软件开发效率最大的问题依然是集成的问题，DevOps通过持续交付流水线的方式不断的对软件进行集成，但是D" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://yefengzhichen.github.io/post/kt_connect/" /><meta property="article:section" content="post" />
 <meta property="article:published_time" content="2022-09-04T09:49:06+08:00" />
 <meta property="article:modified_time" content="2022-09-04T09:49:06+08:00" />
 
-<meta itemprop="name" content="Kt_connect">
+<meta itemprop="name" content="使用kt-connect本地调试k8s集群内服务">
 <meta itemprop="description" content="一、kt-connect介绍 背景 影响软件开发效率最大的问题依然是集成的问题，DevOps通过持续交付流水线的方式不断的对软件进行集成，但是D"><meta itemprop="datePublished" content="2022-09-04T09:49:06+08:00" />
 <meta itemprop="dateModified" content="2022-09-04T09:49:06+08:00" />
-<meta itemprop="wordCount" content="2132">
+<meta itemprop="wordCount" content="2137">
 <meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="Kt_connect"/>
+<meta name="twitter:title" content="使用kt-connect本地调试k8s集群内服务"/>
 <meta name="twitter:description" content="一、kt-connect介绍 背景 影响软件开发效率最大的问题依然是集成的问题，DevOps通过持续交付流水线的方式不断的对软件进行集成，但是D"/>
 
 <!--[if lte IE 9]>
@@ -125,14 +125,14 @@
           <article class="post">
     
     <header class="post-header">
-      <h1 class="post-title">Kt_connect</h1>
+      <h1 class="post-title">使用kt-connect本地调试k8s集群内服务</h1>
 
       <div class="post-meta">
         <span class="post-time"> 2022-09-04 </span>
         
-          <span class="more-meta"> 2132 words </span>
+          <span class="more-meta"> 2137 words </span>
           <span class="more-meta"> 5 mins read </span>
-        
+        <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> times read </span>
       </div>
     </header>
 
@@ -145,17 +145,22 @@
       <ul>
         <li><a href="#一kt-connect介绍">一、kt-connect介绍</a>
           <ul>
-            <li></li>
+            <li><a href="#背景">背景</a></li>
+            <li><a href="#介绍">介绍</a></li>
           </ul>
         </li>
         <li><a href="#二kt-connect使用流程">二、kt-connect使用流程</a>
           <ul>
-            <li></li>
+            <li><a href="#安装">安装</a></li>
+            <li><a href="#connect连接">Connect连接</a></li>
+            <li><a href="#exchange连接">Exchange连接</a></li>
+            <li><a href="#mesh连接">Mesh连接</a></li>
           </ul>
         </li>
         <li><a href="#三kt-connect原理">三、kt-connect原理</a>
           <ul>
-            <li></li>
+            <li><a href="#connect原理">connect原理</a></li>
+            <li><a href="#exchange原理">Exchange原理</a></li>
           </ul>
         </li>
         <li><a href="#四使用建议">四、使用建议</a></li>
@@ -168,21 +173,21 @@
 </div>
     <div class="post-content">
       <h2 id="一kt-connect介绍">一、kt-connect介绍</h2>
-<h4 id="背景">背景</h4>
+<h3 id="背景">背景</h3>
 <p>影响软件开发效率最大的问题依然是集成的问题，DevOps通过持续交付流水线的方式不断的对软件进行集成，但是DevOps仍然存在很多问题，比如：</p>
 <ul>
 <li>开发环境崩溃</li>
 <li>改代码后部署时间过长</li>
 <li>疑难问题要多次加日志来排查</li>
 </ul>
-<p><img src="" alt="img"></p>
+<p><img src="../../image/kt_connect/background_1.png" alt="background_1"></p>
 <p>对于我们来说，问题主要是第二个，目前做开发验证有三种方式：</p>
 <ol>
 <li>拷贝代码到CD环境，通过kubectl patch挂载路径执行，流程繁琐</li>
-<li>在开发环境装cloud ide来调试: <a href="https://easystack.atlassian.net/wiki/spaces/DEV/pages/1155206547/CloudIDE">https://easystack.atlassian.net/wiki/spaces/DEV/pages/1155206547/CloudIDE</a></li>
+<li>在开发环境装cloud ide来调试: 类似code-server和theia改造而来</li>
 <li>提交代码后，DevOps第二天部署好后验证，需要合并代码验证时间长</li>
 </ol>
-<h4 id="介绍">介绍</h4>
+<h3 id="介绍">介绍</h3>
 <p>kt-connect是阿里开源的一个工具，是轻量级的面向k8s用户的开发测试环境调试工具，开源地址https://github.com/alibaba/kt-connect。工具核心功能：</p>
 <ul>
 <li>建立本地到集群的通道</li>
@@ -190,14 +195,13 @@
 <li>提升开发环节的效率问题</li>
 <li>解决开发测试环境的复用问题</li>
 </ul>
-<p>![image-20211127185208036](/Users/yefeng/Library/Application Support/typora-user-images/image-20211127185208036.png)</p>
+<p><img src="../../image/kt_connect/introduce_1.png" alt="introduce_1"></p>
 <h2 id="二kt-connect使用流程">二、kt-connect使用流程</h2>
-<h4 id="安装">安装</h4>
+<h3 id="安装">安装</h3>
 <p>安装sshuttle：https://github.com/sshuttle/sshuttle</p>
 <p>安装kt-connect：https://github.com/alibaba/kt-connect/blob/master/docs/en-us/downloads.md</p>
-<h4 id="connect连接">Connect连接</h4>
-<pre><code>Connect建立本地到集群的VPN网络，同时将 Kubernetes 集群的 DNS 解析能力整合到本地，让用户可以直接通过 PodIP， ClusterIP 以及 DNS 域名访问到集群内的服务。下面以服务ecp-dashboard-api来做使用验证：
-</code></pre>
+<h3 id="connect连接">Connect连接</h3>
+<p>Connect建立本地到集群的VPN网络，同时将 Kubernetes 集群的 DNS 解析能力整合到本地，让用户可以直接通过 PodIP， ClusterIP 以及 DNS 域名访问到集群内的服务。下面以服务ecp-dashboard-api来做使用验证：</p>
 <ul>
 <li>
 <p>拷贝测试环境~/.kube/config到本地~/.kube/config</p>
@@ -208,7 +212,7 @@
 </span></code></pre></td>
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">➜  ~ kubectl get ns | grep ems
-		 ems     Active   8d
+     ems     Active   8d
 </code></pre></td></tr></table>
 </div>
 </div></li>
@@ -247,7 +251,7 @@ curl -v &#34;http://10.232.0.240:8000/ecp-dashboard-api/api/v1/product/obtains/t
 </code></pre></td></tr></table>
 </div>
 </div><p>能正常访问到ecp-dashboard-api服务：</p>
-<p>![image-20211127210709345](/Users/yefeng/Library/Application Support/typora-user-images/image-20211127210709345.png)</p>
+<p><img src="../../image/kt_connect/connect_1.png" alt="connect_1"></p>
 </li>
 <li>
 <p>拷贝开发环境中，ecp-dashboard-api的配置文件config.toml到本地</p>
@@ -266,43 +270,41 @@ curl -v &#34;http://10.232.0.240:8000/ecp-dashboard-api/api/v1/product/obtains/t
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">curl -v &#34;http://127.0.0.1:8000/ecp-dashboard-api/api/v1/product/obtains/tag-crd&#34;
 {&#34;code&#34;:1,&#34;message&#34;:&#34;cannot get token from header&#34;,&#34;data&#34;:null}
-这里返回校验出错，就可以改代码去掉校验，调试其余代码逻辑
+这里返回校验出错，是业务代码中接受到请求后，校验到没有用户信息返回的
 </code></pre></td></tr></table>
 </div>
-</div><p>这种方式优点是可以连接依赖的k8s集群服务，不会停掉集群的相应服务，不影响其他用户；缺点是依赖接口测试工具，测试稍复杂。</p>
-</li>
+</div></li>
 </ul>
-<h4 id="exchange连接">Exchange连接</h4>
-<pre><code>Exchange命令将集群内的流量打到开发者的本地进程，通过在集群内部署代理容器，替换集群内的原有应用，并将所有对代理容器的请求直接转发到本地端口。继续以服务ecp-dashboard-api来做使用验证：
-</code></pre>
+<p>这种方式优点：是可以连接依赖的k8s集群服务，不会停掉集群的相应服务，不影响其他用户。</p>
+<p>缺点：是依赖接口测试工具，测试稍复杂。</p>
+<h3 id="exchange连接">Exchange连接</h3>
+<p>Exchange命令将集群内的流量打到开发者的本地进程，通过在集群内部署代理容器，替换集群内的原有应用，并将所有对代理容器的请求直接转发到本地端口。继续以服务ecp-dashboard-api来做使用验证：</p>
 <ul>
-<li>
-<p>参考connect流程，本地先启动ecp-dashboard-api调试</p>
-</li>
-<li>
-<p>sudo ktctl -n ems exchange ecp-dashboard-api &ndash;expose 8000</p>
-<p>等待命令成功，查看服务对应的deploy，原有的deploy副本置为0，新生成一个ecp-dashboard-api-kt-xx的deploy，副本为1，这个deploy对应的pod就是负责转发请求到本地的</p>
-<p>![image-20211127213850906](/Users/yefeng/Library/Application Support/typora-user-images/image-20211127213850906.png)</p>
-</li>
-<li>
-<p>在开发环境点击页面，请求就转发到本地了</p>
-<p>![image-20211127211948339](/Users/yefeng/Library/Application Support/typora-user-images/image-20211127211948339.png)</p>
-<p>这种方式优点是集群可访问本地服务，调试只需要在网页上操作即可；缺点是会替换掉集群的对应服务，多人调试同一个服务会阻塞，并且容易使环境崩溃。</p>
-</li>
+<li>参考connect流程，本地先启动ecp-dashboard-api调试</li>
+<li>等待以下命令成功，查看服务对应的deploy，原有的deploy副本置为0，新生成一个ecp-dashboard-api-kt-xx的deploy，副本为1，这个deploy对应的pod就是负责转发请求到本地的
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">sudo ktctl -n ems exchange ecp-dashboard-api --expose 8000,
+</code></pre></td></tr></table>
+</div>
+</div><img src="../../image/kt_connect/exchange_1.png" alt="exchange_1"></li>
+<li>在开发环境点击页面，请求就转发到本地了
+<img src="../../image/kt_connect/exchange_2.png" alt="exchage_2"></li>
 </ul>
-<h4 id="mesh连接">Mesh连接</h4>
-<pre><code>Mesh命令和exchange相似，但exchange命令会独占服务，导致阻塞和环境不稳定。
-
-Mesh则是在保持原有应用 Pod 不变的前提下，创建一个新的代理容器并且继承原应用的所有标签，但是会新增加一个随机的 version 标签。
-
-配合 Istio 的流量规则，只转发有特殊标记的的请求到本地：
-</code></pre>
-<p>![image-20211127213747885](/Users/yefeng/Library/Application Support/typora-user-images/image-20211127213747885.png)</p>
+<p>这种方式优点：集群可访问本地服务，调试只需要在网页上操作即可。</p>
+<p>缺点：是会替换掉集群的对应服务，多人调试同一个服务会阻塞，并且容易使环境崩溃。</p>
+<h3 id="mesh连接">Mesh连接</h3>
+<p>Mesh命令和exchange相似，但exchange命令会独占服务，导致阻塞和环境不稳定。</p>
+<p>Mesh则是在保持原有应用 Pod 不变的前提下，创建一个新的代理容器并且继承原应用的所有标签，但是会新增加一个随机的 version 标签。</p>
+<p>配合 Istio 的流量规则，只转发有特殊标记的的请求到本地：</p>
+<p><img src="../../image/kt_connect/mesh_1.png" alt="mesh_1"></p>
 <h2 id="三kt-connect原理">三、kt-connect原理</h2>
-<h4 id="connect原理">connect原理</h4>
-<pre><code>通过connect命令日志可以看到步骤分为：
-</code></pre>
-<p>![image-20211127220640456](/Users/yefeng/Library/Application Support/typora-user-images/image-20211127220640456.png)</p>
+<h3 id="connect原理">connect原理</h3>
+<p>通过connect命令日志可以看到步骤分为：
+<img src="../../image/kt_connect/theory_1.png" alt="theory_1"></p>
 <ul>
 <li>
 <p>在集群空间创建shadow deploy：kt-connect-daemon-xx，暴露22端口</p>
@@ -323,22 +325,21 @@ Mesh则是在保持原有应用 Pod 不变的前提下，创建一个新的代�
 </div></li>
 <li>
 <p>shadow pod将请求转发给对应的后端</p>
+<p><img src="../../image/kt_connect/theory_2.png" alt="theory_2"></p>
 </li>
 </ul>
-<p>![image-20211127214809790](/Users/yefeng/Library/Application Support/typora-user-images/image-20211127214809790.png)</p>
-<h4 id="exchange原理">Exchange原理</h4>
-<pre><code>通过exchange命令日志可以看到步骤分为：
-</code></pre>
-<p>![image-20211127220617753](/Users/yefeng/Library/Application Support/typora-user-images/image-20211127220617753.png)</p>
+<h3 id="exchange原理">Exchange原理</h3>
+<p>通过exchange命令日志可以看到步骤分为：
+<img src="../../image/kt_connect/theory_3.png" alt="theory_3"></p>
 <ul>
 <li>
 <p>新增shadow deploy，使用的Label和原deploy一样</p>
 </li>
 <li>
 <p>设置原服务deploy副本为0</p>
-<p>![image-20211201101317663](/Users/yefeng/Library/Application Support/typora-user-images/image-20211201101317663.png)</p>
-<p>从pod变化上也可以看到：</p>
-<p>![image-20211201101332956](/Users/yefeng/Library/Application Support/typora-user-images/image-20211201101332956.png)</p>
+<p><img src="../../image/kt_connect/theory_4.png" alt="theory_4"></p>
+<p>从pod变化上也可以看到：
+<img src="../../image/kt_connect/theory_5.png" alt="theory_5"></p>
 </li>
 <li>
 <p>在Local和K8s之间建立通道：kubectl -n ems port-forward ecp-dashboard-api-kt-xx  2226:22</p>
@@ -353,18 +354,18 @@ Mesh则是在保持原有应用 Pod 不变的前提下，创建一个新的代�
 <pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">ssh -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -R 8000:127.0.0.1:8000 root@127.0.0.1 -p2226 sh loop.sh
 </code></pre></td></tr></table>
 </div>
-</div></li>
-</ul>
-<p>![image-20211127214658073](/Users/yefeng/Library/Application Support/typora-user-images/image-20211127214658073.png)</p>
-<ul>
-<li>注：0.2.0版本开始，使用shadow pod代替shadow deployment，exchange不生成deploy了</li>
+</div><p><img src="../../image/kt_connect/theory_6.png" alt="theory_6"></p>
+</li>
+<li>
+<p>注：0.2.0版本开始，使用shadow pod代替shadow deployment，exchange不生成deploy了</p>
+</li>
 </ul>
 <h2 id="四使用建议">四、使用建议</h2>
 <ul>
 <li>在开发初期，使用connect验证整体流程，避免环境崩溃</li>
 <li>在开发后期，代码稳定后，使用exchange直接在网页测试</li>
 <li>为了环境可以多人复用，建议开发测试环境默认安装istio，使用mesh来分流测试</li>
-<li>改造kt-connect的exchange命令，不替换服务而是复制请求（前公司做法）</li>
+<li>改造kt-connect的exchange命令，不替换服务而是复制请求</li>
 </ul>
 <h2 id="参考">参考</h2>
 <ul>
@@ -430,7 +431,11 @@ Mesh则是在保持原有应用 Pod 不变的前提下，创建一个新的代�
     <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
   </span>
 
-  
+  <div class="busuanzi-footer">
+    <span id="busuanzi_container_site_pv"> site pv: <span id="busuanzi_value_site_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> </span>
+      <span class="division">|</span>
+    <span id="busuanzi_container_site_uv"> site uv: <span id="busuanzi_value_site_uv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> </span>
+  </div>
 
   <span class="copyright-year">
     &copy; 
