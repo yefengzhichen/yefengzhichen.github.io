@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>使用 code-server 和 nocalhost 制作 web 调试镜像 - yefengzhichen</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="yefengzhichen" /><meta name="description" content="背景 之前写了一篇文章，分享了如何使用 kt-connect 来加速云原生的开发，但是在实际使用中发现一些问题，比如： 环境不一致，每个开发人员都需要安装和调试程序一" /><meta name="keywords" content="Hugo, theme, even" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.92.1 with theme even" />
+
+
+<link rel="canonical" href="https://yefengzhichen.github.io/post/code_server_local_image/" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../favicon-16x16.png">
+<link rel="manifest" href="../../manifest.json">
+<link rel="mask-icon" href="../../safari-pinned-tab.svg" color="#5bbad5">
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<link href="../../sass/main.min.f92fd13721ddf72129410fd8250e73152cc6f2438082b6c0208dc24ee7c13fc4.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="使用 code-server 和 nocalhost 制作 web 调试镜像" />
+<meta property="og:description" content="背景 之前写了一篇文章，分享了如何使用 kt-connect 来加速云原生的开发，但是在实际使用中发现一些问题，比如： 环境不一致，每个开发人员都需要安装和调试程序一" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yefengzhichen.github.io/post/code_server_local_image/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2022-09-03T20:13:39+08:00" />
+<meta property="article:modified_time" content="2022-09-03T20:13:39+08:00" />
+
+<meta itemprop="name" content="使用 code-server 和 nocalhost 制作 web 调试镜像">
+<meta itemprop="description" content="背景 之前写了一篇文章，分享了如何使用 kt-connect 来加速云原生的开发，但是在实际使用中发现一些问题，比如： 环境不一致，每个开发人员都需要安装和调试程序一"><meta itemprop="datePublished" content="2022-09-03T20:13:39+08:00" />
+<meta itemprop="dateModified" content="2022-09-03T20:13:39+08:00" />
+<meta itemprop="wordCount" content="1448">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="使用 code-server 和 nocalhost 制作 web 调试镜像"/>
+<meta name="twitter:description" content="背景 之前写了一篇文章，分享了如何使用 kt-connect 来加速云原生的开发，但是在实际使用中发现一些问题，比如： 环境不一致，每个开发人员都需要安装和调试程序一"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="../../" class="logo">yefengzhichen</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="../../">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="../../post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="../../tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="../../categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="../../" class="logo">yefengzhichen</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="../../">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../categories/">Categories</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">使用 code-server 和 nocalhost 制作 web 调试镜像</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2022-09-03 </span>
+        
+          <span class="more-meta"> 1448 words </span>
+          <span class="more-meta"> 3 mins read </span>
+        <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> times read </span>
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">Contents</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#背景">背景</a></li>
+        <li><a href="#增加-kubectl-命令">增加 kubectl 命令</a></li>
+        <li><a href="#增加-ssh-配置和-k8s-配置">增加 ssh 配置和 k8s 配置</a></li>
+        <li><a href="#预安装-nocalhost-插件">预安装 nocalhost 插件</a></li>
+        <li><a href="#镜像增加-golang-开发环境">镜像增加 golang 开发环境</a></li>
+        <li><a href="#开发镜像访问集群中服务">开发镜像访问集群中服务</a></li>
+        <li><a href="#开发镜像测试启动服务">开发镜像测试启动服务</a></li>
+        <li><a href="#开发镜像测试调试服务待解决">开发镜像测试调试服务【待解决】</a></li>
+        <li><a href="#参考">参考</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h2 id="背景">背景</h2>
+<p>之前写了一篇文章，分享了如何使用 kt-connect 来加速云原生的开发，但是在实际使用中发现一些问题，比如：</p>
+<ul>
+<li>环境不一致，每个开发人员都需要安装和调试程序一致的运行环境，比如 golang 的命令行工具、python 的依赖库等</li>
+<li>需要依赖 k8s 集群的资源，虽然 connect 模式打通后可以访问，但实测不稳定且速度慢</li>
+</ul>
+<p>后面又看到了 <a href="https://nocalhost.dev/zh-CN/docs/introduction">nocalhost</a>，一款开源的基于 IDE 的云原生应用开发工具，相比 kt-connect 具有以下优势：</p>
+<ul>
+<li>在 k8s 集群内部构建、测试和调试应用程序，因此可使用基本一致的镜像</li>
+<li>运行在 k8s 集群内部，访问资源更稳定、更快速</li>
+<li>更改代码后实时同步到远端容器，无需重建镜像或重新启动容器</li>
+</ul>
+<p>为了开发环境和线上环境更一致，后续决定使用 nocalhost 来进行本地开发调试。考虑到需要在公司内部推广使用，打算制作一个基于 code-server 和 nocalhost 制作的 web 调试镜像，实现以下功能：</p>
+<ul>
+<li>本地 docker run 启动镜像后，即可打开浏览器进行代码编辑和调试</li>
+<li>基于不同编程语言，制作不同的调试镜像（工作中主要是 golang 和 python）</li>
+</ul>
+<h2 id="增加-kubectl-命令">增加 kubectl 命令</h2>
+<p>开发镜像是为了调试 k8s 集群中的服务，需要连接到 k8s 集群，因此需要安装 kubectl，参考 <a href="https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/">官网安装方式</a>，增加以下 dockerfile 内容：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">FROM codercom/code-server:latest
+# install kubectl
+RUN sudo apt-get update
+RUN sudo apt-get install -y ca-certificates curl
+RUN sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg &lt;https://packages.cloud.google.com/apt/doc/apt-key.gpg&gt;
+RUN echo &#34;deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] &lt;https://apt.kubernetes.io/&gt; kubernetes-xenial main&#34; | sudo tee /etc/apt/sources.list.d/kubernetes.list
+RUN sudo apt-get update
+RUN sudo apt-get install -y kubectl
+</code></pre></td></tr></table>
+</div>
+</div><p>在编写时，可以先 run 一个 code-server 容器来测试：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">docker run -it --rm  --entrypoint /bin/bash codercom/code-server:latest
+</code></pre></td></tr></table>
+</div>
+</div><p>验证好了后，执行 build 来构建测试：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">docker build . --tag &#34;local-dev:v0.0.1&#34;
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="增加-ssh-配置和-k8s-配置">增加 ssh 配置和 k8s 配置</h2>
+<p>参考 code-server 官网 docker 启动方式，并增加本地的。ssh 文件夹，用于拉取公司私有仓库代码，增加。kube 文件夹，用于连接和操作开发环境的 k8s 服务，因此为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">docker run -it --rm --name code-server \
+  -p 127.0.0.1:8080:8080 \
+  -v &#34;$HOME/.config:/home/coder/.config&#34; \
+  -v &#34;$HOME/.ssh:/home/coder/.ssh&#34; \
+  -v &#34;$HOME/.kube:/home/coder/.kube&#34; \
+  -v &#34;$PWD:/home/coder/project&#34; \
+  -u &#34;$(id -u):$(id -g)&#34; \
+  -e &#34;DOCKER_USER=$USER&#34; \
+  local-dev:v0.0.1
+</code></pre></td></tr></table>
+</div>
+</div><p>执行成功后，访问 http://127.0.0.1:8080 即可打开 code-server web 页面。</p>
+<h2 id="预安装-nocalhost-插件">预安装 nocalhost 插件</h2>
+<p>使用上面的方式启动后，需要手动去扩展栏安装 nocalhost，为了方面，考虑能不能用命令行方式提前安装好呢。</p>
+<p>答案是肯定的，参考<a href="https://github.com/coder/code-server/issues/171#issuecomment-473690326">这个 issue 里面的评论</a>，看起来是可行的，进行验证后，做了两个小的调整：</p>
+<ul>
+<li>bsdtar 改为 libarchive-tools（<a href="https://github.com/intel/lkp-tests/issues/50">包调整</a>）</li>
+<li>curl 改为 wget（curl 测试有点问题）</li>
+</ul>
+<p>最终预安装 nocalhost 插件的 dockerfile 内容为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="err">#</span> <span class="nx">install</span> <span class="nx">nocalhost</span> <span class="nx">extension</span>
+<span class="nx">RUN</span> <span class="nx">sudo</span> <span class="nx">apt</span><span class="o">-</span><span class="nx">get</span> <span class="nx">update</span> <span class="o">&amp;&amp;</span> <span class="nx">sudo</span> <span class="nx">apt</span> <span class="nx">install</span> <span class="o">-</span><span class="nx">y</span> <span class="nx">libarchive</span><span class="o">-</span><span class="nx">tools</span> <span class="nx">wget</span>
+<span class="nx">RUN</span> <span class="nx">mkdir</span> <span class="o">-</span><span class="nx">p</span> <span class="o">/</span><span class="nx">home</span><span class="o">/</span><span class="nx">coder</span><span class="o">/</span><span class="p">.</span><span class="nx">local</span><span class="o">/</span><span class="nx">share</span><span class="o">/</span><span class="nx">code</span><span class="o">-</span><span class="nx">server</span><span class="o">/</span><span class="nx">extensions</span>
+<span class="nx">RUN</span> <span class="nx">wget</span> <span class="o">-</span><span class="nx">v</span> <span class="nx">https</span><span class="p">:</span><span class="c1">//marketplace.visualstudio.com/_apis/public/gallery/publishers/nocalhost/vsextensions/nocalhost/0.6.18/vspackage
+</span><span class="c1"></span><span class="nx">RUN</span> <span class="nx">bsdtar</span> <span class="o">-</span><span class="nx">xvf</span> <span class="nx">vspackage</span> <span class="nx">extension</span>
+<span class="nx">RUN</span> <span class="nx">mv</span> <span class="nx">extension</span> <span class="o">/</span><span class="nx">home</span><span class="o">/</span><span class="nx">coder</span><span class="o">/</span><span class="p">.</span><span class="nx">local</span><span class="o">/</span><span class="nx">share</span><span class="o">/</span><span class="nx">code</span><span class="o">-</span><span class="nx">server</span><span class="o">/</span><span class="nx">extensions</span><span class="o">/</span><span class="nx">nocalhost</span><span class="p">.</span><span class="nx">nocalhost</span><span class="o">-</span><span class="mf">0.6.18</span>
+<span class="nx">RUN</span> <span class="nx">rm</span> <span class="o">-</span><span class="nx">f</span> <span class="nx">vspackage</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>重新 build 后启动，可以看到 nocalhost 默认已安装：
+<img src="../../image/code_server_local_image/pre_nocalhost.png" alt="pre_nocalhost"></p>
+<p>在 nocalhost 里面连接集群后：
+<img src="../../image/code_server_local_image/nocalhost_debug.png" alt="nocalhost_debug"></p>
+<h2 id="镜像增加-golang-开发环境">镜像增加 golang 开发环境</h2>
+<p>开发镜像是用 code-server 镜像作为基础镜像，没有安装 golang，需要在 dockerfile 增加：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"># install golang
+RUN wget https://go.dev/dl/go1.19.linux-arm64.tar.gz
+RUN sudo rm -rf /usr/local/go &amp;&amp; sudo tar -C /usr/local -xzf go1.19.linux-arm64.tar.gz
+RUN rm -f go1.19.linux-arm64.tar.gz
+ENV GOPROXY=https://goproxy.cn,direct
+RUN sudo echo &#34;export PATH=$PATH:/usr/local/go/bin&#34; | sudo tee -a /etc/profile
+RUN sudo echo &#34;export PATH=$PATH:$HOME/go/bin&#34; | sudo tee -a /etc/profile
+</code></pre></td></tr></table>
+</div>
+</div><p>安装 golang dlv：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"># install dlv
+RUN /usr/local/go/bin/go install github.com/go-delve/delve/cmd/dlv@latest
+</code></pre></td></tr></table>
+</div>
+</div><p>加载 vscode go 插件：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="err">#</span> <span class="nx">install</span> <span class="nx">golang</span> <span class="nx">extension</span>
+<span class="nx">RUN</span> <span class="nx">wget</span> <span class="o">-</span><span class="nx">v</span> <span class="nx">https</span><span class="p">:</span><span class="c1">//marketplace.visualstudio.com/_apis/public/gallery/publishers/golang/vsextensions/go/0.35.2/vspackage
+</span><span class="c1"></span><span class="nx">RUN</span> <span class="nx">bsdtar</span> <span class="o">-</span><span class="nx">xvf</span> <span class="nx">vspackage</span> <span class="nx">extension</span>
+<span class="nx">RUN</span> <span class="nx">mv</span> <span class="nx">extension</span> <span class="o">/</span><span class="nx">home</span><span class="o">/</span><span class="nx">coder</span><span class="o">/</span><span class="p">.</span><span class="nx">local</span><span class="o">/</span><span class="nx">share</span><span class="o">/</span><span class="nx">code</span><span class="o">-</span><span class="nx">server</span><span class="o">/</span><span class="nx">extensions</span><span class="o">/</span><span class="nx">golang</span><span class="p">.</span><span class="k">go</span><span class="o">-</span><span class="mf">0.35.2</span>
+<span class="nx">RUN</span> <span class="nx">rm</span> <span class="o">-</span><span class="nx">f</span> <span class="nx">vspackage</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="开发镜像访问集群中服务">开发镜像访问集群中服务</h2>
+<p>集群中服务需要暴露对外端口，这里用 nocalhost 提供的 bookinfo 的 author 模块来测试，需要将 productpage svc 修改为 node 类型，暴露对外端口：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">  ports:
+  - name: http
+    nodePort: 32428
+    port: 9080
+    protocol: TCP
+    targetPort: 9080
+  type: NodePort
+</code></pre></td></tr></table>
+</div>
+</div><p>在浏览器中开启调试模式后，启动服务 sh run.sh 后，访问地址：http://172.19.52.61:32428/ 。
+其中 172.19.52.61 为 node 的 ip 地址，即可在页面上点击测试。</p>
+<h2 id="开发镜像测试启动服务">开发镜像测试启动服务</h2>
+<p>在 author 模块 app.go 文件中，修改其中的 getAuthors 函数： 将其中的 Name 字段改为“aa William Shakespeare”，然后执行 sh run.sh：
+<img src="../../image/code_server_local_image/run_edit_user.png" alt="run_edit_user"></p>
+<p>启动之后访问 http://172.19.52.61:32428/：
+<img src="../../image/code_server_local_image/run_req_index.png" alt="run_req_index"></p>
+<p>点击 normal user 后可以看到效果：</p>
+<p><img src="../../image/code_server_local_image/run_req_normal_user.png" alt="run_req_normal_user"></p>
+<h2 id="开发镜像测试调试服务待解决">开发镜像测试调试服务【待解决】</h2>
+<p>在 author 模块 app.go 文件，bookAuthorsById 函数中增加断点，执行 sh debug.sh 发现会出现问题：</p>
+<p><img src="../../image/code_server_local_image/debug_exit_error.png" alt="debug_exit_error"></p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://nocalhost.dev/zh-CN/docs/introduction/">nocalhost官方文档</a></li>
+<li><a href="https://www.cnblogs.com/codingdevops/p/15736176.html">Nocalhost：云原生开发新体验</a></li>
+<li><a href="https://www.zhihu.com/question/436014358">如何评价nocalhost</a></li>
+<li><a href="https://www.jianshu.com/p/d31632f899e0">重新思考云原生时代的开发环境——从 Dev-to-Cloud 到 Dev@Cloud</a></li>
+</ul>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">Author</span>
+    <span class="item-content">yefengzhichen</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">LastMod</span>
+    <span class="item-content">
+        2022-09-03
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      
+      <nav class="post-nav">
+        
+        <a class="next" href="../../post/kt_connect/">
+            <span class="next-text nav-default">使用 kt-connect 本地调试 k8s 集群内服务</span>
+            <span class="next-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="zhutao_hust@foxmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/yefengzhichen" class="iconfont icon-github" title="github"></a>
+  <a href="https://yefengzhichen.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  <div class="busuanzi-footer">
+    <span id="busuanzi_container_site_pv"> site pv: <span id="busuanzi_value_site_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> </span>
+      <span class="division">|</span>
+    <span id="busuanzi_container_site_uv"> site uv: <span id="busuanzi_value_site_uv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> </span>
+  </div>
+
+  <span class="copyright-year">
+    &copy; 
+    2022<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="../../js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

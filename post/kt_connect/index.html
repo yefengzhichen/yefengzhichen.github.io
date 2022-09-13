@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-  <title>使用kt-connect本地调试k8s集群内服务 - yefengzhichen</title>
+  <title>使用 kt-connect 本地调试 k8s 集群内服务 - yefengzhichen</title>
   <meta name="renderer" content="webkit" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
 
@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
 
 
-<meta name="author" content="yefengzhichen" /><meta name="description" content="一、kt-connect介绍 背景 影响软件开发效率最大的问题依然是集成的问题，DevOps通过持续交付流水线的方式不断的对软件进行集成，但是D" /><meta name="keywords" content="Hugo, theme, even" />
+<meta name="author" content="yefengzhichen" /><meta name="description" content="一、kt-connect 介绍 背景 影响软件开发效率最大的问题依然是集成的问题，DevOps 通过持续交付流水线的方式不断的对软件进行集成，但是 DevOps" /><meta name="keywords" content="Hugo, theme, even" />
 
 
 
@@ -39,20 +39,20 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
 
 
-<meta property="og:title" content="使用kt-connect本地调试k8s集群内服务" />
-<meta property="og:description" content="一、kt-connect介绍 背景 影响软件开发效率最大的问题依然是集成的问题，DevOps通过持续交付流水线的方式不断的对软件进行集成，但是D" />
+<meta property="og:title" content="使用 kt-connect 本地调试 k8s 集群内服务" />
+<meta property="og:description" content="一、kt-connect 介绍 背景 影响软件开发效率最大的问题依然是集成的问题，DevOps 通过持续交付流水线的方式不断的对软件进行集成，但是 DevOps" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://yefengzhichen.github.io/post/kt_connect/" /><meta property="article:section" content="post" />
-<meta property="article:published_time" content="2022-09-04T09:49:06+08:00" />
-<meta property="article:modified_time" content="2022-09-04T09:49:06+08:00" />
+<meta property="article:published_time" content="2022-09-03T09:49:06+08:00" />
+<meta property="article:modified_time" content="2022-09-03T09:49:06+08:00" />
 
-<meta itemprop="name" content="使用kt-connect本地调试k8s集群内服务">
-<meta itemprop="description" content="一、kt-connect介绍 背景 影响软件开发效率最大的问题依然是集成的问题，DevOps通过持续交付流水线的方式不断的对软件进行集成，但是D"><meta itemprop="datePublished" content="2022-09-04T09:49:06+08:00" />
-<meta itemprop="dateModified" content="2022-09-04T09:49:06+08:00" />
-<meta itemprop="wordCount" content="2137">
+<meta itemprop="name" content="使用 kt-connect 本地调试 k8s 集群内服务">
+<meta itemprop="description" content="一、kt-connect 介绍 背景 影响软件开发效率最大的问题依然是集成的问题，DevOps 通过持续交付流水线的方式不断的对软件进行集成，但是 DevOps"><meta itemprop="datePublished" content="2022-09-03T09:49:06+08:00" />
+<meta itemprop="dateModified" content="2022-09-03T09:49:06+08:00" />
+<meta itemprop="wordCount" content="1729">
 <meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="使用kt-connect本地调试k8s集群内服务"/>
-<meta name="twitter:description" content="一、kt-connect介绍 背景 影响软件开发效率最大的问题依然是集成的问题，DevOps通过持续交付流水线的方式不断的对软件进行集成，但是D"/>
+<meta name="twitter:title" content="使用 kt-connect 本地调试 k8s 集群内服务"/>
+<meta name="twitter:description" content="一、kt-connect 介绍 背景 影响软件开发效率最大的问题依然是集成的问题，DevOps 通过持续交付流水线的方式不断的对软件进行集成，但是 DevOps"/>
 
 <!--[if lte IE 9]>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
@@ -125,13 +125,13 @@
           <article class="post">
     
     <header class="post-header">
-      <h1 class="post-title">使用kt-connect本地调试k8s集群内服务</h1>
+      <h1 class="post-title">使用 kt-connect 本地调试 k8s 集群内服务</h1>
 
       <div class="post-meta">
-        <span class="post-time"> 2022-09-04 </span>
+        <span class="post-time"> 2022-09-03 </span>
         
-          <span class="more-meta"> 2137 words </span>
-          <span class="more-meta"> 5 mins read </span>
+          <span class="more-meta"> 1729 words </span>
+          <span class="more-meta"> 4 mins read </span>
         <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> times read </span>
       </div>
     </header>
@@ -143,24 +143,24 @@
   <ul>
     <li>
       <ul>
-        <li><a href="#一kt-connect介绍">一、kt-connect介绍</a>
+        <li><a href="#一kt-connect-介绍">一、kt-connect 介绍</a>
           <ul>
             <li><a href="#背景">背景</a></li>
             <li><a href="#介绍">介绍</a></li>
           </ul>
         </li>
-        <li><a href="#二kt-connect使用流程">二、kt-connect使用流程</a>
+        <li><a href="#二kt-connect-使用流程">二、kt-connect 使用流程</a>
           <ul>
             <li><a href="#安装">安装</a></li>
-            <li><a href="#connect连接">Connect连接</a></li>
-            <li><a href="#exchange连接">Exchange连接</a></li>
-            <li><a href="#mesh连接">Mesh连接</a></li>
+            <li><a href="#connect-连接">Connect 连接</a></li>
+            <li><a href="#exchange-连接">Exchange 连接</a></li>
+            <li><a href="#mesh-连接">Mesh 连接</a></li>
           </ul>
         </li>
-        <li><a href="#三kt-connect原理">三、kt-connect原理</a>
+        <li><a href="#三kt-connect-原理">三、kt-connect 原理</a>
           <ul>
-            <li><a href="#connect原理">connect原理</a></li>
-            <li><a href="#exchange原理">Exchange原理</a></li>
+            <li><a href="#connect-原理">connect 原理</a></li>
+            <li><a href="#exchange-原理">Exchange 原理</a></li>
           </ul>
         </li>
         <li><a href="#四使用建议">四、使用建议</a></li>
@@ -172,9 +172,9 @@
   </div>
 </div>
     <div class="post-content">
-      <h2 id="一kt-connect介绍">一、kt-connect介绍</h2>
+      <h2 id="一kt-connect-介绍">一、kt-connect 介绍</h2>
 <h3 id="背景">背景</h3>
-<p>影响软件开发效率最大的问题依然是集成的问题，DevOps通过持续交付流水线的方式不断的对软件进行集成，但是DevOps仍然存在很多问题，比如：</p>
+<p>影响软件开发效率最大的问题依然是集成的问题，DevOps 通过持续交付流水线的方式不断的对软件进行集成，但是 DevOps 仍然存在很多问题，比如：</p>
 <ul>
 <li>开发环境崩溃</li>
 <li>改代码后部署时间过长</li>
@@ -183,12 +183,12 @@
 <p><img src="../../image/kt_connect/background_1.png" alt="background_1"></p>
 <p>对于我们来说，问题主要是第二个，目前做开发验证有三种方式：</p>
 <ol>
-<li>拷贝代码到CD环境，通过kubectl patch挂载路径执行，流程繁琐</li>
-<li>在开发环境装cloud ide来调试: 类似code-server和theia改造而来</li>
-<li>提交代码后，DevOps第二天部署好后验证，需要合并代码验证时间长</li>
+<li>拷贝代码到 CD 环境，通过 kubectl patch 挂载路径执行，流程繁琐</li>
+<li>在开发环境装 cloud ide 来调试：类似 code-server 和 theia 改造而来</li>
+<li>提交代码后，DevOps 第二天部署好后验证，需要合并代码验证时间长</li>
 </ol>
 <h3 id="介绍">介绍</h3>
-<p>kt-connect是阿里开源的一个工具，是轻量级的面向k8s用户的开发测试环境调试工具，开源地址https://github.com/alibaba/kt-connect。工具核心功能：</p>
+<p>kt-connect 是阿里开源的一个工具，是轻量级的面向 k8s 用户的开发测试环境调试工具，开源地址 <a href="https://github.com/alibaba/kt-connect">https://github.com/alibaba/kt-connect</a>。工具核心功能：</p>
 <ul>
 <li>建立本地到集群的通道</li>
 <li>建立集群到本地的通道</li>
@@ -196,15 +196,15 @@
 <li>解决开发测试环境的复用问题</li>
 </ul>
 <p><img src="../../image/kt_connect/introduce_1.png" alt="introduce_1"></p>
-<h2 id="二kt-connect使用流程">二、kt-connect使用流程</h2>
+<h2 id="二kt-connect-使用流程">二、kt-connect 使用流程</h2>
 <h3 id="安装">安装</h3>
-<p>安装sshuttle：https://github.com/sshuttle/sshuttle</p>
-<p>安装kt-connect：https://github.com/alibaba/kt-connect/blob/master/docs/en-us/downloads.md</p>
-<h3 id="connect连接">Connect连接</h3>
-<p>Connect建立本地到集群的VPN网络，同时将 Kubernetes 集群的 DNS 解析能力整合到本地，让用户可以直接通过 PodIP， ClusterIP 以及 DNS 域名访问到集群内的服务。下面以服务ecp-dashboard-api来做使用验证：</p>
+<p>安装 sshuttle：<a href="https://github.com/sshuttle/sshuttle">https://github.com/sshuttle/sshuttle</a></p>
+<p>安装 kt-connect：<a href="https://github.com/alibaba/kt-connect/blob/master/docs/en-us/downloads.md">https://github.com/alibaba/kt-connect/blob/master/docs/en-us/downloads.md</a></p>
+<h3 id="connect-连接">Connect 连接</h3>
+<p>Connect 建立本地到集群的 VPN 网络，同时将 Kubernetes 集群的 DNS 解析能力整合到本地，让用户可以直接通过 PodIP， ClusterIP 以及 DNS 域名访问到集群内的服务。下面以服务 ecp-dashboard-api 来做使用验证：</p>
 <ul>
 <li>
-<p>拷贝测试环境~/.kube/config到本地~/.kube/config</p>
+<p>拷贝测试环境~/.kube/config 到本地~/.kube/config</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
@@ -235,7 +235,7 @@
 </span><span class="lnt">13
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">查看服务ecp-dashboard-api svc ip和pod ip：
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">查看服务 ecp-dashboard-api svc ip 和 pod ip：
 [root@node-4 ~]# kubectl get svc -nems | grep ecp-dashboard-api
 ecp-dashboard-api-int  ClusterIP      10.222.235.183   &lt;none&gt;       80/TCP     8d
 
@@ -244,20 +244,20 @@ ecp-dashboard-api-596d5df985-fb4mj   1/1     Running   0  26h     10.232.0.240  
 ecp-dashboard-api-596d5df985-qxbnp   1/1     Running   0  26h     10.232.1.184   node-6
 ecp-dashboard-api-596d5df985-s7qf4   1/1     Running   0  26h     10.232.5.91    node-4
 
-本地通过cluster_ip/service_name/pods_id访问：
+本地通过 cluster_ip/service_name/pods_id 访问：
 curl -v &#34;http://10.222.235.183:80/ecp-dashboard-api/api/v1/product/obtains/tag-crd&#34;
 curl -v &#34;http://ecp-dashboard-api-int:80/ecp-dashboard-api/api/v1/product/obtains/tag-crd&#34;
 curl -v &#34;http://10.232.0.240:8000/ecp-dashboard-api/api/v1/product/obtains/tag-crd&#34;
 </code></pre></td></tr></table>
 </div>
-</div><p>能正常访问到ecp-dashboard-api服务：</p>
+</div><p>能正常访问到 ecp-dashboard-api 服务：</p>
 <p><img src="../../image/kt_connect/connect_1.png" alt="connect_1"></p>
 </li>
 <li>
-<p>拷贝开发环境中，ecp-dashboard-api的配置文件config.toml到本地</p>
+<p>拷贝开发环境中，ecp-dashboard-api 的配置文件 config.toml 到本地</p>
 </li>
 <li>
-<p>本地IDE中指定启动命令和配置文件，启动IDE调试</p>
+<p>本地 IDE 中指定启动命令和配置文件，启动 IDE 调试</p>
 </li>
 <li>
 <p>使用接口测试工具，请求本地启动的服务</p>
@@ -275,13 +275,13 @@ curl -v &#34;http://10.232.0.240:8000/ecp-dashboard-api/api/v1/product/obtains/t
 </div>
 </div></li>
 </ul>
-<p>这种方式优点：是可以连接依赖的k8s集群服务，不会停掉集群的相应服务，不影响其他用户。</p>
+<p>这种方式优点：是可以连接依赖的 k8s 集群服务，不会停掉集群的相应服务，不影响其他用户。</p>
 <p>缺点：是依赖接口测试工具，测试稍复杂。</p>
-<h3 id="exchange连接">Exchange连接</h3>
-<p>Exchange命令将集群内的流量打到开发者的本地进程，通过在集群内部署代理容器，替换集群内的原有应用，并将所有对代理容器的请求直接转发到本地端口。继续以服务ecp-dashboard-api来做使用验证：</p>
+<h3 id="exchange-连接">Exchange 连接</h3>
+<p>Exchange 命令将集群内的流量打到开发者的本地进程，通过在集群内部署代理容器，替换集群内的原有应用，并将所有对代理容器的请求直接转发到本地端口。继续以服务 ecp-dashboard-api 来做使用验证：</p>
 <ul>
-<li>参考connect流程，本地先启动ecp-dashboard-api调试</li>
-<li>等待以下命令成功，查看服务对应的deploy，原有的deploy副本置为0，新生成一个ecp-dashboard-api-kt-xx的deploy，副本为1，这个deploy对应的pod就是负责转发请求到本地的
+<li>参考 connect 流程，本地先启动 ecp-dashboard-api 调试</li>
+<li>等待以下命令成功，查看服务对应的 deploy，原有的 deploy 副本置为 0，新生成一个 ecp-dashboard-api-kt-xx 的 deploy，副本为 1，这个 deploy 对应的 pod 就是负责转发请求到本地的
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
@@ -296,24 +296,24 @@ curl -v &#34;http://10.232.0.240:8000/ecp-dashboard-api/api/v1/product/obtains/t
 </ul>
 <p>这种方式优点：集群可访问本地服务，调试只需要在网页上操作即可。</p>
 <p>缺点：是会替换掉集群的对应服务，多人调试同一个服务会阻塞，并且容易使环境崩溃。</p>
-<h3 id="mesh连接">Mesh连接</h3>
-<p>Mesh命令和exchange相似，但exchange命令会独占服务，导致阻塞和环境不稳定。</p>
-<p>Mesh则是在保持原有应用 Pod 不变的前提下，创建一个新的代理容器并且继承原应用的所有标签，但是会新增加一个随机的 version 标签。</p>
+<h3 id="mesh-连接">Mesh 连接</h3>
+<p>Mesh 命令和 exchange 相似，但 exchange 命令会独占服务，导致阻塞和环境不稳定。</p>
+<p>Mesh 则是在保持原有应用 Pod 不变的前提下，创建一个新的代理容器并且继承原应用的所有标签，但是会新增加一个随机的 version 标签。</p>
 <p>配合 Istio 的流量规则，只转发有特殊标记的的请求到本地：</p>
 <p><img src="../../image/kt_connect/mesh_1.png" alt="mesh_1"></p>
-<h2 id="三kt-connect原理">三、kt-connect原理</h2>
-<h3 id="connect原理">connect原理</h3>
-<p>通过connect命令日志可以看到步骤分为：
+<h2 id="三kt-connect-原理">三、kt-connect 原理</h2>
+<h3 id="connect-原理">connect 原理</h3>
+<p>通过 connect 命令日志可以看到步骤分为：
 <img src="../../image/kt_connect/theory_1.png" alt="theory_1"></p>
 <ul>
 <li>
-<p>在集群空间创建shadow deploy：kt-connect-daemon-xx，暴露22端口</p>
+<p>在集群空间创建 shadow deploy：kt-connect-daemon-xx，暴露 22 端口</p>
 </li>
 <li>
 <p>建立端口转发：kubectl -n default port-forward kt-connect-daemon-xx 2222:22</p>
 </li>
 <li>
-<p>获取k8s集群的CIDR集合（svc ip和pod ip地址范围），使用sshuttle捕获集群请求，并转发给shadow pod</p>
+<p>获取 k8s 集群的 CIDR 集合（svc ip 和 pod ip 地址范围），使用 sshuttle 捕获集群请求，并转发给 shadow pod</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
@@ -324,28 +324,28 @@ curl -v &#34;http://10.232.0.240:8000/ecp-dashboard-api/api/v1/product/obtains/t
 </div>
 </div></li>
 <li>
-<p>shadow pod将请求转发给对应的后端</p>
+<p>shadow pod 将请求转发给对应的后端</p>
 <p><img src="../../image/kt_connect/theory_2.png" alt="theory_2"></p>
 </li>
 </ul>
-<h3 id="exchange原理">Exchange原理</h3>
-<p>通过exchange命令日志可以看到步骤分为：
+<h3 id="exchange-原理">Exchange 原理</h3>
+<p>通过 exchange 命令日志可以看到步骤分为：
 <img src="../../image/kt_connect/theory_3.png" alt="theory_3"></p>
 <ul>
 <li>
-<p>新增shadow deploy，使用的Label和原deploy一样</p>
+<p>新增 shadow deploy，使用的 Label 和原 deploy 一样</p>
 </li>
 <li>
-<p>设置原服务deploy副本为0</p>
+<p>设置原服务 deploy 副本为 0</p>
 <p><img src="../../image/kt_connect/theory_4.png" alt="theory_4"></p>
-<p>从pod变化上也可以看到：
+<p>从 pod 变化上也可以看到：
 <img src="../../image/kt_connect/theory_5.png" alt="theory_5"></p>
 </li>
 <li>
-<p>在Local和K8s之间建立通道：kubectl -n ems port-forward ecp-dashboard-api-kt-xx  2226:22</p>
+<p>在 Local 和 K8s 之间建立通道：kubectl -n ems port-forward ecp-dashboard-api-kt-xx  2226:22</p>
 </li>
 <li>
-<p>ssh 远程转发，将对shadow pod的请求转发到本地服务的8000端口：</p>
+<p>ssh 远程转发，将对 shadow pod 的请求转发到本地服务的 8000 端口：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
@@ -357,15 +357,15 @@ curl -v &#34;http://10.232.0.240:8000/ecp-dashboard-api/api/v1/product/obtains/t
 </div><p><img src="../../image/kt_connect/theory_6.png" alt="theory_6"></p>
 </li>
 <li>
-<p>注：0.2.0版本开始，使用shadow pod代替shadow deployment，exchange不生成deploy了</p>
+<p>注：0.2.0 版本开始，使用 shadow pod 代替 shadow deployment，exchange 不生成 deploy 了</p>
 </li>
 </ul>
 <h2 id="四使用建议">四、使用建议</h2>
 <ul>
-<li>在开发初期，使用connect验证整体流程，避免环境崩溃</li>
-<li>在开发后期，代码稳定后，使用exchange直接在网页测试</li>
-<li>为了环境可以多人复用，建议开发测试环境默认安装istio，使用mesh来分流测试</li>
-<li>改造kt-connect的exchange命令，不替换服务而是复制请求</li>
+<li>在开发初期，使用 connect 验证整体流程，避免环境崩溃</li>
+<li>在开发后期，代码稳定后，使用 exchange 直接在网页测试</li>
+<li>为了环境可以多人复用，建议开发测试环境默认安装 istio，使用 mesh 来分流测试</li>
+<li>改造 kt-connect 的 exchange 命令，不替换服务而是复制请求</li>
 </ul>
 <h2 id="参考">参考</h2>
 <ul>
@@ -385,7 +385,7 @@ curl -v &#34;http://10.232.0.240:8000/ecp-dashboard-api/api/v1/product/obtains/t
   <p class="copyright-item">
     <span class="item-title">LastMod</span>
     <span class="item-content">
-        2022-09-04
+        2022-09-03
         
     </span>
   </p>
@@ -395,7 +395,11 @@ curl -v &#34;http://10.232.0.240:8000/ecp-dashboard-api/api/v1/product/obtains/t
 <footer class="post-footer">
       
       <nav class="post-nav">
-        
+        <a class="prev" href="../../post/code_server_local_image/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">使用 code-server 和 nocalhost 制作 web 调试镜像</span>
+            <span class="prev-text nav-mobile">Prev</span>
+          </a>
         <a class="next" href="../../post/hugo_blog/">
             <span class="next-text nav-default">GitHub&#43;Hugo搭建个人博客</span>
             <span class="next-text nav-mobile">Next</span>
