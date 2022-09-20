@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>使用 Envoy 的 OPA 插件进行鉴权 - yefengzhichen</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="yefengzhichen" /><meta name="description" content="背景 工作中的一个 IAM（身份与访问管理）服务中，使用到了 OPA（开放策略代理）进行鉴权，针对前端来的一个请求，主要处理逻辑如下图红色箭头所示" /><meta name="keywords" content="Hugo, theme, even" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.92.1 with theme even" />
+
+
+<link rel="canonical" href="https://yefengzhichen.github.io/post/envoy_opa_auth/" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../favicon-16x16.png">
+<link rel="manifest" href="../../manifest.json">
+<link rel="mask-icon" href="../../safari-pinned-tab.svg" color="#5bbad5">
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<link href="../../sass/main.min.f92fd13721ddf72129410fd8250e73152cc6f2438082b6c0208dc24ee7c13fc4.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="使用 Envoy 的 OPA 插件进行鉴权" />
+<meta property="og:description" content="背景 工作中的一个 IAM（身份与访问管理）服务中，使用到了 OPA（开放策略代理）进行鉴权，针对前端来的一个请求，主要处理逻辑如下图红色箭头所示" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yefengzhichen.github.io/post/envoy_opa_auth/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2022-09-17T20:13:50+08:00" />
+<meta property="article:modified_time" content="2022-09-17T20:13:50+08:00" />
+
+<meta itemprop="name" content="使用 Envoy 的 OPA 插件进行鉴权">
+<meta itemprop="description" content="背景 工作中的一个 IAM（身份与访问管理）服务中，使用到了 OPA（开放策略代理）进行鉴权，针对前端来的一个请求，主要处理逻辑如下图红色箭头所示"><meta itemprop="datePublished" content="2022-09-17T20:13:50+08:00" />
+<meta itemprop="dateModified" content="2022-09-17T20:13:50+08:00" />
+<meta itemprop="wordCount" content="2662">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="使用 Envoy 的 OPA 插件进行鉴权"/>
+<meta name="twitter:description" content="背景 工作中的一个 IAM（身份与访问管理）服务中，使用到了 OPA（开放策略代理）进行鉴权，针对前端来的一个请求，主要处理逻辑如下图红色箭头所示"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="../../" class="logo">yefengzhichen</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="../../">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="../../post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="../../tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="../../categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="../../" class="logo">yefengzhichen</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="../../">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../categories/">Categories</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">使用 Envoy 的 OPA 插件进行鉴权</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2022-09-17 </span>
+        
+          <span class="more-meta"> 2662 words </span>
+          <span class="more-meta"> 6 mins read </span>
+        <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> times read </span>
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">Contents</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#背景">背景</a></li>
+        <li><a href="#envoy-介绍">Envoy 介绍</a></li>
+        <li><a href="#opa-介绍">OPA 介绍</a></li>
+        <li><a href="#入门实践">入门实践</a>
+          <ul>
+            <li><a href="#k8s-集群环境">k8s 集群环境</a></li>
+            <li><a href="#创建-envoy-配置">创建 Envoy 配置</a></li>
+            <li><a href="#创建-opa-策略配置">创建 OPA 策略配置</a></li>
+            <li><a href="#playground-调试策略">Playground 调试策略</a></li>
+            <li><a href="#创建应用-deployment">创建应用 deployment</a></li>
+            <li><a href="#暴露-http-服务">暴露 http 服务</a></li>
+            <li><a href="#测试结果">测试结果</a></li>
+          </ul>
+        </li>
+        <li><a href="#参考">参考</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h2 id="背景">背景</h2>
+<p>工作中的一个 IAM（身份与访问管理）服务中，使用到了 OPA（开放策略代理）进行鉴权，针对前端来的一个请求，主要处理逻辑如下图红色箭头所示：
+<img src="../../image/envoy_opa_auth/opa_model.png" alt="opa_model"></p>
+<p>下面对各个步骤进行说明：</p>
+<ul>
+<li>1：客户端的 web 请求，通过 nginx ingress 进入集群</li>
+<li>2：Nginx 通过 <a href="https://docs.nginx.com/nginx/admin-guide/security-controls/configuring-subrequest-authentication/">认证子请求</a>，将请求发送给 oathkeeper 进行认证</li>
+<li>3：Oathkeeper 返回 JWT 给 nginx</li>
+<li>4a：Nginx 将 JWT 放在“Authorization”请求头中，发送给应用程序</li>
+<li>5a：应用程序进行简单处理后，请求当前 pod 的 OPA 容器进行鉴权</li>
+<li>6a：OPA 容器根据策略（启动时从 IAM 获取的）返回决策为 true 或者 false，应用程序根据结果决定是否响应请求</li>
+</ul>
+<p>但是以上流程存在一个严重问题，鉴权和应用程序耦合，每个应用程序都需要添加 OPA 的请求和处理逻辑，工作量大且后期有更新时不好维护。因此考虑将鉴权和业务逻辑解耦，如图中黑色箭头所示：</p>
+<ul>
+<li>4b：Nginx 请求应用程序 pod 时，envoy 容器将流量劫持</li>
+<li>5b：Envoy 将请求转发给 OPA 容器进行鉴权</li>
+<li>6b：OPA 容器将鉴权结果返回给 envoy</li>
+<li>7b：Envoy 收到鉴权结果为 true，则将请求转发给应用程序，否则返回 403</li>
+</ul>
+<p>这个思路在 OPA 官网上可以找到，即 <a href="https://www.openpolicyagent.org/docs/latest/envoy-tutorial-standalone-envoy/">这个教程示例</a>。后续内容主要基于此示例，并增加一些详细说明。</p>
+<h2 id="envoy-介绍">Envoy 介绍</h2>
+<p>Envoy 是专为大型现代 SOA（面向服务架构）架构设计的 L7 代理和通信总线，体积小，性能高。它的诞生源于以下理念：<strong>对应用程序而言，网络应该是透明的，当网络和应用程序出现故障时，应该能够很容易确定问题的根源。</strong></p>
+<p>Envoy具有以下优点：</p>
+<ul>
+<li>非侵入的架构，即 Sidecar 模式</li>
+<li>同时支持 L3/L4/L7 代理</li>
+<li>支持 HTTP/2、gRPC</li>
+<li>服务发现和动态配置</li>
+<li>支持流量统计和分布式追踪等可观察性功能</li>
+</ul>
+<h2 id="opa-介绍">OPA 介绍</h2>
+<p>OPA（Open Policy Agent，开放策略代理）是一个开源的通用策略引擎，支持跨整个堆栈的、统一的、上下文感知的决策。OPA 将策略与决策分离开来，当你的软件需要做出决策时，就可以使用结构化数据请求 OPA，其原理如下图所示：
+<img src="https://d33wubrfki0l68.cloudfront.net/b394f524e15a67457b85fdfeed02ff3f2764eb9e/6ac2b/docs/latest/images/opa-service.svg" alt="opa-service"></p>
+<p>OPA 的策略可以用 Rego 编写，详细描述参考 <a href="https://www.openpolicyagent.org/docs/latest/#rego">Rego</a>。</p>
+<h2 id="入门实践">入门实践</h2>
+<p>内容基于 <a href="https://www.openpolicyagent.org/docs/latest/envoy-tutorial-standalone-envoy/">教程示例</a>，进行了部分修改，并增加一些详细说明。</p>
+<h3 id="k8s-集群环境">k8s 集群环境</h3>
+<p>本地环境为一台安装了 k3s 集群的云主机，k3s 环境脚本为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">set -x
+curl -sfL http://rancher-mirror.cnrancher.com/k3s/k3s-install.sh | INSTALL_K3S_MIRROR=cn K3S_KUBECONFIG_MODE=&#34;644&#34; INSTALL_K3S_VERSION=&#34;v1.21.8+k3s2&#34; sh -s -
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="创建-envoy-配置">创建 Envoy 配置</h3>
+<p>下面的配置使用了外部鉴权过滤器 envoy.ext_authz，来请求 gRPC 鉴权服务器，配置为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">static_resources:
+  listeners:
+  - address:
+      socket_address:
+        address: 0.0.0.0
+        port_value: 8000
+    filter_chains:
+    - filters:
+      - name: envoy.filters.network.http_connection_manager
+        typed_config:
+          &#34;@type&#34;: type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          codec_type: auto
+          stat_prefix: ingress_http
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: backend
+              domains:
+              - &#34;*&#34;
+              routes:
+              - match:
+                  prefix: &#34;/&#34;
+                route:
+                  cluster: service
+          http_filters:
+          - name: envoy.ext_authz
+            typed_config:
+              &#34;@type&#34;: type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz
+              transport_api_version: V3
+              with_request_body:
+                max_request_bytes: 8192
+                allow_partial_message: true
+              failure_mode_allow: false
+              grpc_service:
+                google_grpc:
+                  target_uri: 127.0.0.1:9191
+                  stat_prefix: ext_authz
+                timeout: 0.5s
+          - name: envoy.filters.http.router
+  clusters:
+  - name: service
+    connect_timeout: 0.25s
+    type: strict_dns
+    lb_policy: round_robin
+    load_assignment:
+      cluster_name: service
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: 127.0.0.1
+                port_value: 8080
+admin:
+  access_log_path: &#34;/dev/null&#34;
+  address:
+    socket_address:
+      address: 0.0.0.0
+      port_value: 8001
+layered_runtime:
+  layers:
+    - name: static_layer_0
+      static_layer:
+        envoy:
+          resource_limits:
+            listener:
+              example_listener_name:
+                connection_limit: 10000
+        overload:
+          global_downstream_max_connections: 50000
+</code></pre></td></tr></table>
+</div>
+</div><p>下面对其中部分配置进行说明，首先外面几层配置：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">static_resources:       # 包含启动时静态配置的所有内容
+  listeners:            # 监听器
+  - address:            # 监听地址
+     socket_address:
+        address: 0.0.0.0
+        port_value: 8000
+    filter_chains:      # 过滤器链
+    ...
+  clusters:             # 上游集群配置，在过滤器路由中会用到
+  - name: service
+    ...
+admin:                  # 管理员配置
+  access_log_path: &#34;/dev/null&#34;
+  address:              # 管理员服务地址
+    ...
+</code></pre></td></tr></table>
+</div>
+</div><p>对过滤器进行说明：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">    - filters:
+      - name: envoy.filters.network.http_connection_manager     # 过滤器限定名称，这里是 http 连接管理器
+        typed_config:                   # http 连接管理器的类型
+          &#34;@type&#34;: type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          codec_type: auto              # 编解码器类型
+          stat_prefix: ingress_http     # 为连接管理器发生统计时的前缀
+          route_config:                 # 路由配置，在配置 envoy.filters.http.router 时会使用
+            name: local_route
+            virtual_hosts:              # 虚拟主机
+            - name: backend
+              domains:                  # 匹配的 domain
+              - &#34;*&#34;
+              routes:
+              - match:                  # 匹配的 url
+                  prefix: &#34;/&#34;
+                route:
+                  cluster: service
+          http_filters:                 # 使用的 http 过滤器
+          - name: envoy.ext_authz       # http 过滤器限定名称
+            typed_config:               # http 过滤器类型
+              &#34;@type&#34;: type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz
+              transport_api_version: V3 # 协议版本
+              with_request_body:        # 转发请求体设置
+                max_request_bytes: 8192
+                allow_partial_message: true
+              grpc_service:             # 转发 grpc 地址
+                google_grpc:
+                  target_uri: 127.0.0.1:9191
+                  stat_prefix: ext_authz
+                timeout: 0.5s
+          - name: envoy.filters.http.router     # 使用路由过滤器，typed_config 只有一种，进行了省略
+</code></pre></td></tr></table>
+</div>
+</div><p>clusters 配置中，大部分都比较简单，其中 lb_policy 是负载均衡策略，这里设置的是 round_robin。将 envoy 配置在 k8s 中进行部署：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">kubectl create configmap proxy-config --from-file envoy.yaml
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="创建-opa-策略配置">创建 OPA 策略配置</h3>
+<p>这里对示例应用程序公开的/people 端点， 设置 OPA 策略来实现以下鉴权限制：</p>
+<ul>
+<li>Alice 被授予访客角色，可以对/people 执行 GET 请求。</li>
+<li>Bob 被授予管理员角色，可以对/people 执行 GET 和 POST 请求。</li>
+</ul>
+<p>对应的 policy.rego 为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kn">package</span> <span class="nx">envoy</span><span class="p">.</span><span class="nx">authz</span>
+
+<span class="kn">import</span> <span class="nx">future</span><span class="p">.</span><span class="nx">keywords</span>
+
+<span class="kn">import</span> <span class="nx">input</span><span class="p">.</span><span class="nx">attributes</span><span class="p">.</span><span class="nx">request</span><span class="p">.</span><span class="nx">http</span> <span class="nx">as</span> <span class="nx">http_request</span>
+
+<span class="k">default</span> <span class="nx">allow</span> <span class="o">:=</span> <span class="kc">false</span>
+
+<span class="nx">allow</span> <span class="k">if</span> <span class="p">{</span>
+	<span class="nx">is_token_valid</span>
+	<span class="nx">action_allowed</span>
+<span class="p">}</span>
+
+<span class="nx">is_token_valid</span> <span class="k">if</span> <span class="p">{</span>
+	<span class="nx">token</span><span class="p">.</span><span class="nx">valid</span>
+	<span class="nx">now</span> <span class="o">:=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">now_ns</span><span class="p">()</span> <span class="o">/</span> <span class="mi">1000000000</span>
+	<span class="nx">token</span><span class="p">.</span><span class="nx">payload</span><span class="p">.</span><span class="nx">nbf</span> <span class="o">&lt;=</span> <span class="nx">now</span>
+	<span class="nx">now</span> <span class="p">&lt;</span> <span class="nx">token</span><span class="p">.</span><span class="nx">payload</span><span class="p">.</span><span class="nx">exp</span>
+<span class="p">}</span>
+
+<span class="nx">action_allowed</span> <span class="k">if</span> <span class="p">{</span>
+	<span class="nx">http_request</span><span class="p">.</span><span class="nx">method</span> <span class="o">==</span> <span class="s">&#34;GET&#34;</span>
+	<span class="nx">token</span><span class="p">.</span><span class="nx">payload</span><span class="p">.</span><span class="nx">role</span> <span class="o">==</span> <span class="s">&#34;guest&#34;</span>
+	<span class="nx">glob</span><span class="p">.</span><span class="nf">match</span><span class="p">(</span><span class="s">&#34;/people&#34;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#34;/&#34;</span><span class="p">],</span> <span class="nx">http_request</span><span class="p">.</span><span class="nx">path</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="nx">action_allowed</span> <span class="k">if</span> <span class="p">{</span>
+	<span class="nx">http_request</span><span class="p">.</span><span class="nx">method</span> <span class="o">==</span> <span class="s">&#34;GET&#34;</span>
+	<span class="nx">token</span><span class="p">.</span><span class="nx">payload</span><span class="p">.</span><span class="nx">role</span> <span class="o">==</span> <span class="s">&#34;admin&#34;</span>
+	<span class="nx">glob</span><span class="p">.</span><span class="nf">match</span><span class="p">(</span><span class="s">&#34;/people&#34;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#34;/&#34;</span><span class="p">],</span> <span class="nx">http_request</span><span class="p">.</span><span class="nx">path</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="nx">action_allowed</span> <span class="k">if</span> <span class="p">{</span>
+	<span class="nx">http_request</span><span class="p">.</span><span class="nx">method</span> <span class="o">==</span> <span class="s">&#34;POST&#34;</span>
+	<span class="nx">token</span><span class="p">.</span><span class="nx">payload</span><span class="p">.</span><span class="nx">role</span> <span class="o">==</span> <span class="s">&#34;admin&#34;</span>
+	<span class="nx">glob</span><span class="p">.</span><span class="nf">match</span><span class="p">(</span><span class="s">&#34;/people&#34;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#34;/&#34;</span><span class="p">],</span> <span class="nx">http_request</span><span class="p">.</span><span class="nx">path</span><span class="p">)</span>
+	<span class="nf">lower</span><span class="p">(</span><span class="nx">input</span><span class="p">.</span><span class="nx">parsed_body</span><span class="p">.</span><span class="nx">firstname</span><span class="p">)</span> <span class="o">!=</span> <span class="nx">base64url</span><span class="p">.</span><span class="nf">decode</span><span class="p">(</span><span class="nx">token</span><span class="p">.</span><span class="nx">payload</span><span class="p">.</span><span class="nx">sub</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="nx">token</span> <span class="o">:=</span> <span class="p">{</span><span class="s">&#34;valid&#34;</span><span class="p">:</span> <span class="nx">valid</span><span class="p">,</span> <span class="s">&#34;payload&#34;</span><span class="p">:</span> <span class="nx">payload</span><span class="p">}</span> <span class="k">if</span> <span class="p">{</span>
+	<span class="p">[</span><span class="nx">_</span><span class="p">,</span> <span class="nx">encoded</span><span class="p">]</span> <span class="o">:=</span> <span class="nf">split</span><span class="p">(</span><span class="nx">http_request</span><span class="p">.</span><span class="nx">headers</span><span class="p">.</span><span class="nx">authorization</span><span class="p">,</span> <span class="s">&#34; &#34;</span><span class="p">)</span>
+	<span class="p">[</span><span class="nx">valid</span><span class="p">,</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">payload</span><span class="p">]</span> <span class="o">:=</span> <span class="nx">io</span><span class="p">.</span><span class="nx">jwt</span><span class="p">.</span><span class="nf">decode_verify</span><span class="p">(</span><span class="nx">encoded</span><span class="p">,</span> <span class="p">{</span><span class="s">&#34;secret&#34;</span><span class="p">:</span> <span class="s">&#34;secret&#34;</span><span class="p">})</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>编译成 bundler，并用 nginx 来提供服务：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">opa build policy.rego
+docker run --rm --name bundle-server -d -p 8888:80 -v ${PWD}:/usr/share/nginx/html:ro nginx:latest
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="playground-调试策略">Playground 调试策略</h3>
+<p>OPA 官网提供了 <a href="https://play.openpolicyagent.org/">playground 在线工具</a> 来调试策略，对于上面的策略，有如下请求：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">{
+  &#34;attributes&#34;: {
+    &#34;request&#34;: {
+      &#34;http&#34;: {
+        &#34;method&#34;: &#34;GET&#34;,
+        &#34;path&#34;: &#34;/people&#34;,
+        &#34;headers&#34;: {
+          &#34;authorization&#34;: &#34;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiZ3Vlc3QiLCJzdWIiOiJZV3hwWTJVPSIsIm5iZiI6MTUxNDg1MTEzOSwiZXhwIjoxNjQxMDgxNTM5fQ.K5DnnbbIOspRbpCr2IKXE9cPVatGOCBrBQobQmBmaeU&#34;
+        }
+      }
+    }
+  }
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>在 playground 中运行结果如下图所示：
+<img src="../../image/envoy_opa_auth/playground.png" alt="playground"></p>
+<p>将 authorization header 改为后面 Bob 的认证：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"> &#34;headers&#34;: {
+    &#34;authorization&#34;: &#34;Bearer eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJleHAiOiAyMjQxMDgxNTM5LCAibmJmIjogMTUxNDg1MTEzOSwgInJvbGUiOiAiYWRtaW4iLCAic3ViIjogIlltOWkifQ.5qsm7rRTvqFHAgiB6evX0a_hWnGbWquZC0HImVQPQo8&#34;
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>输出的结果为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">{
+    &#34;action_allowed&#34;: true,
+    &#34;allow&#34;: true,
+    &#34;is_token_valid&#34;: true,
+    &#34;token&#34;: {
+        &#34;payload&#34;: {
+            &#34;exp&#34;: 2241081539,
+            &#34;nbf&#34;: 1514851139,
+            &#34;role&#34;: &#34;admin&#34;,
+            &#34;sub&#34;: &#34;Ym9i&#34;
+        },
+        &#34;valid&#34;: true
+    }
+}
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="创建应用-deployment">创建应用 deployment</h3>
+<p>应用的 deployment 包含应用容器、envoy 容器、OPA 容器，deployment.yaml 为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span><span class="lnt">78
+</span><span class="lnt">79
+</span><span class="lnt">80
+</span><span class="lnt">81
+</span><span class="lnt">82
+</span><span class="lnt">83
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: example-app
+  labels:
+    app: example-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: example-app
+  template:
+    metadata:
+      labels:
+        app: example-app
+    spec:
+      initContainers:
+        - name: proxy-init
+          image: openpolicyagent/proxy_init:v5
+          # Configure the iptables bootstrap script to redirect traffic to the
+          # Envoy proxy on port 8000, specify that Envoy will be running as user
+          # 1111, and that we want to exclude port 8282 from the proxy for the
+          # OPA health checks. These values must match up with the configuration
+          # defined below for the &#34;envoy&#34; and &#34;opa&#34; containers.
+          args: [&#34;-p&#34;, &#34;8000&#34;, &#34;-u&#34;, &#34;1111&#34;, &#34;-w&#34;, &#34;8282&#34;]
+          securityContext:
+            capabilities:
+              add:
+              - NET_ADMIN
+            runAsNonRoot: false
+            runAsUser: 0
+      containers:
+      - name: app
+        image: openpolicyagent/demo-test-server:v1
+        ports:
+        - containerPort: 8080
+      - name: envoy
+        image: envoyproxy/envoy:v1.20.0
+        volumeMounts:
+        - readOnly: true
+          mountPath: /config
+          name: proxy-config
+        args:
+        - &#34;envoy&#34;
+        - &#34;--config-path&#34;
+        - &#34;/config/envoy.yaml&#34;
+        env:
+        - name: ENVOY_UID
+          value: &#34;1111&#34;
+      - name: opa
+        # Note: openpolicyagent/opa:latest-envoy is created by retagging
+        # the latest released image of OPA-Envoy.
+        image: openpolicyagent/opa:latest-envoy
+        args:
+        - &#34;run&#34;
+        - &#34;--server&#34;
+        - &#34;--addr=localhost:8181&#34;
+        - &#34;--diagnostic-addr=0.0.0.0:8282&#34;
+        - &#34;--set=services.default.url=http://192.168.60.53:8888&#34;
+        - &#34;--set=bundles.default.resource=bundle.tar.gz&#34;
+        - &#34;--set=plugins.envoy_ext_authz_grpc.addr=:9191&#34;
+        - &#34;--set=plugins.envoy_ext_authz_grpc.path=envoy/authz/allow&#34;
+        - &#34;--set=decision_logs.console=true&#34;
+        - &#34;--set=status.console=true&#34;
+        - &#34;--ignore=.*&#34;
+        livenessProbe:
+          httpGet:
+            path: /health?plugins
+            scheme: HTTP
+            port: 8282
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /health?plugins
+            scheme: HTTP
+            port: 8282
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: proxy-config
+        configMap:
+          name: proxy-config
+</code></pre></td></tr></table>
+</div>
+</div><p>需要说明以下几点：</p>
+<ul>
+<li>proxy-init 容器是设置 iptables 来转发流量，参数 [&quot;-p&quot;, &ldquo;8000&rdquo;, &ldquo;-u&rdquo;, &ldquo;1111&rdquo;, &ldquo;-w&rdquo;, &ldquo;8282&rdquo;] 表示服务的监听端口为 8000，运行时使的用户 id 为 1111，不转发 8282 端口的流量。</li>
+<li>因为不是用的 minikube 集群，OPA 中 services.default.url 需要改为 node 的内部 ip。</li>
+</ul>
+<p>执行部署：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">kubectl apply -f deployment.yaml
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="暴露-http-服务">暴露 http 服务</h3>
+<p>官网示例中是利用 minikube tunnel 提供的 LoadBalancer 模式来暴露服务的，这里为了简单直接用 NodePort 模式：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">kubectl expose deployment example-app --type=NodePort --name=example-app-service  --port=8080
+kubectl get svc example-app-service  # 获取 NodePort
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="测试结果">测试结果</h3>
+<p>为方便测试，设置以下几个环境变量：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">export ALICE_TOKEN=&#34;eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJleHAiOiAyMjQxMDgxNTM5LCAibmJmIjogMTUxNDg1MTEzOSwgInJvbGUiOiAiZ3Vlc3QiLCAic3ViIjogIllXeHBZMlU9In0.Uk5hgUqMuUfDLvBLnlXMD0-X53aM_Hlziqg3vhOsCc8&#34;
+export BOB_TOKEN=&#34;eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJleHAiOiAyMjQxMDgxNTM5LCAibmJmIjogMTUxNDg1MTEzOSwgInJvbGUiOiAiYWRtaW4iLCAic3ViIjogIlltOWkifQ.5qsm7rRTvqFHAgiB6evX0a_hWnGbWquZC0HImVQPQo8&#34;
+export SERVICE_URL=172.19.52.61:32212 #
+</code></pre></td></tr></table>
+</div>
+</div><p>测试 Alice 可以访问员工信息但是不能创建：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">curl -i -H &#34;Authorization: Bearer $ALICE_TOKEN&#34; http://$SERVICE_URL/people
+curl -i -H &#34;Authorization: Bearer $ALICE_TOKEN&#34; -d &#39;{&#34;firstname&#34;:&#34;Charlie&#34;, &#34;lastname&#34;:&#34;OPA&#34;}&#39; -H &#34;Content-Type: application/json&#34; -X POST http://$SERVICE_URL/people
+</code></pre></td></tr></table>
+</div>
+</div><p>测试 Bob 可以获取员工信息也能创建：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">curl -i -H &#34;Authorization: Bearer $BOB_TOKEN&#34; http://$SERVICE_URL/people
+curl -i -H &#34;Authorization: Bearer $BOB_TOKEN&#34; -d &#39;{&#34;firstname&#34;:&#34;Charlie&#34;, &#34;lastname&#34;:&#34;Opa&#34;}&#39; -H &#34;Content-Type: application/json&#34; -X POST http://$SERVICE_URL/people
+</code></pre></td></tr></table>
+</div>
+</div><p>测试完成后，删除所有服务：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">kubectl delete service example-app-service
+kubectl delete deployment example-app
+kubectl delete configmap proxy-config
+docker rm -f bundle-server
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://www.openpolicyagent.org/docs/latest/envoy-tutorial-standalone-envoy/">OPA 官网文档：通过 Envoy 进行鉴权</a></li>
+<li><a href="https://icloudnative.io/envoy-handbook/docs/overview/overview/">Envoy 介绍</a></li>
+<li><a href="https://cloudnative.to/blog/introducing-policy-as-code-the-open-policy-agent-opa/">策略即代码——Open Policy Agent 简介</a></li>
+</ul>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">Author</span>
+    <span class="item-content">yefengzhichen</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">LastMod</span>
+    <span class="item-content">
+        2022-09-17
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      
+      <nav class="post-nav">
+        
+        <a class="next" href="../../post/code_server_local_image/">
+            <span class="next-text nav-default">使用 code-server 和 nocalhost 制作 web 调试镜像</span>
+            <span class="next-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="zhutao_hust@foxmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/yefengzhichen" class="iconfont icon-github" title="github"></a>
+  <a href="https://yefengzhichen.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  <div class="busuanzi-footer">
+    <span id="busuanzi_container_site_pv"> site pv: <span id="busuanzi_value_site_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> </span>
+      <span class="division">|</span>
+    <span id="busuanzi_container_site_uv"> site uv: <span id="busuanzi_value_site_uv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> </span>
+  </div>
+
+  <span class="copyright-year">
+    &copy; 
+    2022<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="../../js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

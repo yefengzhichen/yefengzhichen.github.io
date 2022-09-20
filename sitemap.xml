@@ -3,14 +3,21 @@
   
   <url>
     <loc>https://yefengzhichen.github.io/post/</loc>
-    <lastmod>2022-09-03T20:13:39+08:00</lastmod>
+    <lastmod>2022-09-17T20:13:50+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
     <loc>https://yefengzhichen.github.io/</loc>
-    <lastmod>2022-09-03T20:13:39+08:00</lastmod>
+    <lastmod>2022-09-17T20:13:50+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/post/envoy_opa_auth/</loc>
+    <lastmod>2022-09-17T20:13:50+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
