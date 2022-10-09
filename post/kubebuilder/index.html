@@ -1,0 +1,1700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Kubebuilder使用介绍 - yefengzhichen</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="yefengzhichen" /><meta name="description" content="Kubebuilder 是什么 Kubebuilder 是一个使用自定义资源定义（CRDs）来构建 Kubernetes API 的框架。与 Ruby on Rails 和 SpringBoot 等 web 开发框架类似，Kubebuilder 提高了开发人员使用 Go 语言" /><meta name="keywords" content="Hugo, theme, even" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.92.1 with theme even" />
+
+
+<link rel="canonical" href="https://yefengzhichen.github.io/post/kubebuilder/" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../favicon-16x16.png">
+<link rel="manifest" href="../../manifest.json">
+<link rel="mask-icon" href="../../safari-pinned-tab.svg" color="#5bbad5">
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<link href="../../sass/main.min.f92fd13721ddf72129410fd8250e73152cc6f2438082b6c0208dc24ee7c13fc4.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="Kubebuilder使用介绍" />
+<meta property="og:description" content="Kubebuilder 是什么 Kubebuilder 是一个使用自定义资源定义（CRDs）来构建 Kubernetes API 的框架。与 Ruby on Rails 和 SpringBoot 等 web 开发框架类似，Kubebuilder 提高了开发人员使用 Go 语言" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yefengzhichen.github.io/post/kubebuilder/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2022-09-09T15:19:26+08:00" />
+<meta property="article:modified_time" content="2022-09-09T15:19:26+08:00" />
+
+<meta itemprop="name" content="Kubebuilder使用介绍">
+<meta itemprop="description" content="Kubebuilder 是什么 Kubebuilder 是一个使用自定义资源定义（CRDs）来构建 Kubernetes API 的框架。与 Ruby on Rails 和 SpringBoot 等 web 开发框架类似，Kubebuilder 提高了开发人员使用 Go 语言"><meta itemprop="datePublished" content="2022-09-09T15:19:26+08:00" />
+<meta itemprop="dateModified" content="2022-09-09T15:19:26+08:00" />
+<meta itemprop="wordCount" content="5218">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Kubebuilder使用介绍"/>
+<meta name="twitter:description" content="Kubebuilder 是什么 Kubebuilder 是一个使用自定义资源定义（CRDs）来构建 Kubernetes API 的框架。与 Ruby on Rails 和 SpringBoot 等 web 开发框架类似，Kubebuilder 提高了开发人员使用 Go 语言"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="../../" class="logo">yefengzhichen</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="../../">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="../../post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="../../tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="../../categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="../../" class="logo">yefengzhichen</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="../../">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../categories/">Categories</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">Kubebuilder使用介绍</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2022-09-09 </span>
+        
+          <span class="more-meta"> 5218 words </span>
+          <span class="more-meta"> 11 mins read </span>
+        <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> times read </span>
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">Contents</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#kubebuilder-是什么">Kubebuilder 是什么</a>
+          <ul>
+            <li><a href="#控制器模式">控制器模式</a></li>
+          </ul>
+        </li>
+        <li><a href="#kubebuilder-安装和使用">Kubebuilder 安装和使用</a>
+          <ul>
+            <li><a href="#创建项目">创建项目</a></li>
+            <li><a href="#创建-api">创建 API</a></li>
+            <li><a href="#测试">测试</a></li>
+            <li><a href="#定制-crd-结构和逻辑">定制 CRD 结构和逻辑</a></li>
+          </ul>
+        </li>
+        <li><a href="#实现-cronjob-控制器">实现 CronJob 控制器</a>
+          <ul>
+            <li><a href="#初始化项目">初始化项目</a></li>
+            <li><a href="#修改-cronjob-的结构体">修改 CronJob 的结构体</a></li>
+            <li><a href="#实现控制器逻辑">实现控制器逻辑</a></li>
+            <li><a href="#运行和部署控制器">运行和部署控制器</a></li>
+            <li><a href="#测试-1">测试</a></li>
+          </ul>
+        </li>
+        <li><a href="#kubebuilder-实现原理">Kubebuilder 实现原理</a></li>
+        <li><a href="#参考">参考</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h2 id="kubebuilder-是什么">Kubebuilder 是什么</h2>
+<p>Kubebuilder 是一个使用自定义资源定义（CRDs）来构建 Kubernetes API 的框架。与 Ruby on Rails 和 SpringBoot 等 web 开发框架类似，Kubebuilder 提高了开发人员使用 Go 语言构建和发布 Kubernetes API 的速度，并降低了管理的复杂性，提供了简单的抽象，减少了样板文件的编写。Kubebuilder 是基于 <a href="https://github.com/kubernetes-sigs/controller-runtime">controller-runtime 库</a> 和 <a href="https://github.com/kubernetes-sigs/controller-tools">controller-tools 库</a> 进行开发的。</p>
+<p>Kubebuilder 框架主要做了以下两个事情：</p>
+<ul>
+<li>编写 CRD 并将其部署到 k8s 集群里：描述 CRD 的结构，k8s 能够识别</li>
+<li>编写 Controller 并将其部署到 K8s 集群里：实现调谐逻辑，控制 CRD 的运行逻辑</li>
+</ul>
+<p>其中 Controller 主要实现了 Reconcile（调谐）逻辑，其原理和 k8s 底层使用的控制器模式一样。</p>
+<h3 id="控制器模式">控制器模式</h3>
+<p>k8s 集群在部署时包含了控制器组件，对于每个内置资源类型都有对应的控制器，在 k8s 源码目录 pkg/controller 下可以查看到所有的控制器。k8s 作为一个“容器编排”平台，其核心编排功能正是通过控制器来实现的</p>
+<p>对于下面的 deploy：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test
+spec:
+  selector:
+    matchLabels:
+      app: test
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: test
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.7.9
+        ports:
+        - containerPort: 80
+</code></pre></td></tr></table>
+</div>
+</div><p>上面的例子中，Deployment 资源创建之后，Deployment 控制器进行处理，确保 pods 个数为 2。实现控制逻辑的过程称为调谐，其伪代码逻辑为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">for {
+    actualState := GetResourceActualState(rsvc)
+    expectState := GetResourceExpectState(rsvc)
+    if actualState == expectState {
+        // do nothing
+    } else {
+        Reconcile(rsvc)
+    }
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>就是一个无限循环（实际是事件驱动+定时同步来实现，不是无脑循环）不断地对比期望状态（yaml 中定义的状态）和实际状态（deploy 和 pods 等状态的汇总），如果有出入则进行调谐逻辑，将实际状态调整为期望状态。</p>
+<h2 id="kubebuilder-安装和使用">Kubebuilder 安装和使用</h2>
+<p>基于 <a href="https://book.kubebuilder.io/quick-start.html">官方快速入门文档</a>，在一台安装了 k3s 集群的 linux 云主机上进行测试。需要注意，不要用 arm 版 macos 来安装，kubebuilder 中依赖的 kustomize 暂时没有 arm 版 macos 版稳定安装包。</p>
+<h3 id="创建项目">创建项目</h3>
+<p>依赖条件：</p>
+<ul>
+<li>安装 go v1.17.9+。</li>
+<li>安装 docker 17.03+。</li>
+<li>安装 kubectl v1.11.3+。</li>
+<li>能访问 Kubernetes v1.11.3+ 集群。</li>
+</ul>
+<p>golang 设置代理：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">go env -w GOPROXY=&#34;https://goproxy.cn,direct&#34;
+</code></pre></td></tr></table>
+</div>
+</div><p>安装 kubebuilder：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">curl -L -o kubebuilder https://go.kubebuilder.io/dl/latest/$(go env GOOS)/$(go env GOARCH)
+chmod +x kubebuilder &amp;&amp; mv kubebuilder /usr/local/bin/
+</code></pre></td></tr></table>
+</div>
+</div><p>创建项目：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">mkdir -p ~/projects/guestbook
+cd ~/projects/guestbook
+kubebuilder init --domain my.domain --repo my.domain/guestbook
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="创建-api">创建 API</h3>
+<p>创建一个新的 API webapp/v1 和新的 CRD Guestbook，执行后会有两个选项“Create Resource”和“Create Controller”，选择是否创建资源和控制器：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">kubebuilder create api --group webapp --version v1 --kind Guestbook
+</code></pre></td></tr></table>
+</div>
+</div><p>在本地执行时报了一个错：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="o">/</span><span class="nx">root</span><span class="o">/</span><span class="nx">projects</span><span class="o">/</span><span class="nx">guestbook</span><span class="o">/</span><span class="nx">bin</span><span class="o">/</span><span class="nx">controller</span><span class="o">-</span><span class="nx">gen</span> <span class="nx">object</span><span class="p">:</span><span class="nx">headerFile</span><span class="p">=</span><span class="s">&#34;hack/boilerplate.go.txt&#34;</span> <span class="nx">paths</span><span class="p">=</span><span class="s">&#34;./...&#34;</span>
+<span class="o">/</span><span class="nx">usr</span><span class="o">/</span><span class="nx">local</span><span class="o">/</span><span class="k">go</span><span class="o">/</span><span class="nx">src</span><span class="o">/</span><span class="nx">net</span><span class="o">/</span><span class="nx">cgo_linux</span><span class="p">.</span><span class="k">go</span><span class="p">:</span><span class="mi">12</span><span class="p">:</span><span class="mi">8</span><span class="p">:</span> <span class="nx">no</span> <span class="nx">such</span> <span class="kn">package</span> <span class="nx">located</span>
+<span class="nx">Error</span><span class="p">:</span> <span class="nx">not</span> <span class="nx">all</span> <span class="nx">generators</span> <span class="nx">ran</span> <span class="nx">successfully</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>在 github 上搜到的 <a href="https://github.com/kubernetes-sigs/kubebuilder/issues/2828">issue</a>，提示安装 gcc：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">apt install gcc
+</code></pre></td></tr></table>
+</div>
+</div><p>安装后删除文件夹再重新执行上面的步骤，问题得到解决。执行完成后，目录下主要文件为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">➜  guestbook tree -L 3
+.
+├── Dockerfile  // 控制器镜像模板
+├── Makefile    // 工具安装、编译、运行等命令集合
+├── api
+│   └── v1
+│       ├── groupversion_info.go        // group、version 的元数据和 scheme 设置
+│       ├── guestbook_types.go          // crd struct 定义
+│       └── zz_generated.deepcopy.go    // 自动生成的，实现 runtime.Object 接口，主要是深拷贝
+├── config      // 启动相关的配置
+│   ├── crd
+│   │   ├── bases                   // crd 的描述文件
+│   │   ├── kustomization.yaml      // kustomize 文件，对资源进行（组合）[https://kubernetes.io/zh-cn/docs/tasks/manage-kubernetes-objects/kustomization/#composing]
+│   │   ├── kustomizeconfig.yaml    // kustomize （转换器配置）[https://github.com/kubernetes-sigs/kustomize/tree/master/examples/transformerconfigs]
+│   │   └── patches                 // kuctomize （定制）[https://kubernetes.io/zh-cn/docs/tasks/manage-kubernetes-objects/kustomization/#customizing]
+│   ├── default                     // 默认启动配置，包含加载 crd 和控制器等，即 kustomization 包含了 crd、manager 和 rbac 等目录资源
+│   ├── manager                     // 控制器配置
+│   ├── rbac                        // rbac 配置
+│   └── samples                     // crd 的示例
+│       └── webapp_v1_guestbook.yaml
+├── controllers
+│   ├── guestbook_controller.go     // 控制器定义
+├── go.mod
+├── go.sum
+└── main.go                         // 程序入口
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="测试">测试</h3>
+<p>生成的 guestbook 目录里面，Makefile 包含了需要依赖的 controller-gen 和 kustomize 版本号，并且提供了 install 进行安装：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">make install
+</code></pre></td></tr></table>
+</div>
+</div><p>如果机器配置了国外代理，是可以安装成功的。但是测试的这台云主机没有配置，安装会出错，因此需要参考 Makefile 内容，用手动方式安装替换：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"># Makefile 中 controller-gen 替换变量后安装命令，可以执行成功
+GOBIN=/root/projects/guestbook/bin  go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.9.2
+
+# Makefile 中 kustomize 替换变量后安装命令，执行出错
+curl -s &#34;https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh&#34; | bash -s -- 3.8.7 /root/projects/guestbook/bin
+# 将 raw.githubusercontent.com 改为：raw.fastgit.org 后下载 install_kustomize.sh：
+wget &#34;https://raw.fastgit.org/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh&#34;
+# 将 install_kustomize.sh 执行后，在下载安装包时出错：
+curl -sLO https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v3.8.7/kustomize_v3.8.7_linux_amd64.tar.gz
+# 使用加速下载工具 http://toolwa.com/github/ 得到链接后，替换脚本中下载地址：
+curl -sLO &#34;https://download.fastgit.org/kubernetes-sigs/kustomize/releases/download/kustomize/v3.8.7/kustomize_v3.8.7_linux_amd64.tar.gz&#34;
+# 最后将当前目录下的 bin 下的可执行文件拷贝到 /root/projects/guestbook/bin 下即可
+
+# 使用 kustomize 应用 crd
+bin/kustomize build config/crd | kubectl apply -f -
+</code></pre></td></tr></table>
+</div>
+</div><p>此时用一下命令可以看到 crd 已经应用成功：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">root@ecp-dev:~/projects/guestbook# kubectl api-resources  | grep guestbooks
+guestbooks                                       webapp.my.domain/v1                    true         Guestbook
+</code></pre></td></tr></table>
+</div>
+</div><p>运行进行测试，下面的命令会启动控制器，开始对 guestbooks crd 进行调谐：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">make run
+</code></pre></td></tr></table>
+</div>
+</div><p>部署一个 guestbooks 资源，并查看结果：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">root@ecp-dev:~/projects/guestbook# kubectl apply -f config/samples/
+guestbook.webapp.my.domain/guestbook-sample created
+root@ecp-dev:~/projects/guestbook# kubectl get guestbooks.webapp.my.domain
+NAME               AGE
+guestbook-sample   4s
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="定制-crd-结构和逻辑">定制 CRD 结构和逻辑</h3>
+<p>从上面展示的目录结构，可以看到修改 CRD 的结构在文件 guestbook_types.go 中：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">// GuestbookSpec defines the desired state of Guestbook
+type GuestbookSpec struct {
+	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+	// Important: Run &#34;make&#34; to regenerate code after modifying this file
+
+	// Foo is an example field of Guestbook. Edit guestbook_types.go to remove/update
+	Foo string `json:&#34;foo,omitempty&#34;`
+}
+
+// GuestbookStatus defines the observed state of Guestbook
+type GuestbookStatus struct {
+	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+	// Important: Run &#34;make&#34; to regenerate code after modifying this file
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>修改控制器的调谐逻辑在文件 guestbook_controller.go 中：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.12.2/pkg/reconcile
+func (r *GuestbookReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	_ = log.FromContext(ctx)
+
+	// TODO(user): your logic here
+
+	return ctrl.Result{}, nil
+}
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="实现-cronjob-控制器">实现 CronJob 控制器</h2>
+<p>Kubebuilder 官方文档中，用了一个 CronJob 来举例说明，这里整理了实现的完整步骤。</p>
+<h3 id="初始化项目">初始化项目</h3>
+<p>主要是使用 kubebuilder 命令创建项目文件夹，并创建 CRD，步骤如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"># 创建项目
+mkdir project
+cd project
+kubebuilder init --domain tutorial.kubebuilder.io --repo tutorial.kubebuilder.io/project
+
+# 添加 api
+kubebuilder create api --group batch --version v1 --kind CronJob
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="修改-cronjob-的结构体">修改 CronJob 的结构体</h3>
+<p>找到 api/v1/cronjob_types.go 文件，修改为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">  1
+</span><span class="lnt">  2
+</span><span class="lnt">  3
+</span><span class="lnt">  4
+</span><span class="lnt">  5
+</span><span class="lnt">  6
+</span><span class="lnt">  7
+</span><span class="lnt">  8
+</span><span class="lnt">  9
+</span><span class="lnt"> 10
+</span><span class="lnt"> 11
+</span><span class="lnt"> 12
+</span><span class="lnt"> 13
+</span><span class="lnt"> 14
+</span><span class="lnt"> 15
+</span><span class="lnt"> 16
+</span><span class="lnt"> 17
+</span><span class="lnt"> 18
+</span><span class="lnt"> 19
+</span><span class="lnt"> 20
+</span><span class="lnt"> 21
+</span><span class="lnt"> 22
+</span><span class="lnt"> 23
+</span><span class="lnt"> 24
+</span><span class="lnt"> 25
+</span><span class="lnt"> 26
+</span><span class="lnt"> 27
+</span><span class="lnt"> 28
+</span><span class="lnt"> 29
+</span><span class="lnt"> 30
+</span><span class="lnt"> 31
+</span><span class="lnt"> 32
+</span><span class="lnt"> 33
+</span><span class="lnt"> 34
+</span><span class="lnt"> 35
+</span><span class="lnt"> 36
+</span><span class="lnt"> 37
+</span><span class="lnt"> 38
+</span><span class="lnt"> 39
+</span><span class="lnt"> 40
+</span><span class="lnt"> 41
+</span><span class="lnt"> 42
+</span><span class="lnt"> 43
+</span><span class="lnt"> 44
+</span><span class="lnt"> 45
+</span><span class="lnt"> 46
+</span><span class="lnt"> 47
+</span><span class="lnt"> 48
+</span><span class="lnt"> 49
+</span><span class="lnt"> 50
+</span><span class="lnt"> 51
+</span><span class="lnt"> 52
+</span><span class="lnt"> 53
+</span><span class="lnt"> 54
+</span><span class="lnt"> 55
+</span><span class="lnt"> 56
+</span><span class="lnt"> 57
+</span><span class="lnt"> 58
+</span><span class="lnt"> 59
+</span><span class="lnt"> 60
+</span><span class="lnt"> 61
+</span><span class="lnt"> 62
+</span><span class="lnt"> 63
+</span><span class="lnt"> 64
+</span><span class="lnt"> 65
+</span><span class="lnt"> 66
+</span><span class="lnt"> 67
+</span><span class="lnt"> 68
+</span><span class="lnt"> 69
+</span><span class="lnt"> 70
+</span><span class="lnt"> 71
+</span><span class="lnt"> 72
+</span><span class="lnt"> 73
+</span><span class="lnt"> 74
+</span><span class="lnt"> 75
+</span><span class="lnt"> 76
+</span><span class="lnt"> 77
+</span><span class="lnt"> 78
+</span><span class="lnt"> 79
+</span><span class="lnt"> 80
+</span><span class="lnt"> 81
+</span><span class="lnt"> 82
+</span><span class="lnt"> 83
+</span><span class="lnt"> 84
+</span><span class="lnt"> 85
+</span><span class="lnt"> 86
+</span><span class="lnt"> 87
+</span><span class="lnt"> 88
+</span><span class="lnt"> 89
+</span><span class="lnt"> 90
+</span><span class="lnt"> 91
+</span><span class="lnt"> 92
+</span><span class="lnt"> 93
+</span><span class="lnt"> 94
+</span><span class="lnt"> 95
+</span><span class="lnt"> 96
+</span><span class="lnt"> 97
+</span><span class="lnt"> 98
+</span><span class="lnt"> 99
+</span><span class="lnt">100
+</span><span class="lnt">101
+</span><span class="lnt">102
+</span><span class="lnt">103
+</span><span class="lnt">104
+</span><span class="lnt">105
+</span><span class="lnt">106
+</span><span class="lnt">107
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kn">package</span> <span class="nx">v1</span>
+<span class="kn">import</span> <span class="p">(</span>
+    <span class="nx">batchv1beta1</span> <span class="s">&#34;k8s.io/api/batch/v1beta1&#34;</span>
+    <span class="nx">corev1</span> <span class="s">&#34;k8s.io/api/core/v1&#34;</span>
+    <span class="nx">metav1</span> <span class="s">&#34;k8s.io/apimachinery/pkg/apis/meta/v1&#34;</span>
+<span class="p">)</span>
+<span class="c1">// CronJobSpec defines the desired state of CronJob
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">CronJobSpec</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="c1">//+kubebuilder:validation:MinLength=0
+</span><span class="c1"></span>
+    <span class="c1">// The schedule in Cron format, see https://en.wikipedia.org/wiki/Cron.
+</span><span class="c1"></span>    <span class="nx">Schedule</span> <span class="kt">string</span> <span class="s">`json:&#34;schedule&#34;`</span>
+
+    <span class="c1">//+kubebuilder:validation:Minimum=0
+</span><span class="c1"></span>
+    <span class="c1">// Optional deadline in seconds for starting the job if it misses scheduled
+</span><span class="c1"></span>    <span class="c1">// time for any reason.  Missed jobs executions will be counted as failed ones.
+</span><span class="c1"></span>    <span class="c1">// +optional
+</span><span class="c1"></span>    <span class="nx">StartingDeadlineSeconds</span> <span class="o">*</span><span class="kt">int64</span> <span class="s">`json:&#34;startingDeadlineSeconds,omitempty&#34;`</span>
+
+    <span class="c1">// Specifies how to treat concurrent executions of a Job.
+</span><span class="c1"></span>    <span class="c1">// Valid values are:
+</span><span class="c1"></span>    <span class="c1">// - &#34;Allow&#34; (default): allows CronJobs to run concurrently;
+</span><span class="c1"></span>    <span class="c1">// - &#34;Forbid&#34;: forbids concurrent runs, skipping next run if previous run hasn&#39;t finished yet;
+</span><span class="c1"></span>    <span class="c1">// - &#34;Replace&#34;: cancels currently running job and replaces it with a new one
+</span><span class="c1"></span>    <span class="c1">// +optional
+</span><span class="c1"></span>    <span class="nx">ConcurrencyPolicy</span> <span class="nx">ConcurrencyPolicy</span> <span class="s">`json:&#34;concurrencyPolicy,omitempty&#34;`</span>
+
+    <span class="c1">// This flag tells the controller to suspend subsequent executions, it does
+</span><span class="c1"></span>    <span class="c1">// not apply to already started executions.  Defaults to false.
+</span><span class="c1"></span>    <span class="c1">// +optional
+</span><span class="c1"></span>    <span class="nx">Suspend</span> <span class="o">*</span><span class="kt">bool</span> <span class="s">`json:&#34;suspend,omitempty&#34;`</span>
+
+    <span class="c1">// Specifies the job that will be created when executing a CronJob.
+</span><span class="c1"></span>    <span class="nx">JobTemplate</span> <span class="nx">batchv1beta1</span><span class="p">.</span><span class="nx">JobTemplateSpec</span> <span class="s">`json:&#34;jobTemplate&#34;`</span>
+
+    <span class="c1">//+kubebuilder:validation:Minimum=0
+</span><span class="c1"></span>
+    <span class="c1">// The number of successful finished jobs to retain.
+</span><span class="c1"></span>    <span class="c1">// This is a pointer to distinguish between explicit zero and not specified.
+</span><span class="c1"></span>    <span class="c1">// +optional
+</span><span class="c1"></span>    <span class="nx">SuccessfulJobsHistoryLimit</span> <span class="o">*</span><span class="kt">int32</span> <span class="s">`json:&#34;successfulJobsHistoryLimit,omitempty&#34;`</span>
+
+    <span class="c1">//+kubebuilder:validation:Minimum=0
+</span><span class="c1"></span>
+    <span class="c1">// The number of failed finished jobs to retain.
+</span><span class="c1"></span>    <span class="c1">// This is a pointer to distinguish between explicit zero and not specified.
+</span><span class="c1"></span>    <span class="c1">// +optional
+</span><span class="c1"></span>    <span class="nx">FailedJobsHistoryLimit</span> <span class="o">*</span><span class="kt">int32</span> <span class="s">`json:&#34;failedJobsHistoryLimit,omitempty&#34;`</span>
+<span class="p">}</span>
+
+<span class="c1">// ConcurrencyPolicy describes how the job will be handled.
+</span><span class="c1">// Only one of the following concurrent policies may be specified.
+</span><span class="c1">// If none of the following policies is specified, the default one
+</span><span class="c1">// is AllowConcurrent.
+</span><span class="c1">// +kubebuilder:validation:Enum=Allow;Forbid;Replace
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">ConcurrencyPolicy</span> <span class="kt">string</span>
+
+<span class="kd">const</span> <span class="p">(</span>
+    <span class="c1">// AllowConcurrent allows CronJobs to run concurrently.
+</span><span class="c1"></span>    <span class="nx">AllowConcurrent</span> <span class="nx">ConcurrencyPolicy</span> <span class="p">=</span> <span class="s">&#34;Allow&#34;</span>
+
+    <span class="c1">// ForbidConcurrent forbids concurrent runs, skipping next run if previous
+</span><span class="c1"></span>    <span class="c1">// hasn&#39;t finished yet.
+</span><span class="c1"></span>    <span class="nx">ForbidConcurrent</span> <span class="nx">ConcurrencyPolicy</span> <span class="p">=</span> <span class="s">&#34;Forbid&#34;</span>
+
+    <span class="c1">// ReplaceConcurrent cancels currently running job and replaces it with a new one.
+</span><span class="c1"></span>    <span class="nx">ReplaceConcurrent</span> <span class="nx">ConcurrencyPolicy</span> <span class="p">=</span> <span class="s">&#34;Replace&#34;</span>
+<span class="p">)</span>
+<span class="c1">// CronJobStatus defines the observed state of CronJob
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">CronJobStatus</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="c1">// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+</span><span class="c1"></span>    <span class="c1">// Important: Run &#34;make&#34; to regenerate code after modifying this file
+</span><span class="c1"></span>
+    <span class="c1">// A list of pointers to currently running jobs.
+</span><span class="c1"></span>    <span class="c1">// +optional
+</span><span class="c1"></span>    <span class="nx">Active</span> <span class="p">[]</span><span class="nx">corev1</span><span class="p">.</span><span class="nx">ObjectReference</span> <span class="s">`json:&#34;active,omitempty&#34;`</span>
+
+    <span class="c1">// Information when was the last time the job was successfully scheduled.
+</span><span class="c1"></span>    <span class="c1">// +optional
+</span><span class="c1"></span>    <span class="nx">LastScheduleTime</span> <span class="o">*</span><span class="nx">metav1</span><span class="p">.</span><span class="nx">Time</span> <span class="s">`json:&#34;lastScheduleTime,omitempty&#34;`</span>
+<span class="p">}</span>
+
+<span class="c1">//+kubebuilder:object:root=true
+</span><span class="c1">//+kubebuilder:subresource:status
+</span><span class="c1"></span>
+<span class="c1">// CronJob is the Schema for the cronjobs API
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">CronJob</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">metav1</span><span class="p">.</span><span class="nx">TypeMeta</span>   <span class="s">`json:&#34;,inline&#34;`</span>
+    <span class="nx">metav1</span><span class="p">.</span><span class="nx">ObjectMeta</span> <span class="s">`json:&#34;metadata,omitempty&#34;`</span>
+
+    <span class="nx">Spec</span>   <span class="nx">CronJobSpec</span>   <span class="s">`json:&#34;spec,omitempty&#34;`</span>
+    <span class="nx">Status</span> <span class="nx">CronJobStatus</span> <span class="s">`json:&#34;status,omitempty&#34;`</span>
+<span class="p">}</span>
+
+<span class="c1">//+kubebuilder:object:root=true
+</span><span class="c1"></span>
+<span class="c1">// CronJobList contains a list of CronJob
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">CronJobList</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">metav1</span><span class="p">.</span><span class="nx">TypeMeta</span> <span class="s">`json:&#34;,inline&#34;`</span>
+    <span class="nx">metav1</span><span class="p">.</span><span class="nx">ListMeta</span> <span class="s">`json:&#34;metadata,omitempty&#34;`</span>
+    <span class="nx">Items</span>           <span class="p">[]</span><span class="nx">CronJob</span> <span class="s">`json:&#34;items&#34;`</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">init</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">SchemeBuilder</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">CronJob</span><span class="p">{},</span> <span class="o">&amp;</span><span class="nx">CronJobList</span><span class="p">{})</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="实现控制器逻辑">实现控制器逻辑</h3>
+<p>在 controllers/cronjob_controller.go 文件中增加控制逻辑，最后内容如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">  1
+</span><span class="lnt">  2
+</span><span class="lnt">  3
+</span><span class="lnt">  4
+</span><span class="lnt">  5
+</span><span class="lnt">  6
+</span><span class="lnt">  7
+</span><span class="lnt">  8
+</span><span class="lnt">  9
+</span><span class="lnt"> 10
+</span><span class="lnt"> 11
+</span><span class="lnt"> 12
+</span><span class="lnt"> 13
+</span><span class="lnt"> 14
+</span><span class="lnt"> 15
+</span><span class="lnt"> 16
+</span><span class="lnt"> 17
+</span><span class="lnt"> 18
+</span><span class="lnt"> 19
+</span><span class="lnt"> 20
+</span><span class="lnt"> 21
+</span><span class="lnt"> 22
+</span><span class="lnt"> 23
+</span><span class="lnt"> 24
+</span><span class="lnt"> 25
+</span><span class="lnt"> 26
+</span><span class="lnt"> 27
+</span><span class="lnt"> 28
+</span><span class="lnt"> 29
+</span><span class="lnt"> 30
+</span><span class="lnt"> 31
+</span><span class="lnt"> 32
+</span><span class="lnt"> 33
+</span><span class="lnt"> 34
+</span><span class="lnt"> 35
+</span><span class="lnt"> 36
+</span><span class="lnt"> 37
+</span><span class="lnt"> 38
+</span><span class="lnt"> 39
+</span><span class="lnt"> 40
+</span><span class="lnt"> 41
+</span><span class="lnt"> 42
+</span><span class="lnt"> 43
+</span><span class="lnt"> 44
+</span><span class="lnt"> 45
+</span><span class="lnt"> 46
+</span><span class="lnt"> 47
+</span><span class="lnt"> 48
+</span><span class="lnt"> 49
+</span><span class="lnt"> 50
+</span><span class="lnt"> 51
+</span><span class="lnt"> 52
+</span><span class="lnt"> 53
+</span><span class="lnt"> 54
+</span><span class="lnt"> 55
+</span><span class="lnt"> 56
+</span><span class="lnt"> 57
+</span><span class="lnt"> 58
+</span><span class="lnt"> 59
+</span><span class="lnt"> 60
+</span><span class="lnt"> 61
+</span><span class="lnt"> 62
+</span><span class="lnt"> 63
+</span><span class="lnt"> 64
+</span><span class="lnt"> 65
+</span><span class="lnt"> 66
+</span><span class="lnt"> 67
+</span><span class="lnt"> 68
+</span><span class="lnt"> 69
+</span><span class="lnt"> 70
+</span><span class="lnt"> 71
+</span><span class="lnt"> 72
+</span><span class="lnt"> 73
+</span><span class="lnt"> 74
+</span><span class="lnt"> 75
+</span><span class="lnt"> 76
+</span><span class="lnt"> 77
+</span><span class="lnt"> 78
+</span><span class="lnt"> 79
+</span><span class="lnt"> 80
+</span><span class="lnt"> 81
+</span><span class="lnt"> 82
+</span><span class="lnt"> 83
+</span><span class="lnt"> 84
+</span><span class="lnt"> 85
+</span><span class="lnt"> 86
+</span><span class="lnt"> 87
+</span><span class="lnt"> 88
+</span><span class="lnt"> 89
+</span><span class="lnt"> 90
+</span><span class="lnt"> 91
+</span><span class="lnt"> 92
+</span><span class="lnt"> 93
+</span><span class="lnt"> 94
+</span><span class="lnt"> 95
+</span><span class="lnt"> 96
+</span><span class="lnt"> 97
+</span><span class="lnt"> 98
+</span><span class="lnt"> 99
+</span><span class="lnt">100
+</span><span class="lnt">101
+</span><span class="lnt">102
+</span><span class="lnt">103
+</span><span class="lnt">104
+</span><span class="lnt">105
+</span><span class="lnt">106
+</span><span class="lnt">107
+</span><span class="lnt">108
+</span><span class="lnt">109
+</span><span class="lnt">110
+</span><span class="lnt">111
+</span><span class="lnt">112
+</span><span class="lnt">113
+</span><span class="lnt">114
+</span><span class="lnt">115
+</span><span class="lnt">116
+</span><span class="lnt">117
+</span><span class="lnt">118
+</span><span class="lnt">119
+</span><span class="lnt">120
+</span><span class="lnt">121
+</span><span class="lnt">122
+</span><span class="lnt">123
+</span><span class="lnt">124
+</span><span class="lnt">125
+</span><span class="lnt">126
+</span><span class="lnt">127
+</span><span class="lnt">128
+</span><span class="lnt">129
+</span><span class="lnt">130
+</span><span class="lnt">131
+</span><span class="lnt">132
+</span><span class="lnt">133
+</span><span class="lnt">134
+</span><span class="lnt">135
+</span><span class="lnt">136
+</span><span class="lnt">137
+</span><span class="lnt">138
+</span><span class="lnt">139
+</span><span class="lnt">140
+</span><span class="lnt">141
+</span><span class="lnt">142
+</span><span class="lnt">143
+</span><span class="lnt">144
+</span><span class="lnt">145
+</span><span class="lnt">146
+</span><span class="lnt">147
+</span><span class="lnt">148
+</span><span class="lnt">149
+</span><span class="lnt">150
+</span><span class="lnt">151
+</span><span class="lnt">152
+</span><span class="lnt">153
+</span><span class="lnt">154
+</span><span class="lnt">155
+</span><span class="lnt">156
+</span><span class="lnt">157
+</span><span class="lnt">158
+</span><span class="lnt">159
+</span><span class="lnt">160
+</span><span class="lnt">161
+</span><span class="lnt">162
+</span><span class="lnt">163
+</span><span class="lnt">164
+</span><span class="lnt">165
+</span><span class="lnt">166
+</span><span class="lnt">167
+</span><span class="lnt">168
+</span><span class="lnt">169
+</span><span class="lnt">170
+</span><span class="lnt">171
+</span><span class="lnt">172
+</span><span class="lnt">173
+</span><span class="lnt">174
+</span><span class="lnt">175
+</span><span class="lnt">176
+</span><span class="lnt">177
+</span><span class="lnt">178
+</span><span class="lnt">179
+</span><span class="lnt">180
+</span><span class="lnt">181
+</span><span class="lnt">182
+</span><span class="lnt">183
+</span><span class="lnt">184
+</span><span class="lnt">185
+</span><span class="lnt">186
+</span><span class="lnt">187
+</span><span class="lnt">188
+</span><span class="lnt">189
+</span><span class="lnt">190
+</span><span class="lnt">191
+</span><span class="lnt">192
+</span><span class="lnt">193
+</span><span class="lnt">194
+</span><span class="lnt">195
+</span><span class="lnt">196
+</span><span class="lnt">197
+</span><span class="lnt">198
+</span><span class="lnt">199
+</span><span class="lnt">200
+</span><span class="lnt">201
+</span><span class="lnt">202
+</span><span class="lnt">203
+</span><span class="lnt">204
+</span><span class="lnt">205
+</span><span class="lnt">206
+</span><span class="lnt">207
+</span><span class="lnt">208
+</span><span class="lnt">209
+</span><span class="lnt">210
+</span><span class="lnt">211
+</span><span class="lnt">212
+</span><span class="lnt">213
+</span><span class="lnt">214
+</span><span class="lnt">215
+</span><span class="lnt">216
+</span><span class="lnt">217
+</span><span class="lnt">218
+</span><span class="lnt">219
+</span><span class="lnt">220
+</span><span class="lnt">221
+</span><span class="lnt">222
+</span><span class="lnt">223
+</span><span class="lnt">224
+</span><span class="lnt">225
+</span><span class="lnt">226
+</span><span class="lnt">227
+</span><span class="lnt">228
+</span><span class="lnt">229
+</span><span class="lnt">230
+</span><span class="lnt">231
+</span><span class="lnt">232
+</span><span class="lnt">233
+</span><span class="lnt">234
+</span><span class="lnt">235
+</span><span class="lnt">236
+</span><span class="lnt">237
+</span><span class="lnt">238
+</span><span class="lnt">239
+</span><span class="lnt">240
+</span><span class="lnt">241
+</span><span class="lnt">242
+</span><span class="lnt">243
+</span><span class="lnt">244
+</span><span class="lnt">245
+</span><span class="lnt">246
+</span><span class="lnt">247
+</span><span class="lnt">248
+</span><span class="lnt">249
+</span><span class="lnt">250
+</span><span class="lnt">251
+</span><span class="lnt">252
+</span><span class="lnt">253
+</span><span class="lnt">254
+</span><span class="lnt">255
+</span><span class="lnt">256
+</span><span class="lnt">257
+</span><span class="lnt">258
+</span><span class="lnt">259
+</span><span class="lnt">260
+</span><span class="lnt">261
+</span><span class="lnt">262
+</span><span class="lnt">263
+</span><span class="lnt">264
+</span><span class="lnt">265
+</span><span class="lnt">266
+</span><span class="lnt">267
+</span><span class="lnt">268
+</span><span class="lnt">269
+</span><span class="lnt">270
+</span><span class="lnt">271
+</span><span class="lnt">272
+</span><span class="lnt">273
+</span><span class="lnt">274
+</span><span class="lnt">275
+</span><span class="lnt">276
+</span><span class="lnt">277
+</span><span class="lnt">278
+</span><span class="lnt">279
+</span><span class="lnt">280
+</span><span class="lnt">281
+</span><span class="lnt">282
+</span><span class="lnt">283
+</span><span class="lnt">284
+</span><span class="lnt">285
+</span><span class="lnt">286
+</span><span class="lnt">287
+</span><span class="lnt">288
+</span><span class="lnt">289
+</span><span class="lnt">290
+</span><span class="lnt">291
+</span><span class="lnt">292
+</span><span class="lnt">293
+</span><span class="lnt">294
+</span><span class="lnt">295
+</span><span class="lnt">296
+</span><span class="lnt">297
+</span><span class="lnt">298
+</span><span class="lnt">299
+</span><span class="lnt">300
+</span><span class="lnt">301
+</span><span class="lnt">302
+</span><span class="lnt">303
+</span><span class="lnt">304
+</span><span class="lnt">305
+</span><span class="lnt">306
+</span><span class="lnt">307
+</span><span class="lnt">308
+</span><span class="lnt">309
+</span><span class="lnt">310
+</span><span class="lnt">311
+</span><span class="lnt">312
+</span><span class="lnt">313
+</span><span class="lnt">314
+</span><span class="lnt">315
+</span><span class="lnt">316
+</span><span class="lnt">317
+</span><span class="lnt">318
+</span><span class="lnt">319
+</span><span class="lnt">320
+</span><span class="lnt">321
+</span><span class="lnt">322
+</span><span class="lnt">323
+</span><span class="lnt">324
+</span><span class="lnt">325
+</span><span class="lnt">326
+</span><span class="lnt">327
+</span><span class="lnt">328
+</span><span class="lnt">329
+</span><span class="lnt">330
+</span><span class="lnt">331
+</span><span class="lnt">332
+</span><span class="lnt">333
+</span><span class="lnt">334
+</span><span class="lnt">335
+</span><span class="lnt">336
+</span><span class="lnt">337
+</span><span class="lnt">338
+</span><span class="lnt">339
+</span><span class="lnt">340
+</span><span class="lnt">341
+</span><span class="lnt">342
+</span><span class="lnt">343
+</span><span class="lnt">344
+</span><span class="lnt">345
+</span><span class="lnt">346
+</span><span class="lnt">347
+</span><span class="lnt">348
+</span><span class="lnt">349
+</span><span class="lnt">350
+</span><span class="lnt">351
+</span><span class="lnt">352
+</span><span class="lnt">353
+</span><span class="lnt">354
+</span><span class="lnt">355
+</span><span class="lnt">356
+</span><span class="lnt">357
+</span><span class="lnt">358
+</span><span class="lnt">359
+</span><span class="lnt">360
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kn">package</span> <span class="nx">controllers</span>
+
+<span class="kn">import</span> <span class="p">(</span>
+    <span class="s">&#34;context&#34;</span>
+    <span class="s">&#34;fmt&#34;</span>
+    <span class="s">&#34;sort&#34;</span>
+    <span class="s">&#34;time&#34;</span>
+
+    <span class="s">&#34;github.com/robfig/cron&#34;</span>
+    <span class="nx">kbatch</span> <span class="s">&#34;k8s.io/api/batch/v1&#34;</span>
+    <span class="nx">corev1</span> <span class="s">&#34;k8s.io/api/core/v1&#34;</span>
+    <span class="nx">metav1</span> <span class="s">&#34;k8s.io/apimachinery/pkg/apis/meta/v1&#34;</span>
+    <span class="s">&#34;k8s.io/apimachinery/pkg/runtime&#34;</span>
+    <span class="nx">ref</span> <span class="s">&#34;k8s.io/client-go/tools/reference&#34;</span>
+    <span class="nx">ctrl</span> <span class="s">&#34;sigs.k8s.io/controller-runtime&#34;</span>
+    <span class="s">&#34;sigs.k8s.io/controller-runtime/pkg/client&#34;</span>
+    <span class="s">&#34;sigs.k8s.io/controller-runtime/pkg/log&#34;</span>
+
+    <span class="nx">batchv1</span> <span class="s">&#34;tutorial.kubebuilder.io/project/api/v1&#34;</span>
+<span class="p">)</span>
+<span class="c1">// CronJobReconciler reconciles a CronJob object
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">CronJobReconciler</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">client</span><span class="p">.</span><span class="nx">Client</span>
+    <span class="nx">Scheme</span> <span class="o">*</span><span class="nx">runtime</span><span class="p">.</span><span class="nx">Scheme</span>
+    <span class="nx">Clock</span>
+<span class="p">}</span>
+
+<span class="kd">type</span> <span class="nx">realClock</span> <span class="kd">struct</span><span class="p">{}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">_</span> <span class="nx">realClock</span><span class="p">)</span> <span class="nf">Now</span><span class="p">()</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Time</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Now</span><span class="p">()</span> <span class="p">}</span>
+
+<span class="c1">// clock knows how to get the current time.
+</span><span class="c1">// It can be used to fake out timing for testing.
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">Clock</span> <span class="kd">interface</span> <span class="p">{</span>
+    <span class="nf">Now</span><span class="p">()</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Time</span>
+<span class="p">}</span>
+
+<span class="c1">//+kubebuilder:rbac:groups=batch.tutorial.kubebuilder.io,resources=cronjobs,verbs=get;list;watch;create;update;patch;delete
+</span><span class="c1">//+kubebuilder:rbac:groups=batch.tutorial.kubebuilder.io,resources=cronjobs/status,verbs=get;update;patch
+</span><span class="c1">//+kubebuilder:rbac:groups=batch.tutorial.kubebuilder.io,resources=cronjobs/finalizers,verbs=update
+</span><span class="c1">//+kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
+</span><span class="c1">//+kubebuilder:rbac:groups=batch,resources=jobs/status,verbs=get
+</span><span class="c1"></span><span class="kd">var</span> <span class="p">(</span>
+    <span class="nx">scheduledTimeAnnotation</span> <span class="p">=</span> <span class="s">&#34;batch.tutorial.kubebuilder.io/scheduled-at&#34;</span>
+<span class="p">)</span>
+
+<span class="c1">// Reconcile is part of the main kubernetes reconciliation loop which aims to
+</span><span class="c1">// move the current state of the cluster closer to the desired state.
+</span><span class="c1">// TODO(user): Modify the Reconcile function to compare the state specified by
+</span><span class="c1">// the CronJob object against the actual cluster state, and then
+</span><span class="c1">// perform operations to make the cluster state reflect the state specified by
+</span><span class="c1">// the user.
+</span><span class="c1">//
+</span><span class="c1">// For more details, check Reconcile and its Result here:
+</span><span class="c1">// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.12.1/pkg/reconcile
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <span class="o">*</span><span class="nx">CronJobReconciler</span><span class="p">)</span> <span class="nf">Reconcile</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">req</span> <span class="nx">ctrl</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span> <span class="p">(</span><span class="nx">ctrl</span><span class="p">.</span><span class="nx">Result</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">log</span> <span class="o">:=</span> <span class="nx">log</span><span class="p">.</span><span class="nf">FromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+	<span class="kd">var</span> <span class="nx">cronJob</span> <span class="nx">batchv1</span><span class="p">.</span><span class="nx">CronJob</span>
+    <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">r</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">req</span><span class="p">.</span><span class="nx">NamespacedName</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">cronJob</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;unable to fetch CronJob&#34;</span><span class="p">)</span>
+        <span class="c1">// we&#39;ll ignore not-found errors, since they can&#39;t be fixed by an immediate
+</span><span class="c1"></span>        <span class="c1">// requeue (we&#39;ll need to wait for a new notification), and we can get them
+</span><span class="c1"></span>        <span class="c1">// on deleted requests.
+</span><span class="c1"></span>        <span class="k">return</span> <span class="nx">ctrl</span><span class="p">.</span><span class="nx">Result</span><span class="p">{},</span> <span class="nx">client</span><span class="p">.</span><span class="nf">IgnoreNotFound</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="kd">var</span> <span class="nx">childJobs</span> <span class="nx">kbatch</span><span class="p">.</span><span class="nx">JobList</span>
+    <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">r</span><span class="p">.</span><span class="nf">List</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">childJobs</span><span class="p">,</span> <span class="nx">client</span><span class="p">.</span><span class="nf">InNamespace</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">Namespace</span><span class="p">),</span> <span class="nx">client</span><span class="p">.</span><span class="nx">MatchingFields</span><span class="p">{</span><span class="nx">jobOwnerKey</span><span class="p">:</span> <span class="nx">req</span><span class="p">.</span><span class="nx">Name</span><span class="p">});</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;unable to list child Jobs&#34;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nx">ctrl</span><span class="p">.</span><span class="nx">Result</span><span class="p">{},</span> <span class="nx">err</span>
+    <span class="p">}</span>
+    <span class="c1">// find the active list of jobs
+</span><span class="c1"></span>    <span class="kd">var</span> <span class="nx">activeJobs</span> <span class="p">[]</span><span class="o">*</span><span class="nx">kbatch</span><span class="p">.</span><span class="nx">Job</span>
+    <span class="kd">var</span> <span class="nx">successfulJobs</span> <span class="p">[]</span><span class="o">*</span><span class="nx">kbatch</span><span class="p">.</span><span class="nx">Job</span>
+    <span class="kd">var</span> <span class="nx">failedJobs</span> <span class="p">[]</span><span class="o">*</span><span class="nx">kbatch</span><span class="p">.</span><span class="nx">Job</span>
+    <span class="kd">var</span> <span class="nx">mostRecentTime</span> <span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span> <span class="c1">// find the last run so we can update the status
+</span><span class="c1"></span>    <span class="nx">isJobFinished</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">job</span> <span class="o">*</span><span class="nx">kbatch</span><span class="p">.</span><span class="nx">Job</span><span class="p">)</span> <span class="p">(</span><span class="kt">bool</span><span class="p">,</span> <span class="nx">kbatch</span><span class="p">.</span><span class="nx">JobConditionType</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">c</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">job</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">Conditions</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">Type</span> <span class="o">==</span> <span class="nx">kbatch</span><span class="p">.</span><span class="nx">JobComplete</span> <span class="o">||</span> <span class="nx">c</span><span class="p">.</span><span class="nx">Type</span> <span class="o">==</span> <span class="nx">kbatch</span><span class="p">.</span><span class="nx">JobFailed</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">c</span><span class="p">.</span><span class="nx">Status</span> <span class="o">==</span> <span class="nx">corev1</span><span class="p">.</span><span class="nx">ConditionTrue</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="kc">true</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">Type</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="kc">false</span><span class="p">,</span> <span class="s">&#34;&#34;</span>
+    <span class="p">}</span>
+    <span class="nx">getScheduledTimeForJob</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">job</span> <span class="o">*</span><span class="nx">kbatch</span><span class="p">.</span><span class="nx">Job</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">timeRaw</span> <span class="o">:=</span> <span class="nx">job</span><span class="p">.</span><span class="nx">Annotations</span><span class="p">[</span><span class="nx">scheduledTimeAnnotation</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">timeRaw</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">nil</span>
+        <span class="p">}</span>
+
+        <span class="nx">timeParsed</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Parse</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">RFC3339</span><span class="p">,</span> <span class="nx">timeRaw</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="o">&amp;</span><span class="nx">timeParsed</span><span class="p">,</span> <span class="kc">nil</span>
+    <span class="p">}</span>
+    <span class="k">for</span> <span class="nx">i</span><span class="p">,</span> <span class="nx">job</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">childJobs</span><span class="p">.</span><span class="nx">Items</span> <span class="p">{</span>
+        <span class="nx">_</span><span class="p">,</span> <span class="nx">finishedType</span> <span class="o">:=</span> <span class="nf">isJobFinished</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">job</span><span class="p">)</span>
+        <span class="k">switch</span> <span class="nx">finishedType</span> <span class="p">{</span>
+        <span class="k">case</span> <span class="s">&#34;&#34;</span><span class="p">:</span> <span class="c1">// ongoing
+</span><span class="c1"></span>            <span class="nx">activeJobs</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">activeJobs</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">childJobs</span><span class="p">.</span><span class="nx">Items</span><span class="p">[</span><span class="nx">i</span><span class="p">])</span>
+        <span class="k">case</span> <span class="nx">kbatch</span><span class="p">.</span><span class="nx">JobFailed</span><span class="p">:</span>
+            <span class="nx">failedJobs</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">failedJobs</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">childJobs</span><span class="p">.</span><span class="nx">Items</span><span class="p">[</span><span class="nx">i</span><span class="p">])</span>
+        <span class="k">case</span> <span class="nx">kbatch</span><span class="p">.</span><span class="nx">JobComplete</span><span class="p">:</span>
+            <span class="nx">successfulJobs</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">successfulJobs</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">childJobs</span><span class="p">.</span><span class="nx">Items</span><span class="p">[</span><span class="nx">i</span><span class="p">])</span>
+        <span class="p">}</span>
+
+        <span class="c1">// We&#39;ll store the launch time in an annotation, so we&#39;ll reconstitute that from
+</span><span class="c1"></span>        <span class="c1">// the active jobs themselves.
+</span><span class="c1"></span>        <span class="nx">scheduledTimeForJob</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">getScheduledTimeForJob</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">job</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;unable to parse schedule time for child job&#34;</span><span class="p">,</span> <span class="s">&#34;job&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">job</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="nx">scheduledTimeForJob</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="nx">mostRecentTime</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+                <span class="nx">mostRecentTime</span> <span class="p">=</span> <span class="nx">scheduledTimeForJob</span>
+            <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="nx">mostRecentTime</span><span class="p">.</span><span class="nf">Before</span><span class="p">(</span><span class="o">*</span><span class="nx">scheduledTimeForJob</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">mostRecentTime</span> <span class="p">=</span> <span class="nx">scheduledTimeForJob</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="nx">mostRecentTime</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">cronJob</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">LastScheduleTime</span> <span class="p">=</span> <span class="o">&amp;</span><span class="nx">metav1</span><span class="p">.</span><span class="nx">Time</span><span class="p">{</span><span class="nx">Time</span><span class="p">:</span> <span class="o">*</span><span class="nx">mostRecentTime</span><span class="p">}</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="nx">cronJob</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">LastScheduleTime</span> <span class="p">=</span> <span class="kc">nil</span>
+    <span class="p">}</span>
+    <span class="nx">cronJob</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">Active</span> <span class="p">=</span> <span class="kc">nil</span>
+    <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">activeJob</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">activeJobs</span> <span class="p">{</span>
+        <span class="nx">jobRef</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">ref</span><span class="p">.</span><span class="nf">GetReference</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">Scheme</span><span class="p">,</span> <span class="nx">activeJob</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;unable to make reference to active job&#34;</span><span class="p">,</span> <span class="s">&#34;job&#34;</span><span class="p">,</span> <span class="nx">activeJob</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="p">}</span>
+        <span class="nx">cronJob</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">Active</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">cronJob</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">Active</span><span class="p">,</span> <span class="o">*</span><span class="nx">jobRef</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;job count&#34;</span><span class="p">,</span> <span class="s">&#34;active jobs&#34;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">activeJobs</span><span class="p">),</span> <span class="s">&#34;successful jobs&#34;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">successfulJobs</span><span class="p">),</span> <span class="s">&#34;failed jobs&#34;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">failedJobs</span><span class="p">))</span>
+    <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">r</span><span class="p">.</span><span class="nf">Status</span><span class="p">().</span><span class="nf">Update</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">cronJob</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;unable to update CronJob status&#34;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nx">ctrl</span><span class="p">.</span><span class="nx">Result</span><span class="p">{},</span> <span class="nx">err</span>
+    <span class="p">}</span>
+    <span class="c1">// NB: deleting these is &#34;best effort&#34; -- if we fail on a particular one,
+</span><span class="c1"></span>    <span class="c1">// we won&#39;t requeue just to finish the deleting.
+</span><span class="c1"></span>    <span class="k">if</span> <span class="nx">cronJob</span><span class="p">.</span><span class="nx">Spec</span><span class="p">.</span><span class="nx">FailedJobsHistoryLimit</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">sort</span><span class="p">.</span><span class="nf">Slice</span><span class="p">(</span><span class="nx">failedJobs</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span> <span class="nx">j</span> <span class="kt">int</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="nx">failedJobs</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">Status</span><span class="p">.</span><span class="nx">StartTime</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="nx">failedJobs</span><span class="p">[</span><span class="nx">j</span><span class="p">].</span><span class="nx">Status</span><span class="p">.</span><span class="nx">StartTime</span> <span class="o">!=</span> <span class="kc">nil</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="nx">failedJobs</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">Status</span><span class="p">.</span><span class="nx">StartTime</span><span class="p">.</span><span class="nf">Before</span><span class="p">(</span><span class="nx">failedJobs</span><span class="p">[</span><span class="nx">j</span><span class="p">].</span><span class="nx">Status</span><span class="p">.</span><span class="nx">StartTime</span><span class="p">)</span>
+        <span class="p">})</span>
+        <span class="k">for</span> <span class="nx">i</span><span class="p">,</span> <span class="nx">job</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">failedJobs</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="nb">int32</span><span class="p">(</span><span class="nx">i</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="nb">int32</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nx">failedJobs</span><span class="p">))</span><span class="o">-*</span><span class="nx">cronJob</span><span class="p">.</span><span class="nx">Spec</span><span class="p">.</span><span class="nx">FailedJobsHistoryLimit</span> <span class="p">{</span>
+                <span class="k">break</span>
+            <span class="p">}</span>
+            <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">r</span><span class="p">.</span><span class="nf">Delete</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">job</span><span class="p">,</span> <span class="nx">client</span><span class="p">.</span><span class="nf">PropagationPolicy</span><span class="p">(</span><span class="nx">metav1</span><span class="p">.</span><span class="nx">DeletePropagationBackground</span><span class="p">));</span> <span class="nx">client</span><span class="p">.</span><span class="nf">IgnoreNotFound</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+                <span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;unable to delete old failed job&#34;</span><span class="p">,</span> <span class="s">&#34;job&#34;</span><span class="p">,</span> <span class="nx">job</span><span class="p">)</span>
+            <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                <span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">0</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;deleted old failed job&#34;</span><span class="p">,</span> <span class="s">&#34;job&#34;</span><span class="p">,</span> <span class="nx">job</span><span class="p">)</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="nx">cronJob</span><span class="p">.</span><span class="nx">Spec</span><span class="p">.</span><span class="nx">SuccessfulJobsHistoryLimit</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">sort</span><span class="p">.</span><span class="nf">Slice</span><span class="p">(</span><span class="nx">successfulJobs</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span> <span class="nx">j</span> <span class="kt">int</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="nx">successfulJobs</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">Status</span><span class="p">.</span><span class="nx">StartTime</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="nx">successfulJobs</span><span class="p">[</span><span class="nx">j</span><span class="p">].</span><span class="nx">Status</span><span class="p">.</span><span class="nx">StartTime</span> <span class="o">!=</span> <span class="kc">nil</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="nx">successfulJobs</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">Status</span><span class="p">.</span><span class="nx">StartTime</span><span class="p">.</span><span class="nf">Before</span><span class="p">(</span><span class="nx">successfulJobs</span><span class="p">[</span><span class="nx">j</span><span class="p">].</span><span class="nx">Status</span><span class="p">.</span><span class="nx">StartTime</span><span class="p">)</span>
+        <span class="p">})</span>
+        <span class="k">for</span> <span class="nx">i</span><span class="p">,</span> <span class="nx">job</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">successfulJobs</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="nb">int32</span><span class="p">(</span><span class="nx">i</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="nb">int32</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nx">successfulJobs</span><span class="p">))</span><span class="o">-*</span><span class="nx">cronJob</span><span class="p">.</span><span class="nx">Spec</span><span class="p">.</span><span class="nx">SuccessfulJobsHistoryLimit</span> <span class="p">{</span>
+                <span class="k">break</span>
+            <span class="p">}</span>
+            <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">r</span><span class="p">.</span><span class="nf">Delete</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">job</span><span class="p">,</span> <span class="nx">client</span><span class="p">.</span><span class="nf">PropagationPolicy</span><span class="p">(</span><span class="nx">metav1</span><span class="p">.</span><span class="nx">DeletePropagationBackground</span><span class="p">));</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+                <span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;unable to delete old successful job&#34;</span><span class="p">,</span> <span class="s">&#34;job&#34;</span><span class="p">,</span> <span class="nx">job</span><span class="p">)</span>
+            <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                <span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">0</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;deleted old successful job&#34;</span><span class="p">,</span> <span class="s">&#34;job&#34;</span><span class="p">,</span> <span class="nx">job</span><span class="p">)</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="nx">cronJob</span><span class="p">.</span><span class="nx">Spec</span><span class="p">.</span><span class="nx">Suspend</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">&amp;&amp;</span> <span class="o">*</span><span class="nx">cronJob</span><span class="p">.</span><span class="nx">Spec</span><span class="p">.</span><span class="nx">Suspend</span> <span class="p">{</span>
+        <span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;cronjob suspended, skipping&#34;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nx">ctrl</span><span class="p">.</span><span class="nx">Result</span><span class="p">{},</span> <span class="kc">nil</span>
+    <span class="p">}</span>
+    <span class="nx">getNextSchedule</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">cronJob</span> <span class="o">*</span><span class="nx">batchv1</span><span class="p">.</span><span class="nx">CronJob</span><span class="p">,</span> <span class="nx">now</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="p">(</span><span class="nx">lastMissed</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">,</span> <span class="nx">next</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">,</span> <span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">sched</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">cron</span><span class="p">.</span><span class="nf">ParseStandard</span><span class="p">(</span><span class="nx">cronJob</span><span class="p">.</span><span class="nx">Spec</span><span class="p">.</span><span class="nx">Schedule</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">{},</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">{},</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;Unparseable schedule %q: %v&#34;</span><span class="p">,</span> <span class="nx">cronJob</span><span class="p">.</span><span class="nx">Spec</span><span class="p">.</span><span class="nx">Schedule</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="c1">// for optimization purposes, cheat a bit and start from our last observed run time
+</span><span class="c1"></span>        <span class="c1">// we could reconstitute this here, but there&#39;s not much point, since we&#39;ve
+</span><span class="c1"></span>        <span class="c1">// just updated it.
+</span><span class="c1"></span>        <span class="kd">var</span> <span class="nx">earliestTime</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Time</span>
+        <span class="k">if</span> <span class="nx">cronJob</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">LastScheduleTime</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="nx">earliestTime</span> <span class="p">=</span> <span class="nx">cronJob</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">LastScheduleTime</span><span class="p">.</span><span class="nx">Time</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="nx">earliestTime</span> <span class="p">=</span> <span class="nx">cronJob</span><span class="p">.</span><span class="nx">ObjectMeta</span><span class="p">.</span><span class="nx">CreationTimestamp</span><span class="p">.</span><span class="nx">Time</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="nx">cronJob</span><span class="p">.</span><span class="nx">Spec</span><span class="p">.</span><span class="nx">StartingDeadlineSeconds</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="c1">// controller is not going to schedule anything below this point
+</span><span class="c1"></span>            <span class="nx">schedulingDeadline</span> <span class="o">:=</span> <span class="nx">now</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="o">-</span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Duration</span><span class="p">(</span><span class="o">*</span><span class="nx">cronJob</span><span class="p">.</span><span class="nx">Spec</span><span class="p">.</span><span class="nx">StartingDeadlineSeconds</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="nx">schedulingDeadline</span><span class="p">.</span><span class="nf">After</span><span class="p">(</span><span class="nx">earliestTime</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">earliestTime</span> <span class="p">=</span> <span class="nx">schedulingDeadline</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="nx">earliestTime</span><span class="p">.</span><span class="nf">After</span><span class="p">(</span><span class="nx">now</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">{},</span> <span class="nx">sched</span><span class="p">.</span><span class="nf">Next</span><span class="p">(</span><span class="nx">now</span><span class="p">),</span> <span class="kc">nil</span>
+        <span class="p">}</span>
+
+        <span class="nx">starts</span> <span class="o">:=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="nx">t</span> <span class="o">:=</span> <span class="nx">sched</span><span class="p">.</span><span class="nf">Next</span><span class="p">(</span><span class="nx">earliestTime</span><span class="p">);</span> <span class="p">!</span><span class="nx">t</span><span class="p">.</span><span class="nf">After</span><span class="p">(</span><span class="nx">now</span><span class="p">);</span> <span class="nx">t</span> <span class="p">=</span> <span class="nx">sched</span><span class="p">.</span><span class="nf">Next</span><span class="p">(</span><span class="nx">t</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">lastMissed</span> <span class="p">=</span> <span class="nx">t</span>
+            <span class="c1">// An object might miss several starts. For example, if
+</span><span class="c1"></span>            <span class="c1">// controller gets wedged on Friday at 5:01pm when everyone has
+</span><span class="c1"></span>            <span class="c1">// gone home, and someone comes in on Tuesday AM and discovers
+</span><span class="c1"></span>            <span class="c1">// the problem and restarts the controller, then all the hourly
+</span><span class="c1"></span>            <span class="c1">// jobs, more than 80 of them for one hourly scheduledJob, should
+</span><span class="c1"></span>            <span class="c1">// all start running with no further intervention (if the scheduledJob
+</span><span class="c1"></span>            <span class="c1">// allows concurrency and late starts).
+</span><span class="c1"></span>            <span class="c1">//
+</span><span class="c1"></span>            <span class="c1">// However, if there is a bug somewhere, or incorrect clock
+</span><span class="c1"></span>            <span class="c1">// on controller&#39;s server or apiservers (for setting creationTimestamp)
+</span><span class="c1"></span>            <span class="c1">// then there could be so many missed start times (it could be off
+</span><span class="c1"></span>            <span class="c1">// by decades or more), that it would eat up all the CPU and memory
+</span><span class="c1"></span>            <span class="c1">// of this controller. In that case, we want to not try to list
+</span><span class="c1"></span>            <span class="c1">// all the missed start times.
+</span><span class="c1"></span>            <span class="nx">starts</span><span class="o">++</span>
+            <span class="k">if</span> <span class="nx">starts</span> <span class="p">&gt;</span> <span class="mi">100</span> <span class="p">{</span>
+                <span class="c1">// We can&#39;t get the most recent times so just return an empty slice
+</span><span class="c1"></span>                <span class="k">return</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">{},</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">{},</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;Too many missed start times (&gt; 100). Set or decrease .spec.startingDeadlineSeconds or check clock skew.&#34;</span><span class="p">)</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="nx">lastMissed</span><span class="p">,</span> <span class="nx">sched</span><span class="p">.</span><span class="nf">Next</span><span class="p">(</span><span class="nx">now</span><span class="p">),</span> <span class="kc">nil</span>
+    <span class="p">}</span>
+    <span class="c1">// figure out the next times that we need to create
+</span><span class="c1"></span>    <span class="c1">// jobs at (or anything we missed).
+</span><span class="c1"></span>    <span class="nx">missedRun</span><span class="p">,</span> <span class="nx">nextRun</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">getNextSchedule</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">cronJob</span><span class="p">,</span> <span class="nx">r</span><span class="p">.</span><span class="nf">Now</span><span class="p">())</span>
+    <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;unable to figure out CronJob schedule&#34;</span><span class="p">)</span>
+        <span class="c1">// we don&#39;t really care about requeuing until we get an update that
+</span><span class="c1"></span>        <span class="c1">// fixes the schedule, so don&#39;t return an error
+</span><span class="c1"></span>        <span class="k">return</span> <span class="nx">ctrl</span><span class="p">.</span><span class="nx">Result</span><span class="p">{},</span> <span class="kc">nil</span>
+    <span class="p">}</span>
+    <span class="nx">scheduledResult</span> <span class="o">:=</span> <span class="nx">ctrl</span><span class="p">.</span><span class="nx">Result</span><span class="p">{</span><span class="nx">RequeueAfter</span><span class="p">:</span> <span class="nx">nextRun</span><span class="p">.</span><span class="nf">Sub</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nf">Now</span><span class="p">())}</span> <span class="c1">// save this so we can re-use it elsewhere
+</span><span class="c1"></span>    <span class="nx">log</span> <span class="p">=</span> <span class="nx">log</span><span class="p">.</span><span class="nf">WithValues</span><span class="p">(</span><span class="s">&#34;now&#34;</span><span class="p">,</span> <span class="nx">r</span><span class="p">.</span><span class="nf">Now</span><span class="p">(),</span> <span class="s">&#34;next run&#34;</span><span class="p">,</span> <span class="nx">nextRun</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nx">missedRun</span><span class="p">.</span><span class="nf">IsZero</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;no upcoming scheduled times, sleeping until next&#34;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nx">scheduledResult</span><span class="p">,</span> <span class="kc">nil</span>
+    <span class="p">}</span>
+
+    <span class="c1">// make sure we&#39;re not too late to start the run
+</span><span class="c1"></span>    <span class="nx">log</span> <span class="p">=</span> <span class="nx">log</span><span class="p">.</span><span class="nf">WithValues</span><span class="p">(</span><span class="s">&#34;current run&#34;</span><span class="p">,</span> <span class="nx">missedRun</span><span class="p">)</span>
+    <span class="nx">tooLate</span> <span class="o">:=</span> <span class="kc">false</span>
+    <span class="k">if</span> <span class="nx">cronJob</span><span class="p">.</span><span class="nx">Spec</span><span class="p">.</span><span class="nx">StartingDeadlineSeconds</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">tooLate</span> <span class="p">=</span> <span class="nx">missedRun</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nf">Duration</span><span class="p">(</span><span class="o">*</span><span class="nx">cronJob</span><span class="p">.</span><span class="nx">Spec</span><span class="p">.</span><span class="nx">StartingDeadlineSeconds</span><span class="p">)</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">).</span><span class="nf">Before</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nf">Now</span><span class="p">())</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="nx">tooLate</span> <span class="p">{</span>
+        <span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;missed starting deadline for last run, sleeping till next&#34;</span><span class="p">)</span>
+        <span class="c1">// TODO(directxman12): events
+</span><span class="c1"></span>        <span class="k">return</span> <span class="nx">scheduledResult</span><span class="p">,</span> <span class="kc">nil</span>
+    <span class="p">}</span>
+    <span class="c1">// figure out how to run this job -- concurrency policy might forbid us from running
+</span><span class="c1"></span>    <span class="c1">// multiple at the same time...
+</span><span class="c1"></span>    <span class="k">if</span> <span class="nx">cronJob</span><span class="p">.</span><span class="nx">Spec</span><span class="p">.</span><span class="nx">ConcurrencyPolicy</span> <span class="o">==</span> <span class="nx">batchv1</span><span class="p">.</span><span class="nx">ForbidConcurrent</span> <span class="o">&amp;&amp;</span> <span class="nb">len</span><span class="p">(</span><span class="nx">activeJobs</span><span class="p">)</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="p">{</span>
+        <span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;concurrency policy blocks concurrent runs, skipping&#34;</span><span class="p">,</span> <span class="s">&#34;num active&#34;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">activeJobs</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nx">scheduledResult</span><span class="p">,</span> <span class="kc">nil</span>
+    <span class="p">}</span>
+
+    <span class="c1">// ...or instruct us to replace existing ones...
+</span><span class="c1"></span>    <span class="k">if</span> <span class="nx">cronJob</span><span class="p">.</span><span class="nx">Spec</span><span class="p">.</span><span class="nx">ConcurrencyPolicy</span> <span class="o">==</span> <span class="nx">batchv1</span><span class="p">.</span><span class="nx">ReplaceConcurrent</span> <span class="p">{</span>
+        <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">activeJob</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">activeJobs</span> <span class="p">{</span>
+            <span class="c1">// we don&#39;t care if the job was already deleted
+</span><span class="c1"></span>            <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">r</span><span class="p">.</span><span class="nf">Delete</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">activeJob</span><span class="p">,</span> <span class="nx">client</span><span class="p">.</span><span class="nf">PropagationPolicy</span><span class="p">(</span><span class="nx">metav1</span><span class="p">.</span><span class="nx">DeletePropagationBackground</span><span class="p">));</span> <span class="nx">client</span><span class="p">.</span><span class="nf">IgnoreNotFound</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+                <span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;unable to delete active job&#34;</span><span class="p">,</span> <span class="s">&#34;job&#34;</span><span class="p">,</span> <span class="nx">activeJob</span><span class="p">)</span>
+                <span class="k">return</span> <span class="nx">ctrl</span><span class="p">.</span><span class="nx">Result</span><span class="p">{},</span> <span class="nx">err</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="nx">constructJobForCronJob</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">cronJob</span> <span class="o">*</span><span class="nx">batchv1</span><span class="p">.</span><span class="nx">CronJob</span><span class="p">,</span> <span class="nx">scheduledTime</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">kbatch</span><span class="p">.</span><span class="nx">Job</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// We want job names for a given nominal start time to have a deterministic name to avoid the same job being created twice
+</span><span class="c1"></span>        <span class="nx">name</span> <span class="o">:=</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;%s-%d&#34;</span><span class="p">,</span> <span class="nx">cronJob</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">scheduledTime</span><span class="p">.</span><span class="nf">Unix</span><span class="p">())</span>
+
+        <span class="nx">job</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">kbatch</span><span class="p">.</span><span class="nx">Job</span><span class="p">{</span>
+            <span class="nx">ObjectMeta</span><span class="p">:</span> <span class="nx">metav1</span><span class="p">.</span><span class="nx">ObjectMeta</span><span class="p">{</span>
+                <span class="nx">Labels</span><span class="p">:</span>      <span class="nb">make</span><span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">),</span>
+                <span class="nx">Annotations</span><span class="p">:</span> <span class="nb">make</span><span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">),</span>
+                <span class="nx">Name</span><span class="p">:</span>        <span class="nx">name</span><span class="p">,</span>
+                <span class="nx">Namespace</span><span class="p">:</span>   <span class="nx">cronJob</span><span class="p">.</span><span class="nx">Namespace</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="nx">Spec</span><span class="p">:</span> <span class="o">*</span><span class="nx">cronJob</span><span class="p">.</span><span class="nx">Spec</span><span class="p">.</span><span class="nx">JobTemplate</span><span class="p">.</span><span class="nx">Spec</span><span class="p">.</span><span class="nf">DeepCopy</span><span class="p">(),</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">cronJob</span><span class="p">.</span><span class="nx">Spec</span><span class="p">.</span><span class="nx">JobTemplate</span><span class="p">.</span><span class="nx">Annotations</span> <span class="p">{</span>
+            <span class="nx">job</span><span class="p">.</span><span class="nx">Annotations</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="p">=</span> <span class="nx">v</span>
+        <span class="p">}</span>
+        <span class="nx">job</span><span class="p">.</span><span class="nx">Annotations</span><span class="p">[</span><span class="nx">scheduledTimeAnnotation</span><span class="p">]</span> <span class="p">=</span> <span class="nx">scheduledTime</span><span class="p">.</span><span class="nf">Format</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">RFC3339</span><span class="p">)</span>
+        <span class="k">for</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">cronJob</span><span class="p">.</span><span class="nx">Spec</span><span class="p">.</span><span class="nx">JobTemplate</span><span class="p">.</span><span class="nx">Labels</span> <span class="p">{</span>
+            <span class="nx">job</span><span class="p">.</span><span class="nx">Labels</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="p">=</span> <span class="nx">v</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">ctrl</span><span class="p">.</span><span class="nf">SetControllerReference</span><span class="p">(</span><span class="nx">cronJob</span><span class="p">,</span> <span class="nx">job</span><span class="p">,</span> <span class="nx">r</span><span class="p">.</span><span class="nx">Scheme</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="nx">job</span><span class="p">,</span> <span class="kc">nil</span>
+    <span class="p">}</span>
+    <span class="c1">// actually make the job...
+</span><span class="c1"></span>    <span class="nx">job</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">constructJobForCronJob</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">cronJob</span><span class="p">,</span> <span class="nx">missedRun</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;unable to construct job from template&#34;</span><span class="p">)</span>
+        <span class="c1">// don&#39;t bother requeuing until we get a change to the spec
+</span><span class="c1"></span>        <span class="k">return</span> <span class="nx">scheduledResult</span><span class="p">,</span> <span class="kc">nil</span>
+    <span class="p">}</span>
+
+    <span class="c1">// ...and create it on the cluster
+</span><span class="c1"></span>    <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">r</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">job</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;unable to create Job for CronJob&#34;</span><span class="p">,</span> <span class="s">&#34;job&#34;</span><span class="p">,</span> <span class="nx">job</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nx">ctrl</span><span class="p">.</span><span class="nx">Result</span><span class="p">{},</span> <span class="nx">err</span>
+    <span class="p">}</span>
+
+    <span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;created Job for CronJob run&#34;</span><span class="p">,</span> <span class="s">&#34;job&#34;</span><span class="p">,</span> <span class="nx">job</span><span class="p">)</span>
+	<span class="c1">// we&#39;ll requeue once we see the running job, and update our status
+</span><span class="c1"></span>    <span class="k">return</span> <span class="nx">scheduledResult</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="p">(</span>
+    <span class="nx">jobOwnerKey</span> <span class="p">=</span> <span class="s">&#34;.metadata.controller&#34;</span>
+    <span class="nx">apiGVStr</span>    <span class="p">=</span> <span class="nx">batchv1</span><span class="p">.</span><span class="nx">GroupVersion</span><span class="p">.</span><span class="nf">String</span><span class="p">()</span>
+<span class="p">)</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <span class="o">*</span><span class="nx">CronJobReconciler</span><span class="p">)</span> <span class="nf">SetupWithManager</span><span class="p">(</span><span class="nx">mgr</span> <span class="nx">ctrl</span><span class="p">.</span><span class="nx">Manager</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+    <span class="c1">// set up a real clock, since we&#39;re not in a test
+</span><span class="c1"></span>    <span class="k">if</span> <span class="nx">r</span><span class="p">.</span><span class="nx">Clock</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">r</span><span class="p">.</span><span class="nx">Clock</span> <span class="p">=</span> <span class="nx">realClock</span><span class="p">{}</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">mgr</span><span class="p">.</span><span class="nf">GetFieldIndexer</span><span class="p">().</span><span class="nf">IndexField</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">(),</span> <span class="o">&amp;</span><span class="nx">kbatch</span><span class="p">.</span><span class="nx">Job</span><span class="p">{},</span> <span class="nx">jobOwnerKey</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="nx">rawObj</span> <span class="nx">client</span><span class="p">.</span><span class="nx">Object</span><span class="p">)</span> <span class="p">[]</span><span class="kt">string</span> <span class="p">{</span>
+        <span class="c1">// grab the job object, extract the owner...
+</span><span class="c1"></span>        <span class="nx">job</span> <span class="o">:=</span> <span class="nx">rawObj</span><span class="p">.(</span><span class="o">*</span><span class="nx">kbatch</span><span class="p">.</span><span class="nx">Job</span><span class="p">)</span>
+        <span class="nx">owner</span> <span class="o">:=</span> <span class="nx">metav1</span><span class="p">.</span><span class="nf">GetControllerOf</span><span class="p">(</span><span class="nx">job</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">owner</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="kc">nil</span>
+        <span class="p">}</span>
+        <span class="c1">// ...make sure it&#39;s a CronJob...
+</span><span class="c1"></span>        <span class="k">if</span> <span class="nx">owner</span><span class="p">.</span><span class="nx">APIVersion</span> <span class="o">!=</span> <span class="nx">apiGVStr</span> <span class="o">||</span> <span class="nx">owner</span><span class="p">.</span><span class="nx">Kind</span> <span class="o">!=</span> <span class="s">&#34;CronJob&#34;</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="kc">nil</span>
+        <span class="p">}</span>
+
+        <span class="c1">// ...and if so, return it
+</span><span class="c1"></span>        <span class="k">return</span> <span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="nx">owner</span><span class="p">.</span><span class="nx">Name</span><span class="p">}</span>
+    <span class="p">});</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">err</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="nx">ctrl</span><span class="p">.</span><span class="nf">NewControllerManagedBy</span><span class="p">(</span><span class="nx">mgr</span><span class="p">).</span>
+        <span class="nf">For</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">batchv1</span><span class="p">.</span><span class="nx">CronJob</span><span class="p">{}).</span>
+        <span class="nf">Owns</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">kbatch</span><span class="p">.</span><span class="nx">Job</span><span class="p">{}).</span>
+        <span class="nf">Complete</span><span class="p">(</span><span class="nx">r</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="运行和部署控制器">运行和部署控制器</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"># 生成 crd 清单
+make manifests
+# 加载 crd 到集群中
+make install
+# 运行控制器
+make run
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="测试-1">测试</h3>
+<p>在 config/samples/batch_v1_cronjob.yaml 文件中，编写如下 yaml 来测试：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">apiVersion: batch.tutorial.kubebuilder.io/v1
+kind: CronJob
+metadata:
+  name: cronjob-sample
+spec:
+  schedule: &#34;*/1 * * * *&#34;
+  startingDeadlineSeconds: 60
+  concurrencyPolicy: Allow # explicitly specify, but Allow is also default.
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox
+            args:
+            - /bin/sh
+            - -c
+            - date; echo Hello from the Kubernetes cluster
+          restartPolicy: OnFailure
+</code></pre></td></tr></table>
+</div>
+</div><p>部署：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">kubectl create -f config/samples/batch_v1_cronjob.yaml
+</code></pre></td></tr></table>
+</div>
+</div><p>然后就可以用以下命令来查看运行结果了：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">kubectl get cronjob.batch.tutorial.kubebuilder.io -o yaml
+kubectl get job
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="kubebuilder-实现原理">Kubebuilder 实现原理</h2>
+<p>kubebuilder 依赖于 controller-runtime 实现控制器的整个处理流程，而控制器对资源的监听依赖于 Informer 机制，controller-runtime 在 Informer 制上又封装了一层，其整体流程入下图：
+<img src="../../image/kubebuilder/kube.png" alt="kube"></p>
+<p>其中 Informer 已经由 kubebuilder 和 contorller-runtime 实现，监听到的资源的事件（创建、删除、更新）都会放在 Informer 中。然后这个事件会经过 predict() 方法进行过滤，经过 interface enqueue 进行处理，最终放入 workqueue 中。我们创建的 controller 则会依次从 workqueue 中拿取事件，并调用我们自己实现的 Recontile() 方法进行业务处理。更详细的细节可参考相关文章 <a href="https://larioy.gst.monster/2021/06/27/kubernetes-kai-fa/controller-runtime-yuan-ma-fen-xi/">kubebuilder 之 controller-runtime 源码分析</a> 和 <a href="https://jimmysong.io/kubernetes-handbook/develop/client-go-informer-sourcecode-analyse.html">client-go 中的 informer 源码分析</a>。</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://github.com/kubernetes-sigs/kubebuilder">Kubebuilder GitHub</a></li>
+<li><a href="https://book.kubebuilder.io/introduction.html">Kubebuilder 官网</a></li>
+<li><a href="https://mp.weixin.qq.com/s/Gzpq71nCfSBc1uJw3dR7xA">Kubebuilder：让编写 CRD 变得更简单</a></li>
+</ul>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">Author</span>
+    <span class="item-content">yefengzhichen</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">LastMod</span>
+    <span class="item-content">
+        2022-09-09
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      
+      <nav class="post-nav">
+        <a class="prev" href="../../post/envoy_opa_auth/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">使用 Envoy 的 OPA 插件进行鉴权</span>
+            <span class="prev-text nav-mobile">Prev</span>
+          </a>
+        <a class="next" href="../../post/code_server_local_image/">
+            <span class="next-text nav-default">使用 code-server 和 nocalhost 制作 web 调试镜像</span>
+            <span class="next-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="zhutao_hust@foxmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/yefengzhichen" class="iconfont icon-github" title="github"></a>
+  <a href="https://yefengzhichen.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  <div class="busuanzi-footer">
+    <span id="busuanzi_container_site_pv"> site pv: <span id="busuanzi_value_site_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> </span>
+      <span class="division">|</span>
+    <span id="busuanzi_container_site_uv"> site uv: <span id="busuanzi_value_site_uv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> </span>
+  </div>
+
+  <span class="copyright-year">
+    &copy; 
+    2022<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="../../js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

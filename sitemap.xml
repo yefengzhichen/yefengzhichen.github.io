@@ -23,6 +23,13 @@
   </url>
   
   <url>
+    <loc>https://yefengzhichen.github.io/post/kubebuilder/</loc>
+    <lastmod>2022-09-09T15:19:26+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
     <loc>https://yefengzhichen.github.io/post/code_server_local_image/</loc>
     <lastmod>2022-09-03T20:13:39+08:00</lastmod>
     <changefreq>weekly</changefreq>
