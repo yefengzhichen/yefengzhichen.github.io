@@ -6,7 +6,16 @@
     <description>Recent content in Posts on yefengzhichen</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Sat, 17 Sep 2022 20:13:50 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/post/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 17 Oct 2022 11:28:33 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/post/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>视频点播服务架构简介</title>
+      <link>https://yefengzhichen.github.io/post/video_on_demand/</link>
+      <pubDate>Mon, 17 Oct 2022 11:28:33 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/post/video_on_demand/</guid>
+      <description>整体架构 视频点播服务：用于腾讯视频、爱奇艺、抖音等类似的在线视频播放平台，简单介绍下这样一个平台是怎么构成的。整体主要是以下几个模块组成的：</description>
+    </item>
+    
     <item>
       <title>使用 Envoy 的 OPA 插件进行鉴权</title>
       <link>https://yefengzhichen.github.io/post/envoy_opa_auth/</link>
