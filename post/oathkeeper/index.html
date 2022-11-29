@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Oathkeeper 介绍和使用实例 - yefengzhichen</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="yefengzhichen" /><meta name="description" content="登陆和访问逻辑 目前网页端平台用户的登陆流程是，请求 ems_dashboard_api 服务的/ems_dashboard_api/auth_login/接口，返回 session_id cookies 数据，返" /><meta name="keywords" content="Hugo, theme, even" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.92.1 with theme even" />
+
+
+<link rel="canonical" href="https://yefengzhichen.github.io/post/oathkeeper/" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../favicon-16x16.png">
+<link rel="manifest" href="../../manifest.json">
+<link rel="mask-icon" href="../../safari-pinned-tab.svg" color="#5bbad5">
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<link href="../../sass/main.min.f92fd13721ddf72129410fd8250e73152cc6f2438082b6c0208dc24ee7c13fc4.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="Oathkeeper 介绍和使用实例" />
+<meta property="og:description" content="登陆和访问逻辑 目前网页端平台用户的登陆流程是，请求 ems_dashboard_api 服务的/ems_dashboard_api/auth_login/接口，返回 session_id cookies 数据，返" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yefengzhichen.github.io/post/oathkeeper/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2022-11-23T18:52:15+08:00" />
+<meta property="article:modified_time" content="2022-11-23T18:52:15+08:00" />
+
+<meta itemprop="name" content="Oathkeeper 介绍和使用实例">
+<meta itemprop="description" content="登陆和访问逻辑 目前网页端平台用户的登陆流程是，请求 ems_dashboard_api 服务的/ems_dashboard_api/auth_login/接口，返回 session_id cookies 数据，返"><meta itemprop="datePublished" content="2022-11-23T18:52:15+08:00" />
+<meta itemprop="dateModified" content="2022-11-23T18:52:15+08:00" />
+<meta itemprop="wordCount" content="4114">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Oathkeeper 介绍和使用实例"/>
+<meta name="twitter:description" content="登陆和访问逻辑 目前网页端平台用户的登陆流程是，请求 ems_dashboard_api 服务的/ems_dashboard_api/auth_login/接口，返回 session_id cookies 数据，返"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="../../" class="logo">yefengzhichen</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="../../">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="../../post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="../../tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="../../categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="../../" class="logo">yefengzhichen</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="../../">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../categories/">Categories</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">Oathkeeper 介绍和使用实例</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2022-11-23 </span>
+        
+          <span class="more-meta"> 4114 words </span>
+          <span class="more-meta"> 9 mins read </span>
+        <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> times read </span>
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">Contents</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#登陆和访问逻辑">登陆和访问逻辑</a></li>
+        <li><a href="#oathkeeper-介绍">Oathkeeper 介绍</a>
+          <ul>
+            <li><a href="#反向代理模式">反向代理模式</a></li>
+            <li><a href="#访问控制决策模式">访问控制决策模式</a></li>
+            <li><a href="#认证规则说明">认证规则说明</a></li>
+            <li><a href="#authenticators-处理器">authenticators 处理器</a></li>
+            <li><a href="#authorizer-处理器">authorizer 处理器</a></li>
+            <li><a href="#mutators-处理器">mutators 处理器</a></li>
+            <li><a href="#errors-处理器">errors 处理器</a></li>
+            <li><a href="#使用说明">使用说明</a></li>
+          </ul>
+        </li>
+        <li><a href="#流程分析">流程分析</a></li>
+        <li><a href="#参考">参考</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h2 id="登陆和访问逻辑">登陆和访问逻辑</h2>
+<p>目前网页端平台用户的登陆流程是，请求 ems_dashboard_api 服务的/ems_dashboard_api/auth_login/接口，返回 session_id cookies 数据，返回的响应头具体如下图：</p>
+<p><img src="../../image/oathkeeper/auth_login.png" alt="auth_login.png"></p>
+<p>后续网页端的请求，都是带上此 cookie 来进行访问的。对应我们平台来说，登陆和访问的访问控制涉及服务和流程如下：
+<img src="../../image/oathkeeper/overview.png" alt="overview.png"></p>
+<h2 id="oathkeeper-介绍">Oathkeeper 介绍</h2>
+<p>Oathkeeper 对传入的 HTTP 请求进行授权，可以成为架构中的决策执行点，即在你的上游 API 或 Web 服务器前的反向代理，拒绝未经授权的请求，
+并将授权的请求转发到你的服务器。如果你想使用另其它 API 网关（Kong、Nginx、Envoy、AWS API 网关。&hellip;..），Oathkeeper 也可以插入其中并作为其决策决定点。</p>
+<h3 id="反向代理模式">反向代理模式</h3>
+<p>如果请求被允许，暴露反向代理的端口会将请求转发到规则中定义的上游服务器。
+如果请求不被允许，Oathkeeper 不会转发请求，而是返回一个错误信息。流程图如下所示：
+<img src="../../image/oathkeeper/reverse.jpeg" alt="reverse"></p>
+<h3 id="访问控制决策模式">访问控制决策模式</h3>
+<p>Oathkeeper 访问控制决策 API 遵循最佳实践，可与大多数现代 API 网关和反向代理一起使用。流程图如下所示：
+<img src="../../image/oathkeeper/policy_control.jpeg" alt="policy_control"></p>
+<h3 id="认证规则说明">认证规则说明</h3>
+<p>以我们现在的 oathkeeper 配置为例，config.yaml 配置为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">serve:
+  proxy:
+    port: 4455 # run the proxy at port 4455
+  api:
+    port: 4456 # run the api at port 4456
+
+access_rules:
+  repositories:
+    - file:///rules.json
+
+errors:
+  fallback:
+    - json
+  handlers:
+    json:
+      enabled: true
+      config:
+        verbose: true
+
+mutators:
+  noop:
+    enabled: true
+  id_token:
+    enabled: true
+    config:
+      issuer_url: oath-gateway.{{ .Release.Namespace }}
+      jwks_url: file:///jwks/jwks.json
+      ttl: 60s
+      claims: |
+        {{ `{{ toJson .Extra }}` }}
+
+authorizers:
+  allow:
+    enabled: true
+
+authenticators:
+  bearer_token:
+    enabled: true
+    config:
+      check_session_url: http://127.0.0.1/api/v1/auth/keystone/
+      preserve_path: true
+      token_from:
+        header: x-keystone-token
+
+  cookie_session:
+    enabled: true
+    config:
+      check_session_url: http://127.0.0.1/api/v1/auth/session/
+      preserve_path: true   // 是否保留路径，设置后，check_session_url 的路径将会被保留，而不是替换为将要被检查的路径
+      only:
+        - sessionid         // cookie 中至少有 sessionid 字段才会处理，否则将会传递到后续认证处理器
+</code></pre></td></tr></table>
+</div>
+</div><p>认证规则 rules.json 为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">[
+  {
+    &#34;id&#34;: &#34;cloud-product-auth&#34;,     // 这条规则的 id
+    &#34;version&#34;: &#34;v0.36.0-beta.4&#34;,
+    &#34;match&#34;: {
+      &#34;url&#34;: &#34;http://&lt;.*&gt;/&lt;.*&gt;&#34;,        // 匹配所有 url
+      &#34;methods&#34;: [
+        &#34;GET&#34;, &#34;POST&#34;, &#34;PUT&#34;, &#34;DELETE&#34;, &#34;PATCH&#34;, &#34;OPTIONS&#34;  // 接口类型
+      ]
+    },
+    &#34;authenticators&#34;: [ // 认证，设置了两个认证处理器
+      {
+        &#34;handler&#34;: &#34;bearer_token&#34;
+      },
+      {
+        &#34;handler&#34;: &#34;cookie_session&#34;
+      }
+    ],
+    &#34;authorizer&#34;: {
+      &#34;handler&#34;: &#34;allow&#34;
+    },
+    &#34;mutators&#34;: [
+      {
+        &#34;handler&#34;: &#34;id_token&#34;
+      }
+    ]
+  }
+]
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="authenticators-处理器">authenticators 处理器</h3>
+<p>authenticators 是配置认证处理器，会根据顺序依次认证，如果第一个通过了，后面的将会被忽略，更详细介绍参考 <a href="https://www.ory.sh/docs/oathkeeper/pipeline/authn">认证处理器说明</a>。
+认证的处理器有以下这些类型：</p>
+<ul>
+<li>noop：这不会执行任何授权，不会颁发任何凭据，是一个通用性处理器，允许所有请求转发到上游的 url</li>
+<li>unauthorized：以未授权来拒绝所有请求</li>
+<li>anonymous：会检查是否设置了“Authorization” header 头，如果没有设置，将会设置 subject 名称为“anonymous”，可在 oathkeeper.yml 中配置。</li>
+<li>cookie_session：将会转发请求方法、请求路径、请求头到一个 session 存储，如果返回了 200 和 body，处理器将会正确设置 subject，使用的是 cookie 里面的数据。</li>
+<li>bearer_token：会转发请求方法、请求路径、请求头到一个 session 存储，如果返回了 200 和 body，处理器将会正确设置 subject。</li>
+<li>oauth2_client_credentials： 使用 HTTP Basic Authorization 中的用户名和密码，执行 OAuth 2.0 的客户端证书授权来校验是否有效。</li>
+<li>jwt：接受带有 Bearer Token 授权 header 的请求。</li>
+<li>oauth2_introspection</li>
+<li>jwt Scope</li>
+</ul>
+<p>以 bearer_token 为例子，说明下一个认证处理器，具体需要哪些配置，oathkeeper.yml 配置示例：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">authenticators:
+  bearer_token:
+    enabled: true # 是否使用 bearer_token
+
+    config:
+      check_session_url: https://session-store-host // 后端 session 存储地址
+      preserve_path: true
+      token_from:
+        header: Custom-Authorization-Header // 从 header 获取
+        # or
+        # query_parameter: auth-token // 从查询参数获取
+        # or
+        # cookie: auth-tokens         // 从 cookie 字段获取
+</code></pre></td></tr></table>
+</div>
+</div><p>rules.json 示例为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">[{
+  &#34;id&#34;: &#34;some-id&#34;,
+  &#34;upstream&#34;: {
+    &#34;url&#34;: &#34;http://my-backend-service&#34;
+  },
+  &#34;match&#34;: {
+    &#34;url&#34;: &#34;http://my-app/some-route&#34;,
+    &#34;methods&#34;: [
+      &#34;GET&#34;
+    ]
+  },
+  &#34;authenticators&#34;: [{
+    &#34;handler&#34;: &#34;bearer_token&#34;
+  }],
+  &#34;authorizer&#34;: { &#34;handler&#34;: &#34;allow&#34; },
+  &#34;mutators&#34;: [{ &#34;handler&#34;: &#34;noop&#34; }]
+}]
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="authorizer-处理器">authorizer 处理器</h3>
+<p>authorizer 是配置授权处理器，将会尝试从之前验证过的凭据中对请求的主体（即用户）授权。比如，你可以检查请求主体是否在“admin”用户组，或者他是否有权限执行此操作，更详细介绍参考 <a href="https://www.ory.sh/docs/oathkeeper/pipeline/authz">授权处理器说明</a>。</p>
+<p>授权处理器会复制请求主体的许可操作，oathkeeper 支持不同类型的授权处理器，并且会根据需要不断增加处理器种类。授权处理器保证主体，比如用户，有必要的权限访问或者操作某个服务。授权处理器和访问规则有 1:1 的强制关系，每个访问规则不可能有两个授权处理器。授权处理器有两个字段：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">{
+  &#34;authorizer&#34;: {
+    &#34;handler&#34;: &#34;noop&#34;,  // 处理器名称
+    &#34;config&#34;: {}        // 配置
+  }
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>授权处理器有以下类型：</p>
+<ul>
+<li>allow：允许所有操作。</li>
+<li>deny： 认为所有操作都是未授权的。</li>
+<li>keto_engine_acp_ory：使用 Ory Keto API 来进行访问控制，即“Ory 风格”的访问控制策略。</li>
+<li>remote：使用一个远程的授权处理器，执行一个 HTTP POST 请求并带上原始的 body 内容到远端，假如远端返回 200，则访问被允许。</li>
+<li>remote_json：跟 remote 类似，只是请求 body 为 json 格式。</li>
+</ul>
+<h3 id="mutators-处理器">mutators 处理器</h3>
+<p>mutators 是转换处理器，用来在转发请求之前进转换。一个常见用法是生成一组新的凭据（例如 JWT），然后会被转发到上游服务器。当使用 oathkeeper 的决策 API，它期望 API Gateway 转发经过转换的 HTTP 头到上游服务器，更详细介绍参考 <a href="https://www.ory.sh/docs/oathkeeper/pipeline/mutator">转换处理器说明</a>。</p>
+<p>比如有这样一个场景，请求包含“Authorization: basic”的请求头，但是上游服务器只能处理“X-User: <subject-id>”请求头，就需要一个转换处理器，这样上游服务器就不用关心原始请求的凭据类型了。转换处理器有以下类型：</p>
+<ul>
+<li>noop：不做转换，只简单的转发请求头。</li>
+<li>id_token：使用认证的信息（比如主体），转换为一个签名的 JWT，更具体的来说是转换为 OpenID Connect ID Token，你的后端可以从 jwks.json（由 oathkeeper API 生成）端点获取 key 来校验 token。</li>
+<li>header：转换请求头，允许你通过 header 传递凭据到上游服务器，比如“Authorization: basic”转换为“X-User: <subject-id>”。</li>
+<li>cookie：转换请求 cookie，允许你通过 cookie 传递凭据到上游服务器。</li>
+<li>hydrator：从外部 API 获取额外的数据，可以被其他处理器使用。</li>
+<li>cache：支持缓存的转换处理器。</li>
+</ul>
+<p>因为上面用到了 id_token，这里做下详细介绍。假设一个请求是由 oathkeeper 使用 Basic 授权保护的资源发出的：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">GET /api/resource HTTP/1.1
+Host: www.example.com
+Authorization: Basic Zm9vOmJhcg==
+</code></pre></td></tr></table>
+</div>
+</div><p>假设 oathkeeper 正在授权访问请求，<code>Basic Zm9vOmJhcg==</code>将被替换为加密的签名 jwt：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">GET /api/resource HTTP/1.1
+Host: internal-api-endpoint-dns
+Authorization: Bearer &lt;jwt-signed-id-token&gt;
+</code></pre></td></tr></table>
+</div>
+</div><p>保护的资源通过使用 oathkeeper 提供的公钥，就能解码和验证 JWT。用来解码 ID token 的公钥，在 oathkeeper 的<code>/.well-known/jwks.json</code>端点中可用。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">http://oathkeeper:4456/.well-known/jwks.json
+</code></pre></td></tr></table>
+</div>
+</div><p>流程图如下：
+<img src="../../image/oathkeeper/mutator_id_token_flow.jpeg" alt="mutator_id_token_flow"></p>
+<p>如果<code>oauth2_client_credentials</code>认证处理器成功认证了凭据<code>client-id:client-secret</code>，那转换处理器将会创建一个 JWT 的 ID Token，带有以下的示例性说明：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">{
+  &#34;iss&#34;: &#34;https://server.example.com&#34;,
+  &#34;sub&#34;: &#34;client-id&#34;,
+  &#34;aud&#34;: &#34;s6BhdRkqt3&#34;,
+  &#34;jti&#34;: &#34;n-0S6_WzA2Mj&#34;,
+  &#34;exp&#34;: 1311281970,
+  &#34;iat&#34;: 1311280970
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>JWT 声明如下：</p>
+<ul>
+<li>iss：响应的签发者标识，一般是 oathkeeper 的 url，即<code>https://oathkeeper.myapi.com</code>。</li>
+<li>sub：主体标识，终端用户在签发者内部唯一的标识符。</li>
+<li>aud：令牌的受众。</li>
+<li>exp：过期时间。</li>
+<li>iat：JWT 发布的时间。</li>
+<li>jti：一个加密的强随机的标识符，来确保 JWT 的唯一性。</li>
+</ul>
+<p>id_token 在 oathkeeper.yml 中配置示例：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">mutators:
+  id_token:
+    enabled: true   // 是否开启
+    config:
+      issuer_url: https://my-oathkeeper/    // 签发者地址
+      jwks_url: https://fetch-keys/from/this/location.json    // 公钥获取地址设置为远端地址
+      # jwks_url: file:///from/this/absolute/location.json    // 公钥获取地址设置为本地文件系统路径
+      # jwks_url: file://../from/this/relative/location.json  // 相对地址
+      ttl: 60s    // 超时时间
+      // claims 允许定制 JWT 的某些字段值
+      claims: &#39;{&#34;aud&#34;: [&#34;https://my-backend-service/some/endpoint&#34;],&#34;def&#34;: &#34;{{ print .Extra.some.arbitrary.data }}&#34;}&#39;
+</code></pre></td></tr></table>
+</div>
+</div><p>在<code>mutators.id_token.jwks_url</code>定义的 JWT 集合中中发现的第一个私钥，将会被用来签署 JWT：</p>
+<ul>
+<li>假如第一个 key 是对称算法密钥（HS256），将会被使用，但是不会被传播到<code>/.well-known/jwks.json</code>中，必须手动配置上有能够获取这个密钥。</li>
+<li>加入第一个 key 是非对称私钥（例如 RS256、ES256），将会被使用，对应的公钥将会被广播到<code>/.well-known/jwks.json</code>中。</li>
+</ul>
+<p>在 rules.json 中配置示例为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">cat ./rules.json
+{
+  ...
+  &#34;mutators&#34;: [
+    {
+      &#34;handler&#34;: &#34;id_token&#34;,
+      &#34;config&#34;: {
+        &#34;aud&#34;: [
+          &#34;audience-1&#34;,
+          &#34;audience-2&#34;
+        ],
+        &#34;claims&#34;: &#34;{\&#34;abc\&#34;: \&#34;{{ print .Subject }}\&#34;,\&#34;def\&#34;: \&#34;{{ print .Extra.some.arbitrary.data }}\&#34;}&#34;
+      }
+    }
+  ]
+}
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="errors-处理器">errors 处理器</h3>
+<p>错误处理器会在前面几种处理器失败情况下执行，定义了如何错误情况，比如在用户未授权情况下重定向到登录 url，如果不指定，默认是以 json 方式返回响应。
+错误处理器支持全局设置和单条访问规则设置，oathkeeper 将会首先检查访问规则级别的错误处理器，然后才会返回全局设置的错误处理器。
+一个示例 oathkeeper.yaml 如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">errors:
+  fallback: // 设置后备，在有多个 handler 都满足转发条件时，优先使用后备字段里面的处理器。
+    - json
+
+  handlers:
+    json:
+      enabled: true # 默认为 true
+      # config:
+      #   when: ...
+    redirect:
+      enabled: true # 默认为 false
+      config:
+        to: http://mywebsite/login
+      # when: ...
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="使用说明">使用说明</h3>
+<p>安装：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">docker pull oryd/oathkeeper:v0.40.0
+docker run --rm -it oryd/oathkeeper:v0.40.0 help
+</code></pre></td></tr></table>
+</div>
+</div><p>如何生成 jwk 文件：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">oathkeeper credentials generate --alg ES256 &gt; /jwks/jwks.jso
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="流程分析">流程分析</h2>
+<p>首先看下 oath-gateway deployment 配置：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span><span class="lnt">78
+</span><span class="lnt">79
+</span><span class="lnt">80
+</span><span class="lnt">81
+</span><span class="lnt">82
+</span><span class="lnt">83
+</span><span class="lnt">84
+</span><span class="lnt">85
+</span><span class="lnt">86
+</span><span class="lnt">87
+</span><span class="lnt">88
+</span><span class="lnt">89
+</span><span class="lnt">90
+</span><span class="lnt">91
+</span><span class="lnt">92
+</span><span class="lnt">93
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">{{- $envAll := . }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oath-gateway
+spec:
+  selector:
+    matchLabels:
+      app: oath
+      component: gateway
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: oath
+        component: gateway
+    spec:
+      initContainers:
+      - name: generate-jwks   // init 容器，使用 oathkeeper api 生成非对称密钥
+        image: ...
+        command:
+          - /bin/sh
+          - -c
+          - &#34;oathkeeper credentials generate --alg ES256 &gt; /jwks/jwks.json&#34;
+        volumeMounts:   // empty 卷，共享文件
+          - name: oathkeeper-jwks
+            mountPath: /jwks
+
+      containers:
+      - name: oathkeeper    // oathkeeper 服务
+        image: ...
+        args:
+          - serve
+          - &#39;--config&#39;
+          - /config.yaml
+        ports:
+          - containerPort: 4456
+            name: gateway
+            protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /health/alive
+            port: gateway
+        startupProbe:
+          httpGet:
+            path: /health/ready
+            port: gateway
+          failureThreshold: 30
+          periodSeconds: 10
+        volumeMounts:
+          - name: oathkeeper-jwks   // 密钥
+            mountPath: /jwks
+          - name: oathkeeper-etc    // 服务配置
+            mountPath: /config.yaml
+            subPath: config.yaml
+            readOnly: true
+          - name: oathkeeper-etc    // 访问规则配置
+            mountPath: /rules.json
+            subPath: rules.json
+            readOnly: true
+
+      - name: oath-backend
+        image: &#34;xxx&#34;
+        args:
+          - -c
+          - gunicorn_conf.py
+          - wsgi:application
+        ports:
+          - name: oath-api
+            containerPort: 80
+            protocol: TCP
+        env:
+          - name: OATH_BACKEND_DB_NAME
+            value: django
+          - name: OATH_BACKEND_DB_USER
+            value: django
+          - name: OATH_BACKEND_DB_PASSWD
+            value: password
+          - name: OATH_BACKEND_DB_HOST
+            value: mariadb.openstack.svc.cluster.local
+          - name: DRONE_PASSWORD
+            value: EyBTaXnK
+          - name: OPENSTACK_KEYSTONE_URL
+            value: http://keystone-api.openstack.svc.cluster.local:80/v3
+
+      volumes:
+        - name: oathkeeper-jwks
+          emptyDir: {}
+        - name: oathkeeper-etc
+          configMap:
+            defaultMode: 420
+            name: oathkeeper-etc
+</code></pre></td></tr></table>
+</div>
+</div><p>在服务的描述中涉及 3 个容器：</p>
+<ul>
+<li>generate-jwks：init 容器，使用 oathkeeper 命令生成密钥</li>
+<li>oathkeeper：对外的 api 服务，对 http 进行认证、授权、转换的服务</li>
+<li>oath-backend： 认证处理器中请求的 session 后端服务，用来验证 bearer_token 和 cookie_session 处理器传过来的认证信息</li>
+</ul>
+<p>从 config.yaml 配置可以看到，请求的 oath-backend 两个接口为：<code>/api/v1/auth/keystone/</code>和<code>/api/v1/auth/session/</code>，从代码可以知道两个接口逻辑为：</p>
+<ul>
+<li>/api/v1/auth/keystone/：从 x-keystone-token 请求头拿到 token，请求 keystone-api 获取数据，构造特定结构的 body 返回</li>
+<li>/api/v1/auth/session/：从 cookie 里面获取 session_id，然后从 mariadb 中获取 session_id 对应的数据</li>
+</ul>
+<p>最终两个接口都会返回以下格式的 json 数据，经过转换处理器转换为 jwt 格式的认证字符串。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">{
+    &#34;subject&#34;: &#34;&#34;,
+    &#34;extra&#34;:{
+      &#34;domain_id&#34;: &#34;&#34;,
+      &#34;domain_name&#34;: &#34;&#34;,
+      &#34;domain_token&#34;: &#34;&#34;,
+      &#34;email&#34;: &#34;&#34;,
+      &#34;id&#34;: &#34;&#34;,
+      &#34;name&#34;: &#34;&#34;,
+      &#34;project_id&#34;: &#34;&#34;,
+      &#34;project_name&#34;: &#34;&#34;,
+      &#34;project_token&#34;: &#34;&#34;,
+      &#34;roles&#34;: &#34;&#34;,
+      &#34;region_url&#34;: &#34;&#34;,
+      &#34;current_cloud&#34;: &#34;&#34;,
+      &#34;sp_id&#34;: &#34;&#34;,
+      &#34;sp_auth_url&#34;: &#34;&#34;
+    }
+}
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://www.ory.sh/docs/oathkeeper/">Oathkeeper 官网</a></li>
+</ul>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">Author</span>
+    <span class="item-content">yefengzhichen</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">LastMod</span>
+    <span class="item-content">
+        2022-11-23
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      
+      <nav class="post-nav">
+        
+        <a class="next" href="../../post/video_on_demand/">
+            <span class="next-text nav-default">视频点播服务架构简介</span>
+            <span class="next-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="zhutao_hust@foxmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/yefengzhichen" class="iconfont icon-github" title="github"></a>
+  <a href="https://yefengzhichen.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  <div class="busuanzi-footer">
+    <span id="busuanzi_container_site_pv"> site pv: <span id="busuanzi_value_site_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> </span>
+      <span class="division">|</span>
+    <span id="busuanzi_container_site_uv"> site uv: <span id="busuanzi_value_site_uv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> </span>
+  </div>
+
+  <span class="copyright-year">
+    &copy; 
+    2022<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="../../js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

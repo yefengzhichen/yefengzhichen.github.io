@@ -2,15 +2,22 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://yefengzhichen.github.io/post/oathkeeper/</loc>
+    <lastmod>2022-11-23T18:52:15+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
     <loc>https://yefengzhichen.github.io/post/</loc>
-    <lastmod>2022-10-17T11:28:33+08:00</lastmod>
+    <lastmod>2022-11-23T18:52:15+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
     <loc>https://yefengzhichen.github.io/</loc>
-    <lastmod>2022-10-17T11:28:33+08:00</lastmod>
+    <lastmod>2022-11-23T18:52:15+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
