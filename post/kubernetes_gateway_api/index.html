@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Kubernetes Gateway Api 介绍 - yefengzhichen</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="yefengzhichen" /><meta name="description" content="介绍 本文根据官方文档翻译汇总而成。 Gateway API 是一个由 Kubernetes SIG-NETWORK（网络兴趣小组）管理的开源项目。这是一个资源的集合，定义了 Kubernetes 中服务网络" /><meta name="keywords" content="Hugo, theme, even" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.92.1 with theme even" />
+
+
+<link rel="canonical" href="https://yefengzhichen.github.io/post/kubernetes_gateway_api/" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../favicon-16x16.png">
+<link rel="manifest" href="../../manifest.json">
+<link rel="mask-icon" href="../../safari-pinned-tab.svg" color="#5bbad5">
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<link href="../../sass/main.min.f92fd13721ddf72129410fd8250e73152cc6f2438082b6c0208dc24ee7c13fc4.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="Kubernetes Gateway Api 介绍" />
+<meta property="og:description" content="介绍 本文根据官方文档翻译汇总而成。 Gateway API 是一个由 Kubernetes SIG-NETWORK（网络兴趣小组）管理的开源项目。这是一个资源的集合，定义了 Kubernetes 中服务网络" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yefengzhichen.github.io/post/kubernetes_gateway_api/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2022-11-30T14:49:18+08:00" />
+<meta property="article:modified_time" content="2022-11-30T14:49:18+08:00" />
+
+<meta itemprop="name" content="Kubernetes Gateway Api 介绍">
+<meta itemprop="description" content="介绍 本文根据官方文档翻译汇总而成。 Gateway API 是一个由 Kubernetes SIG-NETWORK（网络兴趣小组）管理的开源项目。这是一个资源的集合，定义了 Kubernetes 中服务网络"><meta itemprop="datePublished" content="2022-11-30T14:49:18+08:00" />
+<meta itemprop="dateModified" content="2022-11-30T14:49:18+08:00" />
+<meta itemprop="wordCount" content="1988">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Kubernetes Gateway Api 介绍"/>
+<meta name="twitter:description" content="介绍 本文根据官方文档翻译汇总而成。 Gateway API 是一个由 Kubernetes SIG-NETWORK（网络兴趣小组）管理的开源项目。这是一个资源的集合，定义了 Kubernetes 中服务网络"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="../../" class="logo">yefengzhichen</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="../../">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="../../post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="../../tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="../../categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="../../" class="logo">yefengzhichen</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="../../">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../categories/">Categories</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">Kubernetes Gateway Api 介绍</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2022-11-30 </span>
+        
+          <span class="more-meta"> 1988 words </span>
+          <span class="more-meta"> 4 mins read </span>
+        <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> times read </span>
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">Contents</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#介绍">介绍</a>
+          <ul>
+            <li><a href="#特点">特点</a></li>
+            <li><a href="#为什么面向角色的-api-很重要">为什么面向角色的 API 很重要</a></li>
+          </ul>
+        </li>
+        <li><a href="#概念">概念</a>
+          <ul>
+            <li><a href="#角色">角色</a></li>
+            <li><a href="#资源模型">资源模型</a></li>
+            <li><a href="#附着-route-到-gateway-上">附着 Route 到 Gateway 上</a></li>
+          </ul>
+        </li>
+        <li><a href="#使用示例">使用示例</a>
+          <ul>
+            <li><a href="#安装">安装</a></li>
+            <li><a href="#部署简单的-gateway">部署简单的 Gateway</a></li>
+          </ul>
+        </li>
+        <li><a href="#参考">参考</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h2 id="介绍">介绍</h2>
+<p>本文根据官方文档翻译汇总而成。</p>
+<p>Gateway API 是一个由 Kubernetes SIG-NETWORK（网络兴趣小组）管理的开源项目。这是一个资源的集合，定义了 Kubernetes 中服务网络模型。这些资源，GatewayClass、Gateway、HTTPRoute、TCPRoute、Service 等等，目的是通过具有表现力的、可扩展的、面向角色的接口来发展 Kubernetes 服务网络，这些接口由许多供应商实现，并得到广泛的行业支持。下图是 Gateway API 的模型：
+<img src="../../image/gateway_api/api-model.png" alt="api-model"></p>
+<h3 id="特点">特点</h3>
+<p>以下设计目标驱动了 Gateway API 的概念，说明了 Gateway 是如何改进了当前的标准，比如 Ingress。</p>
+<ul>
+<li>面向角色：Gateway 是由 API 的资源组成，这些资源定义了使用和配置 Kubernetes 服务网络的组织角色</li>
+<li>可移植的：这不是一个改进，而是应该保持不变的东西。就好比 Ingress 是一个有多种实现的通用规范一样，Gateway API 是设计成一个支持多种实现的可移植规范。</li>
+<li>富有表现力的：Gateway API 资源支持一些核心函数，比如基于 header 的匹配、流量权重，和其它只能在 ingress 中通过自定义注解实现的功能。</li>
+<li>可扩展的：Gateway API 允许自定义资源链接在 API 的不同层，这使得在 API 结构的合适位置进行细粒度定制成为可能。</li>
+</ul>
+<p>其它一些值得注意的功能：</p>
+<ul>
+<li>GatewayClasses：负载均衡实现的正式化类型。这些类型使得用户更加容易使用，并且容易理解在 Kubernetes 资源模型中哪种类型的能力是可用的。</li>
+<li>共享的 Gateway 和跨命名空间支持：通过允许独立的 Route 资源来附着到同一个 Gateway 上，来实现负载均衡和 VIP 的共享。这允许跨团队来共享基础设施，无需直接协调。</li>
+<li>类型化的 Route 和类型化的后端：Gateway API 支持类型化的 Route 资源和不同类型的后端，这允许 API 可以灵活的支持不同的协议（比如 HTTP 和 gRPC）和不同的后端目标（比如 Kubernetes 服务，存储 buckets 等）。</li>
+</ul>
+<h3 id="为什么面向角色的-api-很重要">为什么面向角色的 API 很重要</h3>
+<p>共享基础设施提出来一个通用的挑战：如何提供给基础设施用户灵活性的同时，保持基础设施拥有者的控制权。
+Gateway API 通过面向角色的 Kubernetes 服务网络设计，来达到分布式灵活性和集中控制的平衡。它允许共享网络基础设施（硬件负载均衡，云网络，集群托管代理等）被许多不同的和非协调的团队使用，所有这些都受到集器操作人员设置的策略和约束的限制。下面的例子展示了实践中是如何工作的。</p>
+<p>一个集群操作人员创建了一个从 GatewayClass 派生的 Gateway 资源，这个 Gateway 部署或者配置了它代表的底层的网络资源。通过 Gateway 和 Route 之间的路有附着过程，集群操作人员和指定的团队必须就可以附着到 Gateway 的内容达成一致，并通过该网关公开他们的应用程序。集群化的策略如 TLS 可以在 Gateway 上强制执行。同时，存储和网站团队运行在他们自己的命名空间，但是附着他们的 Route 到同样共享 Gateway，允许他们独立控制他们的路由逻辑。关注点分离允许存储团体管理他们自己的分流流量，同时中心化的策略和控制留给集群操作员管理。</p>
+<p><img src="../../image/gateway_api/gateway-roles.png" alt="gateway-roles"></p>
+<h2 id="概念">概念</h2>
+<h3 id="角色">角色</h3>
+<p>Gateway API 中有 3 种主要的角色：</p>
+<ul>
+<li>基础设施提供商</li>
+<li>集群操作员</li>
+<li>应用开发者
+在某些情况下，可能有第四个角色，应用管理员。</li>
+</ul>
+<h3 id="资源模型">资源模型</h3>
+<ul>
+<li>GatewayClass：一组共享通用配置和行为的网关，每个 GatewayClass 由一个控制器处理，是一个集群范围的资源。</li>
+<li>Gateway：描述流量是如何被转发到服务的，即定义了一个请求，将流量从不知道 Kubernetes 的地方转发到了 Kubernetes 内部。</li>
+<li>Route ：定义了特定协议的规则，用于将请求从 Gateway 映射到 Kubernetes 服务，包含 HTTPRoute、TLSRoute、TCPRoute、UDPRoute、GRPCRoute 等。</li>
+</ul>
+<p>GatewayClass、Gateway、xRoute 和 Service 的组合定义了一个可实现的负载平衡器，下图说明了不同资源之间的关系：
+<img src="../../image/gateway_api/resources.svg" alt="resources"></p>
+<h3 id="附着-route-到-gateway-上">附着 Route 到 Gateway 上</h3>
+<p>当 Route 附加到 Gateway 上时，它表示应用于配置底层负载均衡器或代理的 Gateway 上的配置。Gateway 和 Route 的关系有：</p>
+<ul>
+<li>一对一：一个 Gateway 对应一个 Route。</li>
+<li>一对多：一个 Gateway 可以绑定多个 Route，由不同的团队拥有，并且可以跨多个命名空间。</li>
+<li>多对一：Route 可以绑定多个 Gateway，允许单个 Route 控制跨多个 IP、负载均衡或者网络的应用程序的暴露。</li>
+</ul>
+<h2 id="使用示例">使用示例</h2>
+<h3 id="安装">安装</h3>
+<p>一个 Gateway API 捆绑包代表了与 Gateway API 的一个版本相关的 CRD 和校验 webhook 的集合，每个版本包括两个具有不同稳定性的通道版本。这里安装标准通道版本，即里面所有资源版本都已经达到 beta 阶段。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v0.5.1/standard-install.yaml
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="部署简单的-gateway">部署简单的 Gateway</h3>
+<p>最简单的可能部署方式，由同一个拥有者部署一个 Gateway 和 Route 资源，这代表了 Ingress 类似的使用模型。这里，部署了一个 Gateway 和 HTTPRoute，来匹配所有 HTTP 流量，定向到一个名为 foo-svc 的服务，如下图所示。</p>
+<p><img src="../../image/gateway_api/single-service-gateway.png" alt="single-service-gateway"></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">apiVersion: gateway.networking.k8s.io/v1beta1
+kind: Gateway
+metadata:
+  name: prod-web
+spec:
+  gatewayClassName: acme-lb
+  listeners:
+  - protocol: HTTP
+    port: 80
+    name: prod-web-gw
+    allowedRoutes:
+      namespaces:
+        from: Same
+</code></pre></td></tr></table>
+</div>
+</div><p>这个 Gateway 代表来一个逻辑负载均衡器的实例化，它的模板来自 acme-lb GatewayClass，在 80 端口上监听 HTTP 流量。这个特定的 GatewayClass 自动分配一个 IP 地址，在部署将会展示在 Gateway.status 字段中。</p>
+<p>下面的 HTTPRoute 定义了 Gateway 监听器的流量是如何被路由到后端的，因为没有 host 路由或者指定路径，HTTPRoute 将会匹配所有到达 80 端口的 HTTP 流量，然后发送到 foo-svc 的 pods。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: foo
+spec:
+  parentRefs:
+  - name: prod-web
+  rules:
+  - backendRefs:
+    - name: foo-svc
+      port: 8080
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://gateway-api.sigs.k8s.io/">Gateway API 官网</a></li>
+</ul>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">Author</span>
+    <span class="item-content">yefengzhichen</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">LastMod</span>
+    <span class="item-content">
+        2022-11-30
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      
+      <nav class="post-nav">
+        
+        <a class="next" href="../../post/csdn_top_articles/">
+            <span class="next-text nav-default">Csdn博客文章汇总</span>
+            <span class="next-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="zhutao_hust@foxmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/yefengzhichen" class="iconfont icon-github" title="github"></a>
+  <a href="https://yefengzhichen.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  <div class="busuanzi-footer">
+    <span id="busuanzi_container_site_pv"> site pv: <span id="busuanzi_value_site_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> </span>
+      <span class="division">|</span>
+    <span id="busuanzi_container_site_uv"> site uv: <span id="busuanzi_value_site_uv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> </span>
+  </div>
+
+  <span class="copyright-year">
+    &copy; 
+    2022 - 
+    2023<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="../../js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>
