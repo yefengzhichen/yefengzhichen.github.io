@@ -49,7 +49,7 @@
 <meta itemprop="name" content="GitHub&#43;Hugo搭建个人博客">
 <meta itemprop="description" content="GitHub仓库创建 GitHub Pages 是通过 GitHub 托管和发布的公共网页，首先需要创建一个名为username.github.io的仓库， username是Gi"><meta itemprop="datePublished" content="2022-09-02T20:14:03+08:00" />
 <meta itemprop="dateModified" content="2022-09-02T20:14:03+08:00" />
-<meta itemprop="wordCount" content="2344">
+<meta itemprop="wordCount" content="2468">
 <meta itemprop="keywords" content="hugo,博客," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="GitHub&#43;Hugo搭建个人博客"/>
 <meta name="twitter:description" content="GitHub仓库创建 GitHub Pages 是通过 GitHub 托管和发布的公共网页，首先需要创建一个名为username.github.io的仓库， username是Gi"/>
@@ -132,7 +132,7 @@
         <div class="post-category">
             <a href="../../categories/%E5%90%8E%E7%AB%AF/"> 后端 </a>
             </div>
-          <span class="more-meta"> 约 2344 字 </span>
+          <span class="more-meta"> 约 2468 字 </span>
           <span class="more-meta"> 预计阅读 5 分钟 </span>
         <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
       </div>
@@ -154,6 +154,7 @@
         <li><a href="#格式优化">格式优化</a>
           <ul>
             <li><a href="#图片路径问题">图片路径问题</a></li>
+            <li><a href="#utterances-评论系统">utterances 评论系统</a></li>
           </ul>
         </li>
       </ul>
@@ -180,7 +181,7 @@
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">brew install hugo
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">brew install hugo
 </code></pre></td></tr></table>
 </div>
 </div><p>在本地环境中，执行以下命令生成保存网站内容的文件夹：</p>
@@ -189,7 +190,7 @@
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">hugo new site mysite
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">hugo new site mysite
 </code></pre></td></tr></table>
 </div>
 </div><p>生成的目录结构为：</p>
@@ -207,7 +208,7 @@
 </span><span class="lnt">10
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">➜  mysite tree -L 1
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">➜  mysite tree -L <span class="m">1</span>
 .
 ├── archetypes
 ├── config.toml
@@ -226,7 +227,7 @@
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">hugo new post/hugo_blog.md
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">hugo new post/hugo_blog.md
 </code></pre></td></tr></table>
 </div>
 </div><h2 id="主题设置">主题设置</h2>
@@ -237,7 +238,7 @@
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">$ git clone https://github.com/olOwOlo/hugo-theme-even themes/even
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">$ git clone https://github.com/olOwOlo/hugo-theme-even themes/even
 </code></pre></td></tr></table>
 </div>
 </div><p>然后将github示例里面的 config.toml 内容拷贝到本地 config.toml 中。</p>
@@ -264,15 +265,15 @@
 </span><span class="lnt">10
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">hugo --buildDrafts --baseUrl=&#34;https://username.github.io/&#34;
-cd public
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">hugo --buildDrafts --baseUrl<span class="o">=</span><span class="s2">&#34;https://username.github.io/&#34;</span>
+<span class="nb">cd</span> public
 git init
 // 如果有多个git环境（公司内部和github等），为public文件夹设置独立的用户名和邮件
 git config user.name username
 git config user.email test@gmail.com
 git remote add origin git@github.com:username/username.github.io.git
 git add -A
-git commit -m &#34;&#34;
+git commit -m <span class="s2">&#34;&#34;</span>
 git push origin master
 </code></pre></td></tr></table>
 </div>
@@ -301,7 +302,24 @@ git push origin master
 <li>放在static文件夹：图片存放位置为static/image/hugo_blog/1.png，markdown引用为 <img src="../../image/hugo_blog/1.png" alt=""></li>
 </ul>
 <p>至于Office Viewer插件中手动选择图片，生成后图片位置在public/post/image/hugo_blog/xxx.png，文档在public/post/hugo_blog下面，因此用image/hugo_blog/xxx.png无法找到。为了存储图片统一管理，推荐第二种方式，统一存储在static文件夹。</p>
-
+<h3 id="utterances-评论系统">utterances 评论系统</h3>
+<ul>
+<li>安装App：https://github.com/apps/utterances</li>
+<li>在config.toml 里配置，even主题本身已经支持，只需要配置即可</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-toml" data-lang="toml">  <span class="p">[</span><span class="nx">params</span><span class="p">.</span><span class="nx">utterances</span><span class="p">]</span>
+    <span class="nx">owner</span> <span class="p">=</span> <span class="s2">&#34;yefengzhichen&#34;</span>              <span class="c"># github id</span>
+    <span class="nx">repo</span> <span class="p">=</span> <span class="s2">&#34;yefengzhichen.github.io&#34;</span>     <span class="c"># 存储评论的仓库，用配置github Pages使用的仓库即可</span>
+</code></pre></td></tr></table>
+</div>
+</div>
     </div>
 
     <div class="post-copyright">

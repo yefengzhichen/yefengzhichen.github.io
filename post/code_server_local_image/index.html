@@ -49,7 +49,7 @@
 <meta itemprop="name" content="使用 code-server 和 nocalhost 制作 web 调试镜像">
 <meta itemprop="description" content="背景 之前写了一篇文章，分享了如何使用 kt-connect 来加速云原生的开发，但是在实际使用中发现一些问题，比如： 环境不一致，每个开发人员都需要安装和调试程序一"><meta itemprop="datePublished" content="2022-09-03T20:13:39+08:00" />
 <meta itemprop="dateModified" content="2022-09-03T20:13:39+08:00" />
-<meta itemprop="wordCount" content="1448">
+<meta itemprop="wordCount" content="1419">
 <meta itemprop="keywords" content="code-server,nocalhost,调试," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="使用 code-server 和 nocalhost 制作 web 调试镜像"/>
 <meta name="twitter:description" content="背景 之前写了一篇文章，分享了如何使用 kt-connect 来加速云原生的开发，但是在实际使用中发现一些问题，比如： 环境不一致，每个开发人员都需要安装和调试程序一"/>
@@ -132,7 +132,7 @@
         <div class="post-category">
             <a href="../../categories/%E5%90%8E%E7%AB%AF/"> 后端 </a>
             </div>
-          <span class="more-meta"> 约 1448 字 </span>
+          <span class="more-meta"> 约 1419 字 </span>
           <span class="more-meta"> 预计阅读 3 分钟 </span>
         <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
       </div>
@@ -192,12 +192,12 @@
 </span><span class="lnt">8
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">FROM codercom/code-server:latest
-# install kubectl
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">FROM codercom/code-server:latest
+<span class="c1"># install kubectl</span>
 RUN sudo apt-get update
 RUN sudo apt-get install -y ca-certificates curl
 RUN sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg &lt;https://packages.cloud.google.com/apt/doc/apt-key.gpg&gt;
-RUN echo &#34;deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] &lt;https://apt.kubernetes.io/&gt; kubernetes-xenial main&#34; | sudo tee /etc/apt/sources.list.d/kubernetes.list
+RUN <span class="nb">echo</span> <span class="s2">&#34;deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] &lt;https://apt.kubernetes.io/&gt; kubernetes-xenial main&#34;</span> <span class="p">|</span> sudo tee /etc/apt/sources.list.d/kubernetes.list
 RUN sudo apt-get update
 RUN sudo apt-get install -y kubectl
 </code></pre></td></tr></table>
@@ -208,7 +208,7 @@ RUN sudo apt-get install -y kubectl
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">docker run -it --rm  --entrypoint /bin/bash codercom/code-server:latest
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">docker run -it --rm  --entrypoint /bin/bash codercom/code-server:latest
 </code></pre></td></tr></table>
 </div>
 </div><p>验证好了后，执行 build 来构建测试：</p>
@@ -217,7 +217,7 @@ RUN sudo apt-get install -y kubectl
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">docker build . --tag &#34;local-dev:v0.0.1&#34;
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">docker build . --tag <span class="s2">&#34;local-dev:v0.0.1&#34;</span>
 </code></pre></td></tr></table>
 </div>
 </div><h2 id="增加-ssh-配置和-k8s-配置">增加 ssh 配置和 k8s 配置</h2>
@@ -235,15 +235,15 @@ RUN sudo apt-get install -y kubectl
 </span><span class="lnt">9
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">docker run -it --rm --name code-server \
-  -p 127.0.0.1:8080:8080 \
-  -v &#34;$HOME/.config:/home/coder/.config&#34; \
-  -v &#34;$HOME/.ssh:/home/coder/.ssh&#34; \
-  -v &#34;$HOME/.kube:/home/coder/.kube&#34; \
-  -v &#34;$PWD:/home/coder/project&#34; \
-  -u &#34;$(id -u):$(id -g)&#34; \
-  -e &#34;DOCKER_USER=$USER&#34; \
-  local-dev:v0.0.1
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">docker run -it --rm --name code-server <span class="se">\
+</span><span class="se"></span>  -p 127.0.0.1:8080:8080 <span class="se">\
+</span><span class="se"></span>  -v <span class="s2">&#34;</span><span class="nv">$HOME</span><span class="s2">/.config:/home/coder/.config&#34;</span> <span class="se">\
+</span><span class="se"></span>  -v <span class="s2">&#34;</span><span class="nv">$HOME</span><span class="s2">/.ssh:/home/coder/.ssh&#34;</span> <span class="se">\
+</span><span class="se"></span>  -v <span class="s2">&#34;</span><span class="nv">$HOME</span><span class="s2">/.kube:/home/coder/.kube&#34;</span> <span class="se">\
+</span><span class="se"></span>  -v <span class="s2">&#34;</span><span class="nv">$PWD</span><span class="s2">:/home/coder/project&#34;</span> <span class="se">\
+</span><span class="se"></span>  -u <span class="s2">&#34;</span><span class="k">$(</span>id -u<span class="k">)</span><span class="s2">:</span><span class="k">$(</span>id -g<span class="k">)</span><span class="s2">&#34;</span> <span class="se">\
+</span><span class="se"></span>  -e <span class="s2">&#34;DOCKER_USER=</span><span class="nv">$USER</span><span class="s2">&#34;</span> <span class="se">\
+</span><span class="se"></span>  local-dev:v0.0.1
 </code></pre></td></tr></table>
 </div>
 </div><p>执行成功后，访问 http://127.0.0.1:8080 即可打开 code-server web 页面。</p>
@@ -266,14 +266,14 @@ RUN sudo apt-get install -y kubectl
 </span><span class="lnt">7
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="err">#</span> <span class="nx">install</span> <span class="nx">nocalhost</span> <span class="nx">extension</span>
-<span class="nx">RUN</span> <span class="nx">sudo</span> <span class="nx">apt</span><span class="o">-</span><span class="nx">get</span> <span class="nx">update</span> <span class="o">&amp;&amp;</span> <span class="nx">sudo</span> <span class="nx">apt</span> <span class="nx">install</span> <span class="o">-</span><span class="nx">y</span> <span class="nx">libarchive</span><span class="o">-</span><span class="nx">tools</span> <span class="nx">wget</span>
-<span class="nx">RUN</span> <span class="nx">mkdir</span> <span class="o">-</span><span class="nx">p</span> <span class="o">/</span><span class="nx">home</span><span class="o">/</span><span class="nx">coder</span><span class="o">/</span><span class="p">.</span><span class="nx">local</span><span class="o">/</span><span class="nx">share</span><span class="o">/</span><span class="nx">code</span><span class="o">-</span><span class="nx">server</span><span class="o">/</span><span class="nx">extensions</span>
-<span class="nx">RUN</span> <span class="nx">wget</span> <span class="o">-</span><span class="nx">v</span> <span class="nx">https</span><span class="p">:</span><span class="c1">//marketplace.visualstudio.com/_apis/public/gallery/publishers/nocalhost/vsextensions/nocalhost/0.6.18/vspackage
-</span><span class="c1"></span><span class="nx">RUN</span> <span class="nx">bsdtar</span> <span class="o">-</span><span class="nx">xvf</span> <span class="nx">vspackage</span> <span class="nx">extension</span>
-<span class="nx">RUN</span> <span class="nx">mv</span> <span class="nx">extension</span> <span class="o">/</span><span class="nx">home</span><span class="o">/</span><span class="nx">coder</span><span class="o">/</span><span class="p">.</span><span class="nx">local</span><span class="o">/</span><span class="nx">share</span><span class="o">/</span><span class="nx">code</span><span class="o">-</span><span class="nx">server</span><span class="o">/</span><span class="nx">extensions</span><span class="o">/</span><span class="nx">nocalhost</span><span class="p">.</span><span class="nx">nocalhost</span><span class="o">-</span><span class="mf">0.6.18</span>
-<span class="nx">RUN</span> <span class="nx">rm</span> <span class="o">-</span><span class="nx">f</span> <span class="nx">vspackage</span>
-</code></pre></td></tr></table>
+<pre tabindex="0" class="chroma"><code class="language-dockerfile" data-lang="dockerfile"><span class="c"># install nocalhost extension</span><span class="err">
+</span><span class="err"></span><span class="k">RUN</span> sudo apt-get update <span class="o">&amp;&amp;</span> sudo apt install -y libarchive-tools wget<span class="err">
+</span><span class="err"></span><span class="k">RUN</span> mkdir -p /home/coder/.local/share/code-server/extensions<span class="err">
+</span><span class="err"></span><span class="k">RUN</span> wget -v https://marketplace.visualstudio.com/_apis/public/gallery/publishers/nocalhost/vsextensions/nocalhost/0.6.18/vspackage<span class="err">
+</span><span class="err"></span><span class="k">RUN</span> bsdtar -xvf vspackage extension<span class="err">
+</span><span class="err"></span><span class="k">RUN</span> mv extension /home/coder/.local/share/code-server/extensions/nocalhost.nocalhost-0.6.18<span class="err">
+</span><span class="err"></span><span class="k">RUN</span> rm -f vspackage<span class="err">
+</span></code></pre></td></tr></table>
 </div>
 </div><p>重新 build 后启动，可以看到 nocalhost 默认已安装：
 <img src="../../image/code_server_local_image/pre_nocalhost.png" alt="pre_nocalhost"></p>
@@ -292,14 +292,14 @@ RUN sudo apt-get install -y kubectl
 </span><span class="lnt">7
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"># install golang
-RUN wget https://go.dev/dl/go1.19.linux-arm64.tar.gz
-RUN sudo rm -rf /usr/local/go &amp;&amp; sudo tar -C /usr/local -xzf go1.19.linux-arm64.tar.gz
-RUN rm -f go1.19.linux-arm64.tar.gz
-ENV GOPROXY=https://goproxy.cn,direct
-RUN sudo echo &#34;export PATH=$PATH:/usr/local/go/bin&#34; | sudo tee -a /etc/profile
-RUN sudo echo &#34;export PATH=$PATH:$HOME/go/bin&#34; | sudo tee -a /etc/profile
-</code></pre></td></tr></table>
+<pre tabindex="0" class="chroma"><code class="language-dockerfile" data-lang="dockerfile"><span class="c"># install golang</span><span class="err">
+</span><span class="err"></span><span class="k">RUN</span> wget https://go.dev/dl/go1.19.linux-arm64.tar.gz<span class="err">
+</span><span class="err"></span><span class="k">RUN</span> sudo rm -rf /usr/local/go <span class="o">&amp;&amp;</span> sudo tar -C /usr/local -xzf go1.19.linux-arm64.tar.gz<span class="err">
+</span><span class="err"></span><span class="k">RUN</span> rm -f go1.19.linux-arm64.tar.gz<span class="err">
+</span><span class="err"></span><span class="k">ENV</span> <span class="nv">GOPROXY</span><span class="o">=</span>https://goproxy.cn,direct<span class="err">
+</span><span class="err"></span><span class="k">RUN</span> sudo <span class="nb">echo</span> <span class="s2">&#34;export PATH=</span><span class="nv">$PATH</span><span class="s2">:/usr/local/go/bin&#34;</span> <span class="p">|</span> sudo tee -a /etc/profile<span class="err">
+</span><span class="err"></span><span class="k">RUN</span> sudo <span class="nb">echo</span> <span class="s2">&#34;export PATH=</span><span class="nv">$PATH</span><span class="s2">:</span><span class="nv">$HOME</span><span class="s2">/go/bin&#34;</span> <span class="p">|</span> sudo tee -a /etc/profile<span class="err">
+</span></code></pre></td></tr></table>
 </div>
 </div><p>安装 golang dlv：</p>
 <div class="highlight"><div class="chroma">
@@ -308,9 +308,9 @@ RUN sudo echo &#34;export PATH=$PATH:$HOME/go/bin&#34; | sudo tee -a /etc/profil
 </span><span class="lnt">2
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"># install dlv
-RUN /usr/local/go/bin/go install github.com/go-delve/delve/cmd/dlv@latest
-</code></pre></td></tr></table>
+<pre tabindex="0" class="chroma"><code class="language-dockerfile" data-lang="dockerfile"><span class="c"># install dlv</span><span class="err">
+</span><span class="err"></span><span class="k">RUN</span> /usr/local/go/bin/go install github.com/go-delve/delve/cmd/dlv@latest<span class="err">
+</span></code></pre></td></tr></table>
 </div>
 </div><p>加载 vscode go 插件：</p>
 <div class="highlight"><div class="chroma">
@@ -322,12 +322,12 @@ RUN /usr/local/go/bin/go install github.com/go-delve/delve/cmd/dlv@latest
 </span><span class="lnt">5
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="err">#</span> <span class="nx">install</span> <span class="nx">golang</span> <span class="nx">extension</span>
-<span class="nx">RUN</span> <span class="nx">wget</span> <span class="o">-</span><span class="nx">v</span> <span class="nx">https</span><span class="p">:</span><span class="c1">//marketplace.visualstudio.com/_apis/public/gallery/publishers/golang/vsextensions/go/0.35.2/vspackage
-</span><span class="c1"></span><span class="nx">RUN</span> <span class="nx">bsdtar</span> <span class="o">-</span><span class="nx">xvf</span> <span class="nx">vspackage</span> <span class="nx">extension</span>
-<span class="nx">RUN</span> <span class="nx">mv</span> <span class="nx">extension</span> <span class="o">/</span><span class="nx">home</span><span class="o">/</span><span class="nx">coder</span><span class="o">/</span><span class="p">.</span><span class="nx">local</span><span class="o">/</span><span class="nx">share</span><span class="o">/</span><span class="nx">code</span><span class="o">-</span><span class="nx">server</span><span class="o">/</span><span class="nx">extensions</span><span class="o">/</span><span class="nx">golang</span><span class="p">.</span><span class="k">go</span><span class="o">-</span><span class="mf">0.35.2</span>
-<span class="nx">RUN</span> <span class="nx">rm</span> <span class="o">-</span><span class="nx">f</span> <span class="nx">vspackage</span>
-</code></pre></td></tr></table>
+<pre tabindex="0" class="chroma"><code class="language-dockerfile" data-lang="dockerfile"><span class="c"># install golang extension</span><span class="err">
+</span><span class="err"></span><span class="k">RUN</span> wget -v https://marketplace.visualstudio.com/_apis/public/gallery/publishers/golang/vsextensions/go/0.35.2/vspackage<span class="err">
+</span><span class="err"></span><span class="k">RUN</span> bsdtar -xvf vspackage extension<span class="err">
+</span><span class="err"></span><span class="k">RUN</span> mv extension /home/coder/.local/share/code-server/extensions/golang.go-0.35.2<span class="err">
+</span><span class="err"></span><span class="k">RUN</span> rm -f vspackage<span class="err">
+</span></code></pre></td></tr></table>
 </div>
 </div><h2 id="开发镜像访问集群中服务">开发镜像访问集群中服务</h2>
 <p>集群中服务需要暴露对外端口，这里用 nocalhost 提供的 bookinfo 的 author 模块来测试，需要将 productpage svc 修改为 node 类型，暴露对外端口：</p>
@@ -342,14 +342,14 @@ RUN /usr/local/go/bin/go install github.com/go-delve/delve/cmd/dlv@latest
 </span><span class="lnt">7
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">  ports:
-  - name: http
-    nodePort: 32428
-    port: 9080
-    protocol: TCP
-    targetPort: 9080
-  type: NodePort
-</code></pre></td></tr></table>
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="w">  </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">http</span><span class="w">
+</span><span class="w">    </span><span class="nt">nodePort</span><span class="p">:</span><span class="w"> </span><span class="m">32428</span><span class="w">
+</span><span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">9080</span><span class="w">
+</span><span class="w">    </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l">TCP</span><span class="w">
+</span><span class="w">    </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="m">9080</span><span class="w">
+</span><span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">NodePort</span><span class="w">
+</span></code></pre></td></tr></table>
 </div>
 </div><p>在浏览器中开启调试模式后，启动服务 sh run.sh 后，访问地址：http://172.19.52.61:32428/ 。
 其中 172.19.52.61 为 node 的 ip 地址，即可在页面上点击测试。</p>

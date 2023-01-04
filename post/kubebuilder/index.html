@@ -49,7 +49,7 @@
 <meta itemprop="name" content="Kubebuilder使用介绍">
 <meta itemprop="description" content="Kubebuilder 是什么 Kubebuilder 是一个使用自定义资源定义（CRDs）来构建 Kubernetes API 的框架。与 Ruby on Rails 和 SpringBoot 等 web 开发框架类似，Kubebuilder 提高了开发人员使用 Go 语言"><meta itemprop="datePublished" content="2022-09-09T15:19:26+08:00" />
 <meta itemprop="dateModified" content="2022-09-09T15:19:26+08:00" />
-<meta itemprop="wordCount" content="5218">
+<meta itemprop="wordCount" content="5162">
 <meta itemprop="keywords" content="kubernetes,kubebuilder,operator," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Kubebuilder使用介绍"/>
 <meta name="twitter:description" content="Kubebuilder 是什么 Kubebuilder 是一个使用自定义资源定义（CRDs）来构建 Kubernetes API 的框架。与 Ruby on Rails 和 SpringBoot 等 web 开发框架类似，Kubebuilder 提高了开发人员使用 Go 语言"/>
@@ -132,7 +132,7 @@
         <div class="post-category">
             <a href="../../categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
             </div>
-          <span class="more-meta"> 约 5218 字 </span>
+          <span class="more-meta"> 约 5162 字 </span>
           <span class="more-meta"> 预计阅读 11 分钟 </span>
         <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
       </div>
@@ -210,26 +210,26 @@
 </span><span class="lnt">19
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: test
-spec:
-  selector:
-    matchLabels:
-      app: test
-  replicas: 2
-  template:
-    metadata:
-      labels:
-        app: test
-    spec:
-      containers:
-      - name: nginx
-        image: nginx:1.7.9
-        ports:
-        - containerPort: 80
-</code></pre></td></tr></table>
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">apps/v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Deployment</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">test</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">test</span><span class="w">
+</span><span class="w">  </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="m">2</span><span class="w">
+</span><span class="w">  </span><span class="nt">template</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">test</span><span class="w">
+</span><span class="w">    </span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">containers</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">nginx</span><span class="w">
+</span><span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l">nginx:1.7.9</span><span class="w">
+</span><span class="w">        </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">containerPort</span><span class="p">:</span><span class="w"> </span><span class="m">80</span><span class="w">
+</span></code></pre></td></tr></table>
 </div>
 </div><p>上面的例子中，Deployment 资源创建之后，Deployment 控制器进行处理，确保 pods 个数为 2。实现控制逻辑的过程称为调谐，其伪代码逻辑为：</p>
 <div class="highlight"><div class="chroma">
@@ -245,15 +245,15 @@ spec:
 </span><span class="lnt">9
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">for {
-    actualState := GetResourceActualState(rsvc)
-    expectState := GetResourceExpectState(rsvc)
-    if actualState == expectState {
-        // do nothing
-    } else {
-        Reconcile(rsvc)
-    }
-}
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="k">for</span> <span class="p">{</span>
+    <span class="nx">actualState</span> <span class="o">:=</span> <span class="nf">GetResourceActualState</span><span class="p">(</span><span class="nx">rsvc</span><span class="p">)</span>
+    <span class="nx">expectState</span> <span class="o">:=</span> <span class="nf">GetResourceExpectState</span><span class="p">(</span><span class="nx">rsvc</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nx">actualState</span> <span class="o">==</span> <span class="nx">expectState</span> <span class="p">{</span>
+        <span class="c1">// do nothing
+</span><span class="c1"></span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="nf">Reconcile</span><span class="p">(</span><span class="nx">rsvc</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
 </div><p>就是一个无限循环（实际是事件驱动+定时同步来实现，不是无脑循环）不断地对比期望状态（yaml 中定义的状态）和实际状态（deploy 和 pods 等状态的汇总），如果有出入则进行调谐逻辑，将实际状态调整为期望状态。</p>
@@ -273,7 +273,7 @@ spec:
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">go env -w GOPROXY=&#34;https://goproxy.cn,direct&#34;
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">go env -w <span class="nv">GOPROXY</span><span class="o">=</span><span class="s2">&#34;https://goproxy.cn,direct&#34;</span>
 </code></pre></td></tr></table>
 </div>
 </div><p>安装 kubebuilder：</p>
@@ -283,8 +283,8 @@ spec:
 </span><span class="lnt">2
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">curl -L -o kubebuilder https://go.kubebuilder.io/dl/latest/$(go env GOOS)/$(go env GOARCH)
-chmod +x kubebuilder &amp;&amp; mv kubebuilder /usr/local/bin/
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">curl -L -o kubebuilder https://go.kubebuilder.io/dl/latest/<span class="k">$(</span>go env GOOS<span class="k">)</span>/<span class="k">$(</span>go env GOARCH<span class="k">)</span>
+chmod +x kubebuilder <span class="o">&amp;&amp;</span> mv kubebuilder /usr/local/bin/
 </code></pre></td></tr></table>
 </div>
 </div><p>创建项目：</p>
@@ -295,8 +295,8 @@ chmod +x kubebuilder &amp;&amp; mv kubebuilder /usr/local/bin/
 </span><span class="lnt">3
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">mkdir -p ~/projects/guestbook
-cd ~/projects/guestbook
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">mkdir -p ~/projects/guestbook
+<span class="nb">cd</span> ~/projects/guestbook
 kubebuilder init --domain my.domain --repo my.domain/guestbook
 </code></pre></td></tr></table>
 </div>
@@ -307,7 +307,7 @@ kubebuilder init --domain my.domain --repo my.domain/guestbook
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">kubebuilder create api --group webapp --version v1 --kind Guestbook
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubebuilder create api --group webapp --version v1 --kind Guestbook
 </code></pre></td></tr></table>
 </div>
 </div><p>在本地执行时报了一个错：</p>
@@ -318,9 +318,9 @@ kubebuilder init --domain my.domain --repo my.domain/guestbook
 </span><span class="lnt">3
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="o">/</span><span class="nx">root</span><span class="o">/</span><span class="nx">projects</span><span class="o">/</span><span class="nx">guestbook</span><span class="o">/</span><span class="nx">bin</span><span class="o">/</span><span class="nx">controller</span><span class="o">-</span><span class="nx">gen</span> <span class="nx">object</span><span class="p">:</span><span class="nx">headerFile</span><span class="p">=</span><span class="s">&#34;hack/boilerplate.go.txt&#34;</span> <span class="nx">paths</span><span class="p">=</span><span class="s">&#34;./...&#34;</span>
-<span class="o">/</span><span class="nx">usr</span><span class="o">/</span><span class="nx">local</span><span class="o">/</span><span class="k">go</span><span class="o">/</span><span class="nx">src</span><span class="o">/</span><span class="nx">net</span><span class="o">/</span><span class="nx">cgo_linux</span><span class="p">.</span><span class="k">go</span><span class="p">:</span><span class="mi">12</span><span class="p">:</span><span class="mi">8</span><span class="p">:</span> <span class="nx">no</span> <span class="nx">such</span> <span class="kn">package</span> <span class="nx">located</span>
-<span class="nx">Error</span><span class="p">:</span> <span class="nx">not</span> <span class="nx">all</span> <span class="nx">generators</span> <span class="nx">ran</span> <span class="nx">successfully</span>
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">/root/projects/guestbook/bin/controller-gen object:headerFile<span class="o">=</span><span class="s2">&#34;hack/boilerplate.go.txt&#34;</span> <span class="nv">paths</span><span class="o">=</span><span class="s2">&#34;./...&#34;</span>
+/usr/local/go/src/net/cgo_linux.go:12:8: no such package located
+Error: not all generators ran successfully
 </code></pre></td></tr></table>
 </div>
 </div><p>在 github 上搜到的 <a href="https://github.com/kubernetes-sigs/kubebuilder/issues/2828">issue</a>，提示安装 gcc：</p>
@@ -329,7 +329,7 @@ kubebuilder init --domain my.domain --repo my.domain/guestbook
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">apt install gcc
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">apt install gcc
 </code></pre></td></tr></table>
 </div>
 </div><p>安装后删除文件夹再重新执行上面的步骤，问题得到解决。执行完成后，目录下主要文件为：</p>
@@ -362,7 +362,7 @@ kubebuilder init --domain my.domain --repo my.domain/guestbook
 </span><span class="lnt">25
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">➜  guestbook tree -L 3
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">➜  guestbook tree -L <span class="m">3</span>
 .
 ├── Dockerfile  // 控制器镜像模板
 ├── Makefile    // 工具安装、编译、运行等命令集合
@@ -374,9 +374,9 @@ kubebuilder init --domain my.domain --repo my.domain/guestbook
 ├── config      // 启动相关的配置
 │   ├── crd
 │   │   ├── bases                   // crd 的描述文件
-│   │   ├── kustomization.yaml      // kustomize 文件，对资源进行（组合）[https://kubernetes.io/zh-cn/docs/tasks/manage-kubernetes-objects/kustomization/#composing]
-│   │   ├── kustomizeconfig.yaml    // kustomize （转换器配置）[https://github.com/kubernetes-sigs/kustomize/tree/master/examples/transformerconfigs]
-│   │   └── patches                 // kuctomize （定制）[https://kubernetes.io/zh-cn/docs/tasks/manage-kubernetes-objects/kustomization/#customizing]
+│   │   ├── kustomization.yaml      // kustomize 文件，对资源进行（组合）<span class="o">[</span>https://kubernetes.io/zh-cn/docs/tasks/manage-kubernetes-objects/kustomization/#composing<span class="o">]</span>
+│   │   ├── kustomizeconfig.yaml    // kustomize （转换器配置）<span class="o">[</span>https://github.com/kubernetes-sigs/kustomize/tree/master/examples/transformerconfigs<span class="o">]</span>
+│   │   └── patches                 // kuctomize （定制）<span class="o">[</span>https://kubernetes.io/zh-cn/docs/tasks/manage-kubernetes-objects/kustomization/#customizing<span class="o">]</span>
 │   ├── default                     // 默认启动配置，包含加载 crd 和控制器等，即 kustomization 包含了 crd、manager 和 rbac 等目录资源
 │   ├── manager                     // 控制器配置
 │   ├── rbac                        // rbac 配置
@@ -396,7 +396,7 @@ kubebuilder init --domain my.domain --repo my.domain/guestbook
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">make install
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">make install
 </code></pre></td></tr></table>
 </div>
 </div><p>如果机器配置了国外代理，是可以安装成功的。但是测试的这台云主机没有配置，安装会出错，因此需要参考 Makefile 内容，用手动方式安装替换：</p>
@@ -419,21 +419,21 @@ kubebuilder init --domain my.domain --repo my.domain/guestbook
 </span><span class="lnt">15
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"># Makefile 中 controller-gen 替换变量后安装命令，可以执行成功
-GOBIN=/root/projects/guestbook/bin  go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.9.2
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># Makefile 中 controller-gen 替换变量后安装命令，可以执行成功</span>
+<span class="nv">GOBIN</span><span class="o">=</span>/root/projects/guestbook/bin  go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.9.2
 
-# Makefile 中 kustomize 替换变量后安装命令，执行出错
-curl -s &#34;https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh&#34; | bash -s -- 3.8.7 /root/projects/guestbook/bin
-# 将 raw.githubusercontent.com 改为：raw.fastgit.org 后下载 install_kustomize.sh：
-wget &#34;https://raw.fastgit.org/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh&#34;
-# 将 install_kustomize.sh 执行后，在下载安装包时出错：
+<span class="c1"># Makefile 中 kustomize 替换变量后安装命令，执行出错</span>
+curl -s <span class="s2">&#34;https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh&#34;</span> <span class="p">|</span> bash -s -- 3.8.7 /root/projects/guestbook/bin
+<span class="c1"># 将 raw.githubusercontent.com 改为：raw.fastgit.org 后下载 install_kustomize.sh：</span>
+wget <span class="s2">&#34;https://raw.fastgit.org/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh&#34;</span>
+<span class="c1"># 将 install_kustomize.sh 执行后，在下载安装包时出错：</span>
 curl -sLO https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v3.8.7/kustomize_v3.8.7_linux_amd64.tar.gz
-# 使用加速下载工具 http://toolwa.com/github/ 得到链接后，替换脚本中下载地址：
-curl -sLO &#34;https://download.fastgit.org/kubernetes-sigs/kustomize/releases/download/kustomize/v3.8.7/kustomize_v3.8.7_linux_amd64.tar.gz&#34;
-# 最后将当前目录下的 bin 下的可执行文件拷贝到 /root/projects/guestbook/bin 下即可
+<span class="c1"># 使用加速下载工具 http://toolwa.com/github/ 得到链接后，替换脚本中下载地址：</span>
+curl -sLO <span class="s2">&#34;https://download.fastgit.org/kubernetes-sigs/kustomize/releases/download/kustomize/v3.8.7/kustomize_v3.8.7_linux_amd64.tar.gz&#34;</span>
+<span class="c1"># 最后将当前目录下的 bin 下的可执行文件拷贝到 /root/projects/guestbook/bin 下即可</span>
 
-# 使用 kustomize 应用 crd
-bin/kustomize build config/crd | kubectl apply -f -
+<span class="c1"># 使用 kustomize 应用 crd</span>
+bin/kustomize build config/crd <span class="p">|</span> kubectl apply -f -
 </code></pre></td></tr></table>
 </div>
 </div><p>此时用一下命令可以看到 crd 已经应用成功：</p>
@@ -443,8 +443,8 @@ bin/kustomize build config/crd | kubectl apply -f -
 </span><span class="lnt">2
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">root@ecp-dev:~/projects/guestbook# kubectl api-resources  | grep guestbooks
-guestbooks                                       webapp.my.domain/v1                    true         Guestbook
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@ecp-dev:~/projects/guestbook# kubectl api-resources  <span class="p">|</span> grep guestbooks
+guestbooks                                       webapp.my.domain/v1                    <span class="nb">true</span>         Guestbook
 </code></pre></td></tr></table>
 </div>
 </div><p>运行进行测试，下面的命令会启动控制器，开始对 guestbooks crd 进行调谐：</p>
@@ -453,7 +453,7 @@ guestbooks                                       webapp.my.domain/v1            
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">make run
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">make run
 </code></pre></td></tr></table>
 </div>
 </div><p>部署一个 guestbooks 资源，并查看结果：</p>
@@ -466,7 +466,7 @@ guestbooks                                       webapp.my.domain/v1            
 </span><span class="lnt">5
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">root@ecp-dev:~/projects/guestbook# kubectl apply -f config/samples/
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@ecp-dev:~/projects/guestbook# kubectl apply -f config/samples/
 guestbook.webapp.my.domain/guestbook-sample created
 root@ecp-dev:~/projects/guestbook# kubectl get guestbooks.webapp.my.domain
 NAME               AGE
@@ -493,20 +493,20 @@ guestbook-sample   4s
 </span><span class="lnt">14
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">// GuestbookSpec defines the desired state of Guestbook
-type GuestbookSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run &#34;make&#34; to regenerate code after modifying this file
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// GuestbookSpec defines the desired state of Guestbook
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">GuestbookSpec</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="c1">// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+</span><span class="c1"></span>	<span class="c1">// Important: Run &#34;make&#34; to regenerate code after modifying this file
+</span><span class="c1"></span>
+	<span class="c1">// Foo is an example field of Guestbook. Edit guestbook_types.go to remove/update
+</span><span class="c1"></span>	<span class="nx">Foo</span> <span class="kt">string</span> <span class="s">`json:&#34;foo,omitempty&#34;`</span>
+<span class="p">}</span>
 
-	// Foo is an example field of Guestbook. Edit guestbook_types.go to remove/update
-	Foo string `json:&#34;foo,omitempty&#34;`
-}
-
-// GuestbookStatus defines the observed state of Guestbook
-type GuestbookStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run &#34;make&#34; to regenerate code after modifying this file
-}
+<span class="c1">// GuestbookStatus defines the observed state of Guestbook
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">GuestbookStatus</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="c1">// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+</span><span class="c1"></span>	<span class="c1">// Important: Run &#34;make&#34; to regenerate code after modifying this file
+</span><span class="c1"></span><span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
 </div><p>修改控制器的调谐逻辑在文件 guestbook_controller.go 中：</p>
@@ -522,14 +522,14 @@ type GuestbookStatus struct {
 </span><span class="lnt">8
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.12.2/pkg/reconcile
-func (r *GuestbookReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.12.2/pkg/reconcile
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <span class="o">*</span><span class="nx">GuestbookReconciler</span><span class="p">)</span> <span class="nf">Reconcile</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">req</span> <span class="nx">ctrl</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span> <span class="p">(</span><span class="nx">ctrl</span><span class="p">.</span><span class="nx">Result</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">_</span> <span class="p">=</span> <span class="nx">log</span><span class="p">.</span><span class="nf">FromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
 
-	// TODO(user): your logic here
-
-	return ctrl.Result{}, nil
-}
+	<span class="c1">// TODO(user): your logic here
+</span><span class="c1"></span>
+	<span class="k">return</span> <span class="nx">ctrl</span><span class="p">.</span><span class="nx">Result</span><span class="p">{},</span> <span class="kc">nil</span>
+<span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
 </div><h2 id="实现-cronjob-控制器">实现 CronJob 控制器</h2>
@@ -547,12 +547,12 @@ func (r *GuestbookReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 </span><span class="lnt">7
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"># 创建项目
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 创建项目</span>
 mkdir project
-cd project
+<span class="nb">cd</span> project
 kubebuilder init --domain tutorial.kubebuilder.io --repo tutorial.kubebuilder.io/project
 
-# 添加 api
+<span class="c1"># 添加 api</span>
 kubebuilder create api --group batch --version v1 --kind CronJob
 </code></pre></td></tr></table>
 </div>
@@ -1517,11 +1517,11 @@ kubebuilder create api --group batch --version v1 --kind CronJob
 </span><span class="lnt">6
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"># 生成 crd 清单
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 生成 crd 清单</span>
 make manifests
-# 加载 crd 到集群中
+<span class="c1"># 加载 crd 到集群中</span>
 make install
-# 运行控制器
+<span class="c1"># 运行控制器</span>
 make run
 </code></pre></td></tr></table>
 </div>
@@ -1551,27 +1551,27 @@ make run
 </span><span class="lnt">20
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">apiVersion: batch.tutorial.kubebuilder.io/v1
-kind: CronJob
-metadata:
-  name: cronjob-sample
-spec:
-  schedule: &#34;*/1 * * * *&#34;
-  startingDeadlineSeconds: 60
-  concurrencyPolicy: Allow # explicitly specify, but Allow is also default.
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          containers:
-          - name: hello
-            image: busybox
-            args:
-            - /bin/sh
-            - -c
-            - date; echo Hello from the Kubernetes cluster
-          restartPolicy: OnFailure
-</code></pre></td></tr></table>
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">batch.tutorial.kubebuilder.io/v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">CronJob</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">cronjob-sample</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">schedule</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;*/1 * * * *&#34;</span><span class="w">
+</span><span class="w">  </span><span class="nt">startingDeadlineSeconds</span><span class="p">:</span><span class="w"> </span><span class="m">60</span><span class="w">
+</span><span class="w">  </span><span class="nt">concurrencyPolicy</span><span class="p">:</span><span class="w"> </span><span class="l">Allow</span><span class="w"> </span><span class="c"># explicitly specify, but Allow is also default.</span><span class="w">
+</span><span class="w">  </span><span class="nt">jobTemplate</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">template</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">containers</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">hello</span><span class="w">
+</span><span class="w">            </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l">busybox</span><span class="w">
+</span><span class="w">            </span><span class="nt">args</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span>- <span class="l">/bin/sh</span><span class="w">
+</span><span class="w">            </span>- -<span class="l">c</span><span class="w">
+</span><span class="w">            </span>- <span class="l">date; echo Hello from the Kubernetes cluster</span><span class="w">
+</span><span class="w">          </span><span class="nt">restartPolicy</span><span class="p">:</span><span class="w"> </span><span class="l">OnFailure</span><span class="w">
+</span></code></pre></td></tr></table>
 </div>
 </div><p>部署：</p>
 <div class="highlight"><div class="chroma">
@@ -1579,7 +1579,7 @@ spec:
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">kubectl create -f config/samples/batch_v1_cronjob.yaml
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubectl create -f config/samples/batch_v1_cronjob.yaml
 </code></pre></td></tr></table>
 </div>
 </div><p>然后就可以用以下命令来查看运行结果了：</p>
@@ -1589,7 +1589,7 @@ spec:
 </span><span class="lnt">2
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">kubectl get cronjob.batch.tutorial.kubebuilder.io -o yaml
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubectl get cronjob.batch.tutorial.kubebuilder.io -o yaml
 kubectl get job
 </code></pre></td></tr></table>
 </div>

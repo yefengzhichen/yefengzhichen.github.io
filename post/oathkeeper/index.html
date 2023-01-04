@@ -49,7 +49,7 @@
 <meta itemprop="name" content="Oathkeeper 介绍和使用实例">
 <meta itemprop="description" content="登陆和访问逻辑 目前网页端平台用户的登陆流程是，请求 ems_dashboard_api 服务的/ems_dashboard_api/auth_login/接口，返回 session_id cookies 数据，返"><meta itemprop="datePublished" content="2022-11-23T18:52:15+08:00" />
 <meta itemprop="dateModified" content="2022-11-23T18:52:15+08:00" />
-<meta itemprop="wordCount" content="4185">
+<meta itemprop="wordCount" content="4283">
 <meta itemprop="keywords" content="oathkeeper,认证,授权," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Oathkeeper 介绍和使用实例"/>
 <meta name="twitter:description" content="登陆和访问逻辑 目前网页端平台用户的登陆流程是，请求 ems_dashboard_api 服务的/ems_dashboard_api/auth_login/接口，返回 session_id cookies 数据，返"/>
@@ -132,7 +132,7 @@
         <div class="post-category">
             <a href="../../categories/%E5%90%8E%E7%AB%AF/"> 后端 </a>
             </div>
-          <span class="more-meta"> 约 4185 字 </span>
+          <span class="more-meta"> 约 4283 字 </span>
           <span class="more-meta"> 预计阅读 9 分钟 </span>
         <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
       </div>
@@ -239,58 +239,58 @@
 </span><span class="lnt">51
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">serve:
-  proxy:
-    port: 4455 # run the proxy at port 4455
-  api:
-    port: 4456 # run the api at port 4456
-
-access_rules:
-  repositories:
-    - file:///rules.json
-
-errors:
-  fallback:
-    - json
-  handlers:
-    json:
-      enabled: true
-      config:
-        verbose: true
-
-mutators:
-  noop:
-    enabled: true
-  id_token:
-    enabled: true
-    config:
-      issuer_url: oath-gateway.{{ .Release.Namespace }}
-      jwks_url: file:///jwks/jwks.json
-      ttl: 60s
-      claims: |
-        {{ `{{ toJson .Extra }}` }}
-
-authorizers:
-  allow:
-    enabled: true
-
-authenticators:
-  bearer_token:
-    enabled: true
-    config:
-      check_session_url: http://127.0.0.1/api/v1/auth/keystone/
-      preserve_path: true
-      token_from:
-        header: x-keystone-token
-
-  cookie_session:
-    enabled: true
-    config:
-      check_session_url: http://127.0.0.1/api/v1/auth/session/
-      preserve_path: true   // 是否保留路径，设置后，check_session_url 的路径将会被保留，而不是替换为将要被检查的路径
-      only:
-        - sessionid         // cookie 中至少有 sessionid 字段才会处理，否则将会传递到后续认证处理器
-</code></pre></td></tr></table>
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">serve</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">proxy</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">4455</span><span class="w"> </span><span class="c"># run the proxy at port 4455</span><span class="w">
+</span><span class="w">  </span><span class="nt">api</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">4456</span><span class="w"> </span><span class="c"># run the api at port 4456</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="nt">access_rules</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">repositories</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="l">file:///rules.json</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="nt">errors</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">fallback</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="l">json</span><span class="w">
+</span><span class="w">  </span><span class="nt">handlers</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">json</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">      </span><span class="nt">config</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">verbose</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="nt">mutators</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">noop</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">  </span><span class="nt">id_token</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">    </span><span class="nt">config</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">issuer_url</span><span class="p">:</span><span class="w"> </span><span class="l">oath-gateway.{{ .Release.Namespace }}</span><span class="w">
+</span><span class="w">      </span><span class="nt">jwks_url</span><span class="p">:</span><span class="w"> </span><span class="l">file:///jwks/jwks.json</span><span class="w">
+</span><span class="w">      </span><span class="nt">ttl</span><span class="p">:</span><span class="w"> </span><span class="l">60s</span><span class="w">
+</span><span class="w">      </span><span class="nt">claims</span><span class="p">:</span><span class="w"> </span><span class="p">|</span><span class="sd">
+</span><span class="sd">        </span><span class="w">        </span>{{<span class="w"> </span><span class="l">`{{ toJson .Extra }}` }}</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="nt">authorizers</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">allow</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="nt">authenticators</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">bearer_token</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">    </span><span class="nt">config</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">check_session_url</span><span class="p">:</span><span class="w"> </span><span class="l">http://127.0.0.1/api/v1/auth/keystone/</span><span class="w">
+</span><span class="w">      </span><span class="nt">preserve_path</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">      </span><span class="nt">token_from</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">header</span><span class="p">:</span><span class="w"> </span><span class="l">x-keystone-token</span><span class="w">
+</span><span class="w">
+</span><span class="w">  </span><span class="nt">cookie_session</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">    </span><span class="nt">config</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">check_session_url</span><span class="p">:</span><span class="w"> </span><span class="l">http://127.0.0.1/api/v1/auth/session/</span><span class="w">
+</span><span class="w">      </span><span class="nt">preserve_path</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">   </span><span class="l">// 是否保留路径，设置后，check_session_url 的路径将会被保留，而不是替换为将要被检查的路径</span><span class="w">
+</span><span class="w">      </span><span class="nt">only</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="l">sessionid         // cookie 中至少有 sessionid 字段才会处理，否则将会传递到后续认证处理器</span><span class="w">
+</span></code></pre></td></tr></table>
 </div>
 </div><p>认证规则 rules.json 为：</p>
 <div class="highlight"><div class="chroma">
@@ -325,34 +325,34 @@ authenticators:
 </span><span class="lnt">28
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">[
-  {
-    &#34;id&#34;: &#34;cloud-product-auth&#34;,     // 这条规则的 id
-    &#34;version&#34;: &#34;v0.36.0-beta.4&#34;,
-    &#34;match&#34;: {
-      &#34;url&#34;: &#34;http://&lt;.*&gt;/&lt;.*&gt;&#34;,        // 匹配所有 url
-      &#34;methods&#34;: [
-        &#34;GET&#34;, &#34;POST&#34;, &#34;PUT&#34;, &#34;DELETE&#34;, &#34;PATCH&#34;, &#34;OPTIONS&#34;  // 接口类型
-      ]
-    },
-    &#34;authenticators&#34;: [ // 认证，设置了两个认证处理器
-      {
-        &#34;handler&#34;: &#34;bearer_token&#34;
-      },
-      {
-        &#34;handler&#34;: &#34;cookie_session&#34;
-      }
-    ],
-    &#34;authorizer&#34;: {
-      &#34;handler&#34;: &#34;allow&#34;
-    },
-    &#34;mutators&#34;: [
-      {
-        &#34;handler&#34;: &#34;id_token&#34;
-      }
-    ]
-  }
-]
+<pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="p">[</span>
+  <span class="p">{</span>
+    <span class="nt">&#34;id&#34;</span><span class="p">:</span> <span class="s2">&#34;cloud-product-auth&#34;</span><span class="p">,</span>     <span class="c1">// 这条规则的 id
+</span><span class="c1"></span>    <span class="nt">&#34;version&#34;</span><span class="p">:</span> <span class="s2">&#34;v0.36.0-beta.4&#34;</span><span class="p">,</span>
+    <span class="nt">&#34;match&#34;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="nt">&#34;url&#34;</span><span class="p">:</span> <span class="s2">&#34;http://&lt;.*&gt;/&lt;.*&gt;&#34;</span><span class="p">,</span>        <span class="c1">// 匹配所有 url
+</span><span class="c1"></span>      <span class="nt">&#34;methods&#34;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">&#34;GET&#34;</span><span class="p">,</span> <span class="s2">&#34;POST&#34;</span><span class="p">,</span> <span class="s2">&#34;PUT&#34;</span><span class="p">,</span> <span class="s2">&#34;DELETE&#34;</span><span class="p">,</span> <span class="s2">&#34;PATCH&#34;</span><span class="p">,</span> <span class="s2">&#34;OPTIONS&#34;</span>  <span class="c1">// 接口类型
+</span><span class="c1"></span>      <span class="p">]</span>
+    <span class="p">},</span>
+    <span class="nt">&#34;authenticators&#34;</span><span class="p">:</span> <span class="p">[</span> <span class="c1">// 认证，设置了两个认证处理器
+</span><span class="c1"></span>      <span class="p">{</span>
+        <span class="nt">&#34;handler&#34;</span><span class="p">:</span> <span class="s2">&#34;bearer_token&#34;</span>
+      <span class="p">},</span>
+      <span class="p">{</span>
+        <span class="nt">&#34;handler&#34;</span><span class="p">:</span> <span class="s2">&#34;cookie_session&#34;</span>
+      <span class="p">}</span>
+    <span class="p">],</span>
+    <span class="nt">&#34;authorizer&#34;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="nt">&#34;handler&#34;</span><span class="p">:</span> <span class="s2">&#34;allow&#34;</span>
+    <span class="p">},</span>
+    <span class="nt">&#34;mutators&#34;</span><span class="p">:</span> <span class="p">[</span>
+      <span class="p">{</span>
+        <span class="nt">&#34;handler&#34;</span><span class="p">:</span> <span class="s2">&#34;id_token&#34;</span>
+      <span class="p">}</span>
+    <span class="p">]</span>
+  <span class="p">}</span>
+<span class="p">]</span>
 </code></pre></td></tr></table>
 </div>
 </div><h3 id="authenticators-处理器">authenticators 处理器</h3>
@@ -387,20 +387,20 @@ authenticators:
 </span><span class="lnt">13
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">authenticators:
-  bearer_token:
-    enabled: true # 是否使用 bearer_token
-
-    config:
-      check_session_url: https://session-store-host // 后端 session 存储地址
-      preserve_path: true
-      token_from:
-        header: Custom-Authorization-Header // 从 header 获取
-        # or
-        # query_parameter: auth-token // 从查询参数获取
-        # or
-        # cookie: auth-tokens         // 从 cookie 字段获取
-</code></pre></td></tr></table>
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">authenticators</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">bearer_token</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="c"># 是否使用 bearer_token</span><span class="w">
+</span><span class="w">
+</span><span class="w">    </span><span class="nt">config</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">check_session_url</span><span class="p">:</span><span class="w"> </span><span class="l">https://session-store-host // 后端 session 存储地址</span><span class="w">
+</span><span class="w">      </span><span class="nt">preserve_path</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">      </span><span class="nt">token_from</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">header</span><span class="p">:</span><span class="w"> </span><span class="l">Custom-Authorization-Header // 从 header 获取</span><span class="w">
+</span><span class="w">        </span><span class="c"># or</span><span class="w">
+</span><span class="w">        </span><span class="c"># query_parameter: auth-token // 从查询参数获取</span><span class="w">
+</span><span class="w">        </span><span class="c"># or</span><span class="w">
+</span><span class="w">        </span><span class="c"># cookie: auth-tokens         // 从 cookie 字段获取</span><span class="w">
+</span></code></pre></td></tr></table>
 </div>
 </div><p>rules.json 示例为：</p>
 <div class="highlight"><div class="chroma">
@@ -424,23 +424,23 @@ authenticators:
 </span><span class="lnt">17
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">[{
-  &#34;id&#34;: &#34;some-id&#34;,
-  &#34;upstream&#34;: {
-    &#34;url&#34;: &#34;http://my-backend-service&#34;
-  },
-  &#34;match&#34;: {
-    &#34;url&#34;: &#34;http://my-app/some-route&#34;,
-    &#34;methods&#34;: [
-      &#34;GET&#34;
-    ]
-  },
-  &#34;authenticators&#34;: [{
-    &#34;handler&#34;: &#34;bearer_token&#34;
-  }],
-  &#34;authorizer&#34;: { &#34;handler&#34;: &#34;allow&#34; },
-  &#34;mutators&#34;: [{ &#34;handler&#34;: &#34;noop&#34; }]
-}]
+<pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="p">[{</span>
+  <span class="nt">&#34;id&#34;</span><span class="p">:</span> <span class="s2">&#34;some-id&#34;</span><span class="p">,</span>
+  <span class="nt">&#34;upstream&#34;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&#34;url&#34;</span><span class="p">:</span> <span class="s2">&#34;http://my-backend-service&#34;</span>
+  <span class="p">},</span>
+  <span class="nt">&#34;match&#34;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&#34;url&#34;</span><span class="p">:</span> <span class="s2">&#34;http://my-app/some-route&#34;</span><span class="p">,</span>
+    <span class="nt">&#34;methods&#34;</span><span class="p">:</span> <span class="p">[</span>
+      <span class="s2">&#34;GET&#34;</span>
+    <span class="p">]</span>
+  <span class="p">},</span>
+  <span class="nt">&#34;authenticators&#34;</span><span class="p">:</span> <span class="p">[{</span>
+    <span class="nt">&#34;handler&#34;</span><span class="p">:</span> <span class="s2">&#34;bearer_token&#34;</span>
+  <span class="p">}],</span>
+  <span class="nt">&#34;authorizer&#34;</span><span class="p">:</span> <span class="p">{</span> <span class="nt">&#34;handler&#34;</span><span class="p">:</span> <span class="s2">&#34;allow&#34;</span> <span class="p">},</span>
+  <span class="nt">&#34;mutators&#34;</span><span class="p">:</span> <span class="p">[{</span> <span class="nt">&#34;handler&#34;</span><span class="p">:</span> <span class="s2">&#34;noop&#34;</span> <span class="p">}]</span>
+<span class="p">}]</span>
 </code></pre></td></tr></table>
 </div>
 </div><h3 id="authorizer-处理器">authorizer 处理器</h3>
@@ -456,12 +456,12 @@ authenticators:
 </span><span class="lnt">6
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">{
-  &#34;authorizer&#34;: {
-    &#34;handler&#34;: &#34;noop&#34;,  // 处理器名称
-    &#34;config&#34;: {}        // 配置
-  }
-}
+<pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="p">{</span>
+  <span class="nt">&#34;authorizer&#34;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&#34;handler&#34;</span><span class="p">:</span> <span class="s2">&#34;noop&#34;</span><span class="p">,</span>  <span class="c1">// 处理器名称
+</span><span class="c1"></span>    <span class="nt">&#34;config&#34;</span><span class="p">:</span> <span class="p">{}</span>        <span class="c1">// 配置
+</span><span class="c1"></span>  <span class="p">}</span>
+<span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
 </div><p>授权处理器有以下类型：</p>
@@ -533,14 +533,14 @@ Authorization: Bearer &lt;jwt-signed-id-token&gt;
 </span><span class="lnt">8
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">{
-  &#34;iss&#34;: &#34;https://server.example.com&#34;,
-  &#34;sub&#34;: &#34;client-id&#34;,
-  &#34;aud&#34;: &#34;s6BhdRkqt3&#34;,
-  &#34;jti&#34;: &#34;n-0S6_WzA2Mj&#34;,
-  &#34;exp&#34;: 1311281970,
-  &#34;iat&#34;: 1311280970
-}
+<pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="p">{</span>
+  <span class="nt">&#34;iss&#34;</span><span class="p">:</span> <span class="s2">&#34;https://server.example.com&#34;</span><span class="p">,</span>
+  <span class="nt">&#34;sub&#34;</span><span class="p">:</span> <span class="s2">&#34;client-id&#34;</span><span class="p">,</span>
+  <span class="nt">&#34;aud&#34;</span><span class="p">:</span> <span class="s2">&#34;s6BhdRkqt3&#34;</span><span class="p">,</span>
+  <span class="nt">&#34;jti&#34;</span><span class="p">:</span> <span class="s2">&#34;n-0S6_WzA2Mj&#34;</span><span class="p">,</span>
+  <span class="nt">&#34;exp&#34;</span><span class="p">:</span> <span class="mi">1311281970</span><span class="p">,</span>
+  <span class="nt">&#34;iat&#34;</span><span class="p">:</span> <span class="mi">1311280970</span>
+<span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
 </div><p>JWT 声明如下：</p>
@@ -568,18 +568,18 @@ Authorization: Bearer &lt;jwt-signed-id-token&gt;
 </span><span class="lnt">11
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">mutators:
-  id_token:
-    enabled: true   // 是否开启
-    config:
-      issuer_url: https://my-oathkeeper/    // 签发者地址
-      jwks_url: https://fetch-keys/from/this/location.json    // 公钥获取地址设置为远端地址
-      # jwks_url: file:///from/this/absolute/location.json    // 公钥获取地址设置为本地文件系统路径
-      # jwks_url: file://../from/this/relative/location.json  // 相对地址
-      ttl: 60s    // 超时时间
-      // claims 允许定制 JWT 的某些字段值
-      claims: &#39;{&#34;aud&#34;: [&#34;https://my-backend-service/some/endpoint&#34;],&#34;def&#34;: &#34;{{ print .Extra.some.arbitrary.data }}&#34;}&#39;
-</code></pre></td></tr></table>
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">mutators</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">id_token</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">   </span><span class="l">// 是否开启</span><span class="w">
+</span><span class="w">    </span><span class="nt">config</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">issuer_url</span><span class="p">:</span><span class="w"> </span><span class="l">https://my-oathkeeper/    // 签发者地址</span><span class="w">
+</span><span class="w">      </span><span class="nt">jwks_url</span><span class="p">:</span><span class="w"> </span><span class="l">https://fetch-keys/from/this/location.json    // 公钥获取地址设置为远端地址</span><span class="w">
+</span><span class="w">      </span><span class="c"># jwks_url: file:///from/this/absolute/location.json    // 公钥获取地址设置为本地文件系统路径</span><span class="w">
+</span><span class="w">      </span><span class="c"># jwks_url: file://../from/this/relative/location.json  // 相对地址</span><span class="w">
+</span><span class="w">      </span><span class="nt">ttl</span><span class="p">:</span><span class="w"> </span><span class="l">60s    // 超时时间</span><span class="w">
+</span><span class="w">      </span><span class="l">// claims 允许定制 JWT 的某些字段值</span><span class="w">
+</span><span class="w">      </span><span class="nt">claims</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;{&#34;aud&#34;: [&#34;https://my-backend-service/some/endpoint&#34;],&#34;def&#34;: &#34;{{ print .Extra.some.arbitrary.data }}&#34;}&#39;</span><span class="w">
+</span></code></pre></td></tr></table>
 </div>
 </div><p>在<code>mutators.id_token.jwks_url</code>定义的 JWT 集合中中发现的第一个私钥，将会被用来签署 JWT：</p>
 <ul>
@@ -607,22 +607,22 @@ Authorization: Bearer &lt;jwt-signed-id-token&gt;
 </span><span class="lnt">16
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">cat ./rules.json
-{
-  ...
-  &#34;mutators&#34;: [
-    {
-      &#34;handler&#34;: &#34;id_token&#34;,
-      &#34;config&#34;: {
-        &#34;aud&#34;: [
-          &#34;audience-1&#34;,
-          &#34;audience-2&#34;
-        ],
-        &#34;claims&#34;: &#34;{\&#34;abc\&#34;: \&#34;{{ print .Subject }}\&#34;,\&#34;def\&#34;: \&#34;{{ print .Extra.some.arbitrary.data }}\&#34;}&#34;
-      }
-    }
-  ]
-}
+<pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="err">cat</span> <span class="err">./rules.json</span>
+<span class="p">{</span>
+  <span class="err">...</span>
+  <span class="nt">&#34;mutators&#34;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="nt">&#34;handler&#34;</span><span class="p">:</span> <span class="s2">&#34;id_token&#34;</span><span class="p">,</span>
+      <span class="nt">&#34;config&#34;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&#34;aud&#34;</span><span class="p">:</span> <span class="p">[</span>
+          <span class="s2">&#34;audience-1&#34;</span><span class="p">,</span>
+          <span class="s2">&#34;audience-2&#34;</span>
+        <span class="p">],</span>
+        <span class="nt">&#34;claims&#34;</span><span class="p">:</span> <span class="s2">&#34;{\&#34;abc\&#34;: \&#34;{{ print .Subject }}\&#34;,\&#34;def\&#34;: \&#34;{{ print .Extra.some.arbitrary.data }}\&#34;}&#34;</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
 </div><h3 id="errors-处理器">errors 处理器</h3>
@@ -647,21 +647,21 @@ Authorization: Bearer &lt;jwt-signed-id-token&gt;
 </span><span class="lnt">14
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">errors:
-  fallback: // 设置后备，在有多个 handler 都满足转发条件时，优先使用后备字段里面的处理器。
-    - json
-
-  handlers:
-    json:
-      enabled: true # 默认为 true
-      # config:
-      #   when: ...
-    redirect:
-      enabled: true # 默认为 false
-      config:
-        to: http://mywebsite/login
-      # when: ...
-</code></pre></td></tr></table>
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">errors</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">fallback</span><span class="p">:</span><span class="w"> </span><span class="l">// 设置后备，在有多个 handler 都满足转发条件时，优先使用后备字段里面的处理器。</span><span class="w">
+</span><span class="w">    </span>- <span class="l">json</span><span class="w">
+</span><span class="w">
+</span><span class="w">  </span><span class="nt">handlers</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">json</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="c"># 默认为 true</span><span class="w">
+</span><span class="w">      </span><span class="c"># config:</span><span class="w">
+</span><span class="w">      </span><span class="c">#   when: ...</span><span class="w">
+</span><span class="w">    </span><span class="nt">redirect</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="c"># 默认为 false</span><span class="w">
+</span><span class="w">      </span><span class="nt">config</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">to</span><span class="p">:</span><span class="w"> </span><span class="l">http://mywebsite/login</span><span class="w">
+</span><span class="w">      </span><span class="c"># when: ...</span><span class="w">
+</span></code></pre></td></tr></table>
 </div>
 </div><h3 id="使用说明">使用说明</h3>
 <p>安装：</p>
@@ -671,8 +671,8 @@ Authorization: Bearer &lt;jwt-signed-id-token&gt;
 </span><span class="lnt">2
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">docker pull oryd/oathkeeper:v0.40.0
-docker run --rm -it oryd/oathkeeper:v0.40.0 help
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">docker pull oryd/oathkeeper:v0.40.0
+docker run --rm -it oryd/oathkeeper:v0.40.0 <span class="nb">help</span>
 </code></pre></td></tr></table>
 </div>
 </div><p>如何生成 jwk 文件：</p>
@@ -681,7 +681,7 @@ docker run --rm -it oryd/oathkeeper:v0.40.0 help
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">oathkeeper credentials generate --alg ES256 &gt; /jwks/jwks.jso
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">oathkeeper credentials generate --alg ES256 &gt; /jwks/jwks.jso
 </code></pre></td></tr></table>
 </div>
 </div><h2 id="流程分析">流程分析</h2>
@@ -783,100 +783,100 @@ docker run --rm -it oryd/oathkeeper:v0.40.0 help
 </span><span class="lnt">93
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">{{- $envAll := . }}
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: oath-gateway
-spec:
-  selector:
-    matchLabels:
-      app: oath
-      component: gateway
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: oath
-        component: gateway
-    spec:
-      initContainers:
-      - name: generate-jwks   // init 容器，使用 oathkeeper api 生成非对称密钥
-        image: ...
-        command:
-          - /bin/sh
-          - -c
-          - &#34;oathkeeper credentials generate --alg ES256 &gt; /jwks/jwks.json&#34;
-        volumeMounts:   // empty 卷，共享文件
-          - name: oathkeeper-jwks
-            mountPath: /jwks
-
-      containers:
-      - name: oathkeeper    // oathkeeper 服务
-        image: ...
-        args:
-          - serve
-          - &#39;--config&#39;
-          - /config.yaml
-        ports:
-          - containerPort: 4456
-            name: gateway
-            protocol: TCP
-        livenessProbe:
-          httpGet:
-            path: /health/alive
-            port: gateway
-        startupProbe:
-          httpGet:
-            path: /health/ready
-            port: gateway
-          failureThreshold: 30
-          periodSeconds: 10
-        volumeMounts:
-          - name: oathkeeper-jwks   // 密钥
-            mountPath: /jwks
-          - name: oathkeeper-etc    // 服务配置
-            mountPath: /config.yaml
-            subPath: config.yaml
-            readOnly: true
-          - name: oathkeeper-etc    // 访问规则配置
-            mountPath: /rules.json
-            subPath: rules.json
-            readOnly: true
-
-      - name: oath-backend
-        image: &#34;xxx&#34;
-        args:
-          - -c
-          - gunicorn_conf.py
-          - wsgi:application
-        ports:
-          - name: oath-api
-            containerPort: 80
-            protocol: TCP
-        env:
-          - name: OATH_BACKEND_DB_NAME
-            value: django
-          - name: OATH_BACKEND_DB_USER
-            value: django
-          - name: OATH_BACKEND_DB_PASSWD
-            value: password
-          - name: OATH_BACKEND_DB_HOST
-            value: mariadb.openstack.svc.cluster.local
-          - name: DRONE_PASSWORD
-            value: EyBTaXnK
-          - name: OPENSTACK_KEYSTONE_URL
-            value: http://keystone-api.openstack.svc.cluster.local:80/v3
-
-      volumes:
-        - name: oathkeeper-jwks
-          emptyDir: {}
-        - name: oathkeeper-etc
-          configMap:
-            defaultMode: 420
-            name: oathkeeper-etc
-</code></pre></td></tr></table>
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml">{{- <span class="l">$envAll := . }}</span><span class="w">
+</span><span class="w"></span><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">apps/v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Deployment</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">oath-gateway</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">oath</span><span class="w">
+</span><span class="w">      </span><span class="nt">component</span><span class="p">:</span><span class="w"> </span><span class="l">gateway</span><span class="w">
+</span><span class="w">  </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="m">1</span><span class="w">
+</span><span class="w">  </span><span class="nt">template</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">oath</span><span class="w">
+</span><span class="w">        </span><span class="nt">component</span><span class="p">:</span><span class="w"> </span><span class="l">gateway</span><span class="w">
+</span><span class="w">    </span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">initContainers</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">generate-jwks   // init 容器，使用 oathkeeper api 生成非对称密钥</span><span class="w">
+</span><span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l">...</span><span class="w">
+</span><span class="w">        </span><span class="nt">command</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span>- <span class="l">/bin/sh</span><span class="w">
+</span><span class="w">          </span>- -<span class="l">c</span><span class="w">
+</span><span class="w">          </span>- <span class="s2">&#34;oathkeeper credentials generate --alg ES256 &gt; /jwks/jwks.json&#34;</span><span class="w">
+</span><span class="w">        </span><span class="nt">volumeMounts</span><span class="p">:</span><span class="w">   </span><span class="l">// empty 卷，共享文件</span><span class="w">
+</span><span class="w">          </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">oathkeeper-jwks</span><span class="w">
+</span><span class="w">            </span><span class="nt">mountPath</span><span class="p">:</span><span class="w"> </span><span class="l">/jwks</span><span class="w">
+</span><span class="w">
+</span><span class="w">      </span><span class="nt">containers</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">oathkeeper    // oathkeeper 服务</span><span class="w">
+</span><span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l">...</span><span class="w">
+</span><span class="w">        </span><span class="nt">args</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span>- <span class="l">serve</span><span class="w">
+</span><span class="w">          </span>- <span class="s1">&#39;--config&#39;</span><span class="w">
+</span><span class="w">          </span>- <span class="l">/config.yaml</span><span class="w">
+</span><span class="w">        </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span>- <span class="nt">containerPort</span><span class="p">:</span><span class="w"> </span><span class="m">4456</span><span class="w">
+</span><span class="w">            </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">gateway</span><span class="w">
+</span><span class="w">            </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l">TCP</span><span class="w">
+</span><span class="w">        </span><span class="nt">livenessProbe</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">httpGet</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l">/health/alive</span><span class="w">
+</span><span class="w">            </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l">gateway</span><span class="w">
+</span><span class="w">        </span><span class="nt">startupProbe</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">httpGet</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l">/health/ready</span><span class="w">
+</span><span class="w">            </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l">gateway</span><span class="w">
+</span><span class="w">          </span><span class="nt">failureThreshold</span><span class="p">:</span><span class="w"> </span><span class="m">30</span><span class="w">
+</span><span class="w">          </span><span class="nt">periodSeconds</span><span class="p">:</span><span class="w"> </span><span class="m">10</span><span class="w">
+</span><span class="w">        </span><span class="nt">volumeMounts</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">oathkeeper-jwks   // 密钥</span><span class="w">
+</span><span class="w">            </span><span class="nt">mountPath</span><span class="p">:</span><span class="w"> </span><span class="l">/jwks</span><span class="w">
+</span><span class="w">          </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">oathkeeper-etc    // 服务配置</span><span class="w">
+</span><span class="w">            </span><span class="nt">mountPath</span><span class="p">:</span><span class="w"> </span><span class="l">/config.yaml</span><span class="w">
+</span><span class="w">            </span><span class="nt">subPath</span><span class="p">:</span><span class="w"> </span><span class="l">config.yaml</span><span class="w">
+</span><span class="w">            </span><span class="nt">readOnly</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">          </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">oathkeeper-etc    // 访问规则配置</span><span class="w">
+</span><span class="w">            </span><span class="nt">mountPath</span><span class="p">:</span><span class="w"> </span><span class="l">/rules.json</span><span class="w">
+</span><span class="w">            </span><span class="nt">subPath</span><span class="p">:</span><span class="w"> </span><span class="l">rules.json</span><span class="w">
+</span><span class="w">            </span><span class="nt">readOnly</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">oath-backend</span><span class="w">
+</span><span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;xxx&#34;</span><span class="w">
+</span><span class="w">        </span><span class="nt">args</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span>- -<span class="l">c</span><span class="w">
+</span><span class="w">          </span>- <span class="l">gunicorn_conf.py</span><span class="w">
+</span><span class="w">          </span>- <span class="l">wsgi:application</span><span class="w">
+</span><span class="w">        </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">oath-api</span><span class="w">
+</span><span class="w">            </span><span class="nt">containerPort</span><span class="p">:</span><span class="w"> </span><span class="m">80</span><span class="w">
+</span><span class="w">            </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l">TCP</span><span class="w">
+</span><span class="w">        </span><span class="nt">env</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">OATH_BACKEND_DB_NAME</span><span class="w">
+</span><span class="w">            </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l">django</span><span class="w">
+</span><span class="w">          </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">OATH_BACKEND_DB_USER</span><span class="w">
+</span><span class="w">            </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l">django</span><span class="w">
+</span><span class="w">          </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">OATH_BACKEND_DB_PASSWD</span><span class="w">
+</span><span class="w">            </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l">password</span><span class="w">
+</span><span class="w">          </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">OATH_BACKEND_DB_HOST</span><span class="w">
+</span><span class="w">            </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l">mariadb.openstack.svc.cluster.local</span><span class="w">
+</span><span class="w">          </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">DRONE_PASSWORD</span><span class="w">
+</span><span class="w">            </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l">EyBTaXnK</span><span class="w">
+</span><span class="w">          </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">OPENSTACK_KEYSTONE_URL</span><span class="w">
+</span><span class="w">            </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l">http://keystone-api.openstack.svc.cluster.local:80/v3</span><span class="w">
+</span><span class="w">
+</span><span class="w">      </span><span class="nt">volumes</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">oathkeeper-jwks</span><span class="w">
+</span><span class="w">          </span><span class="nt">emptyDir</span><span class="p">:</span><span class="w"> </span>{}<span class="w">
+</span><span class="w">        </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">oathkeeper-etc</span><span class="w">
+</span><span class="w">          </span><span class="nt">configMap</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span><span class="nt">defaultMode</span><span class="p">:</span><span class="w"> </span><span class="m">420</span><span class="w">
+</span><span class="w">            </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">oathkeeper-etc</span><span class="w">
+</span></code></pre></td></tr></table>
 </div>
 </div><p>在服务的描述中涉及 3 个容器：</p>
 <ul>
@@ -913,25 +913,25 @@ spec:
 </span><span class="lnt">19
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">{
-    &#34;subject&#34;: &#34;&#34;,
-    &#34;extra&#34;:{
-      &#34;domain_id&#34;: &#34;&#34;,
-      &#34;domain_name&#34;: &#34;&#34;,
-      &#34;domain_token&#34;: &#34;&#34;,
-      &#34;email&#34;: &#34;&#34;,
-      &#34;id&#34;: &#34;&#34;,
-      &#34;name&#34;: &#34;&#34;,
-      &#34;project_id&#34;: &#34;&#34;,
-      &#34;project_name&#34;: &#34;&#34;,
-      &#34;project_token&#34;: &#34;&#34;,
-      &#34;roles&#34;: &#34;&#34;,
-      &#34;region_url&#34;: &#34;&#34;,
-      &#34;current_cloud&#34;: &#34;&#34;,
-      &#34;sp_id&#34;: &#34;&#34;,
-      &#34;sp_auth_url&#34;: &#34;&#34;
-    }
-}
+<pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="p">{</span>
+    <span class="nt">&#34;subject&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span>
+    <span class="nt">&#34;extra&#34;</span><span class="p">:{</span>
+      <span class="nt">&#34;domain_id&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span>
+      <span class="nt">&#34;domain_name&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span>
+      <span class="nt">&#34;domain_token&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span>
+      <span class="nt">&#34;email&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span>
+      <span class="nt">&#34;id&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span>
+      <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span>
+      <span class="nt">&#34;project_id&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span>
+      <span class="nt">&#34;project_name&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span>
+      <span class="nt">&#34;project_token&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span>
+      <span class="nt">&#34;roles&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span>
+      <span class="nt">&#34;region_url&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span>
+      <span class="nt">&#34;current_cloud&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span>
+      <span class="nt">&#34;sp_id&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span>
+      <span class="nt">&#34;sp_auth_url&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
 </div><p>在业务代码中，请求的公钥地址为：“http://oath-gateway/.well-known/jwks.json”，即请求 oathkeeper 来获取公钥的。</p>
@@ -964,9 +964,9 @@ spec:
           <a href="../../tags/%E6%8E%88%E6%9D%83/">授权</a>
           </div>
       <nav class="post-nav">
-        <a class="prev" href="../../post/csdn_top_articles/">
+        <a class="prev" href="../../post/golang_slice/">
             <i class="iconfont icon-left"></i>
-            <span class="prev-text nav-default">Csdn博客文章汇总</span>
+            <span class="prev-text nav-default">Golang 数组和切片深入分析</span>
             <span class="prev-text nav-mobile">上一篇</span>
           </a>
         <a class="next" href="../../post/video_on_demand/">

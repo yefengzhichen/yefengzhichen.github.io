@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Golang 数组和切片深入分析 - yefengzhichen&#39;s blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="yefengzhichen" /><meta name="description" content="一、数组 数组赋值给数组 Go 数组是值类型，因此赋值操作和函数传参数会复制整个数组的数据，例： 1 2 3 4 5 6 7 8 9 10 11 func main() { a := [3]int{1, 2, 3} b := a fmt.Printf(&amp;#34;a addr: %p, a[0]" /><meta name="keywords" content="Hugo, theme, even" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.92.1 with theme even" />
+
+
+<link rel="canonical" href="https://yefengzhichen.github.io/post/golang_slice/" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../favicon-16x16.png">
+<link rel="manifest" href="../../manifest.json">
+<link rel="mask-icon" href="../../safari-pinned-tab.svg" color="#5bbad5">
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<link href="../../sass/main.min.f92fd13721ddf72129410fd8250e73152cc6f2438082b6c0208dc24ee7c13fc4.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="Golang 数组和切片深入分析" />
+<meta property="og:description" content="一、数组 数组赋值给数组 Go 数组是值类型，因此赋值操作和函数传参数会复制整个数组的数据，例： 1 2 3 4 5 6 7 8 9 10 11 func main() { a := [3]int{1, 2, 3} b := a fmt.Printf(&#34;a addr: %p, a[0]" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yefengzhichen.github.io/post/golang_slice/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2022-11-30T11:35:39+08:00" />
+<meta property="article:modified_time" content="2022-11-30T11:35:39+08:00" />
+
+<meta itemprop="name" content="Golang 数组和切片深入分析">
+<meta itemprop="description" content="一、数组 数组赋值给数组 Go 数组是值类型，因此赋值操作和函数传参数会复制整个数组的数据，例： 1 2 3 4 5 6 7 8 9 10 11 func main() { a := [3]int{1, 2, 3} b := a fmt.Printf(&#34;a addr: %p, a[0]"><meta itemprop="datePublished" content="2022-11-30T11:35:39+08:00" />
+<meta itemprop="dateModified" content="2022-11-30T11:35:39+08:00" />
+<meta itemprop="wordCount" content="1868">
+<meta itemprop="keywords" content="golang,数组,切片," /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Golang 数组和切片深入分析"/>
+<meta name="twitter:description" content="一、数组 数组赋值给数组 Go 数组是值类型，因此赋值操作和函数传参数会复制整个数组的数据，例： 1 2 3 4 5 6 7 8 9 10 11 func main() { a := [3]int{1, 2, 3} b := a fmt.Printf(&#34;a addr: %p, a[0]"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="../../">
+        <li class="mobile-menu-item">首页</li>
+      </a><a href="../../post/">
+        <li class="mobile-menu-item">列表</li>
+      </a><a href="../../tags/">
+        <li class="mobile-menu-item">标签</li>
+      </a><a href="../../categories/">
+        <li class="mobile-menu-item">分类</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="../../">首页</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../post/">列表</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../tags/">标签</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../categories/">分类</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">Golang 数组和切片深入分析</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2022-11-30 </span>
+        <div class="post-category">
+            <a href="../../categories/golang/"> golang </a>
+            </div>
+          <span class="more-meta"> 约 1868 字 </span>
+          <span class="more-meta"> 预计阅读 4 分钟 </span>
+        <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#一数组">一、数组</a>
+          <ul>
+            <li><a href="#数组赋值给数组">数组赋值给数组</a></li>
+            <li><a href="#数组赋值给数组指针">数组赋值给数组指针</a></li>
+          </ul>
+        </li>
+        <li><a href="#二切片">二、切片</a>
+          <ul>
+            <li><a href="#从数组得到切片">从数组得到切片</a></li>
+            <li><a href="#切片之间赋值">切片之间赋值</a></li>
+            <li><a href="#切片-append-分析">切片 append 分析</a></li>
+          </ul>
+        </li>
+        <li><a href="#总结">总结</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h2 id="一数组">一、数组</h2>
+<h3 id="数组赋值给数组">数组赋值给数组</h3>
+<p>Go 数组是值类型，因此赋值操作和函数传参数会复制整个数组的数据，例：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">a</span> <span class="o">:=</span> <span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="kt">int</span><span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">}</span>
+	<span class="nx">b</span> <span class="o">:=</span> <span class="nx">a</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;a addr: %p, a[0] addr: %p\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">a</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;b addr: %p, b[0] addr: %p\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">b</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+	<span class="nf">test</span><span class="p">(</span><span class="nx">a</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">test</span><span class="p">(</span><span class="nx">arr</span> <span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="kt">int</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;arr addr: %p, arr[0] addr: %p\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">arr</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">arr</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>结果：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">a addr: 0xc04204a0e0, a[0] addr: 0xc04204a0e0
+b addr: 0xc04204a100, b[0] addr: 0xc04204a100
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看到，b 的地址和 a 的地址不同，同时可以看到，数组的地址即为数组第一个元素的地址。</p>
+<h3 id="数组赋值给数组指针">数组赋值给数组指针</h3>
+<p>上面已经看到数组直接赋值是值传递，可以考虑用指针来实现传地址，例：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">a</span> <span class="o">:=</span> <span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="kt">int</span><span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">}</span>
+	<span class="nx">b</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">a</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;a addr: %p, a[0] addr: %p, value: %v\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">a</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nx">a</span><span class="p">)</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;b addr: %p, value: %p, b[0] addr: %p, value: %v\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">b</span><span class="p">,</span> <span class="nx">b</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nx">b</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>结果：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">a addr: 0xc04204a0e0, a[0] addr: 0xc04204a0e0, value: [1 2 3]
+b addr: 0xc04206a018, value: 0xc04204a0e0, b[0] addr: 0xc04204a0e0, value: &amp;[1 2 3]
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看到，指针的地址和数组的地址不一样，指针的值是数组的地址，即这里指针 b 是一个指向数组 a 地址的变量。这样无论是直接赋值给指针，还是在函数中用指针来传递，都可以达到不复制数组，并且修改原数组值的目的。</p>
+<h2 id="二切片">二、切片</h2>
+<p>切片运行时实际结构为 SliceHeader ，其结构定义为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go">    <span class="kd">type</span> <span class="nx">SliceHeader</span> <span class="kd">struct</span> <span class="p">{</span>
+    	<span class="nx">Data</span> <span class="kt">uintptr</span>
+    	<span class="nx">Len</span>  <span class="kt">int</span>
+    	<span class="nx">Cap</span>  <span class="kt">int</span>
+    <span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>三个成员即切片指向的数据源数组地址，切片长度和切片容量。当切片之间传递时，实际上是 SliceHeader 之间的值传递，由于传递之后，Data 指向的数组地址是同一个，所以修改操作会同步。下面从几个实际例子来探究不同情况下的运行结果。</p>
+<h3 id="从数组得到切片">从数组得到切片</h3>
+<p>1、切片得到数组时，如果切片没有进行扩容，则指向的数据源还是此数组，任何对数组或切片的值修改操作，另一个的值也随之改变</p>
+<h4 id="切片未扩容">切片未扩容</h4>
+<p>Go 切片是可以从数组得到的，以下代码，从切片得到数组：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">a</span> <span class="o">:=</span> <span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="kt">int</span><span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">}</span>
+	<span class="nx">b</span> <span class="o">:=</span> <span class="nx">a</span><span class="p">[:]</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;a addr: %p, a[0] addr: %p\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">a</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;b addr: %p, b[0] addr: %p\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">b</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>结果：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">a addr: 0xc04200c4a0, a[0] addr: 0xc04200c4a0
+b addr: 0xc0420023e0, b[0] addr: 0xc04200c4a0
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看到，切片 b 指向了新地址，但是第一个元素的地址和数组 a 的一致。那这里修改数组某个元素值切片的值会改变么，或者修改切片的某个元素值数组的值会改变么？下面继续测试：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">a</span> <span class="o">:=</span> <span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="kt">int</span><span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">}</span>
+	<span class="nx">b</span> <span class="o">:=</span> <span class="nx">a</span><span class="p">[:]</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;a addr: %p, a[0] addr: %p, value: %v\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">a</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nx">a</span><span class="p">)</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;b addr: %p, b[0] addr: %p, value: %v\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">b</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nx">b</span>
+	<span class="nx">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">=</span> <span class="mi">10</span>
+	<span class="nx">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="p">=</span> <span class="mi">20</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;a addr: %p, a[0] addr: %p, value: %v\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">a</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nx">a</span><span class="p">)</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;b addr: %p, b[0] addr: %p, value: %v\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">b</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nx">b</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>结果：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">a addr: 0xc04204a0e0, a[0] addr: 0xc04204a0e0, value: [1 2 3]
+b addr: 0xc0420463a0, b[0] addr: 0xc04204a0e0, value: [1 2 3]E
+a addr: 0xc04204a0e0, a[0] addr: 0xc04204a0e0, value: [10 20 3]
+b addr: 0xc0420463a0, b[0] addr: 0xc04204a0e0, value: [10 20 3]
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看到，不管是修改数组的值，还是切片的值，另一个对应的值也改变了，这验证了切片指向的数据源是数组 a。</p>
+<h4 id="切片扩容情况">切片扩容情况</h4>
+<p>下面是从数组得到切片后，执行 append 操作：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">a</span> <span class="o">:=</span> <span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="kt">int</span><span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">}</span>
+	<span class="nx">b</span> <span class="o">:=</span> <span class="nx">a</span><span class="p">[:]</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;a addr: %p, a[0] addr: %p, value: %v\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">a</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nx">a</span><span class="p">)</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;b addr: %p, b[0] addr: %p, value: %v\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">b</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nx">b</span><span class="p">)</span>
+	<span class="nx">b</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">b</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;a addr: %p, a[0] addr: %p, value: %v\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">a</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nx">a</span><span class="p">)</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;b addr: %p, b[0] addr: %p, value: %v\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">b</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nx">b</span><span class="p">)</span>
+
+	<span class="nx">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">=</span> <span class="mi">10</span>
+	<span class="nx">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="p">=</span> <span class="mi">20</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;a addr: %p, a[0] addr: %p, value: %v\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">a</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nx">a</span><span class="p">)</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;b addr: %p, b[0] addr: %p, value: %v\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">b</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nx">b</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>结果：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">a addr: 0xc04204a0e0, a[0] addr: 0xc04204a0e0, value: [1 2 3]
+b addr: 0xc0420463a0, b[0] addr: 0xc04204a0e0, value: [1 2 3]
+a addr: 0xc04204a0e0, a[0] addr: 0xc04204a0e0, value: [1 2 3]
+b addr: 0xc0420463a0, b[0] addr: 0xc042068030, value: [1 2 3 4]
+a addr: 0xc04204a0e0, a[0] addr: 0xc04204a0e0, value: [10 2 3]
+b addr: 0xc0420463a0, b[0] addr: 0xc042068030, value: [1 20 3 4]
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看到，扩容后切片 b 第一个元素的地址发生了变化，因此后续对数组值得修改和对切片值的修改，都不会影响到另一个的值。</p>
+<h3 id="切片之间赋值">切片之间赋值</h3>
+<p>Golang 中切片是引用类型，直接赋值后，修改任意一个的某个元素值，另一个也会随之改变。但是如果在赋值之后，切片进行了扩容操作，则会指向新的数据源，因此修改值操作不会影响原来的切片。如果不想影响另一个的结果，可以用 copy 函数来实现。例：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">a</span> <span class="o">:=</span> <span class="p">[]</span><span class="kt">int</span><span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">}</span>
+	<span class="nx">b</span> <span class="o">:=</span> <span class="nx">a</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;a addr: %p, a[0] addr: %p, value: %v\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">a</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nx">a</span><span class="p">)</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;b addr: %p, b[0] addr: %p, value: %v\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">b</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nx">b</span><span class="p">)</span>  <span class="c1">//b[0] 地址和 a[0] 地址一样
+</span><span class="c1"></span>	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;info a:&#34;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">a</span><span class="p">),</span> <span class="nb">cap</span><span class="p">(</span><span class="nx">a</span><span class="p">))</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;info b:&#34;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">b</span><span class="p">),</span> <span class="nb">cap</span><span class="p">(</span><span class="nx">b</span><span class="p">))</span>
+
+	<span class="nx">b</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">b</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;a addr: %p, a[0] addr: %p, value: %v\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">a</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nx">a</span><span class="p">)</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;b addr: %p, b[0] addr: %p, value: %v\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">b</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nx">b</span><span class="p">)</span>  <span class="c1">//b[0] 地址变化了
+</span><span class="c1"></span>	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;info a:&#34;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">a</span><span class="p">),</span> <span class="nb">cap</span><span class="p">(</span><span class="nx">a</span><span class="p">))</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;info b:&#34;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">b</span><span class="p">),</span> <span class="nb">cap</span><span class="p">(</span><span class="nx">b</span><span class="p">))</span>
+
+	<span class="nx">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">=</span> <span class="mi">10</span>
+	<span class="nx">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="p">=</span> <span class="mi">20</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;a addr: %p, a[0] addr: %p, value: %v\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">a</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nx">a</span><span class="p">)</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;b addr: %p, b[0] addr: %p, value: %v\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">b</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nx">b</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>结果：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">a addr: 0xc0420463a0, a[0] addr: 0xc04204a0e0, value: [1 2 3]
+b addr: 0xc0420463c0, b[0] addr: 0xc04204a0e0, value: [1 2 3]
+info a: 3 3
+info b: 3 3
+a addr: 0xc0420463a0, a[0] addr: 0xc04204a0e0, value: [1 2 3]
+b addr: 0xc0420463c0, b[0] addr: 0xc042068030, value: [1 2 3 4]
+info a: 3 3
+info b: 4 6
+a addr: 0xc0420463a0, a[0] addr: 0xc04204a0e0, value: [10 2 3]
+b addr: 0xc0420463c0, b[0] addr: 0xc042068030, value: [1 20 3 4]
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="切片-append-分析">切片 append 分析</h3>
+<p>当容量足够时，直接在当前长度的下一个位置保存数据，即使还有其他切片也指向这一块地址。例：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">data</span> <span class="o">:=</span> <span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="kt">int</span><span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">}</span>
+	<span class="nx">a</span> <span class="o">:=</span> <span class="nx">data</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">]</span>
+	<span class="nx">b</span> <span class="o">:=</span> <span class="nx">data</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;info a:&#34;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">a</span><span class="p">),</span> <span class="nb">cap</span><span class="p">(</span><span class="nx">a</span><span class="p">))</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;info b:&#34;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">b</span><span class="p">),</span> <span class="nb">cap</span><span class="p">(</span><span class="nx">b</span><span class="p">))</span>  <span class="c1">//切片 a 和 b 数据源都指向 data，但是长度不同
+</span><span class="c1"></span>	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;a addr: %p, a[0] addr: %p, value: %v\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">a</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nx">a</span><span class="p">)</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;b addr: %p, b[0] addr: %p, value: %v\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">b</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nx">b</span><span class="p">)</span>
+	<span class="nx">a</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>  <span class="c1">//向 a 添加数据，直接在数据第二个位置保存数据，这样 data 结果也改变了
+</span><span class="c1"></span>	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;info a:&#34;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">a</span><span class="p">),</span> <span class="nb">cap</span><span class="p">(</span><span class="nx">a</span><span class="p">))</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;info b:&#34;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">b</span><span class="p">),</span> <span class="nb">cap</span><span class="p">(</span><span class="nx">b</span><span class="p">))</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;a addr: %p, a[0] addr: %p, value: %v\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">a</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nx">a</span><span class="p">)</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;b addr: %p, b[0] addr: %p, value: %v\n&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">b</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nx">b</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>结果：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">info a: 1 5
+info b: 4 5
+a addr: 0xc0420463a0, a[0] addr: 0xc042068030, value: [1]
+b addr: 0xc0420463c0, b[0] addr: 0xc042068030, value: [1 2 3 4]
+info a: 2 5
+info b: 4 5
+a addr: 0xc0420463a0, a[0] addr: 0xc042068030, value: [1 10]
+b addr: 0xc0420463c0, b[0] addr: 0xc042068030, value: [1 10 3 4]
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看到，由于多个切片指向同一块数据源，任何修改操作都会使得其他变量结果改变。</p>
+<h2 id="总结">总结</h2>
+<p>对于切片，只要清楚它指向的数据源是否有改变，即关注 append 前后时，容量是否有变化，就能判断其运行结果。</p>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">yefengzhichen</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2022-11-30
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="../../tags/golang/">golang</a>
+          <a href="../../tags/%E6%95%B0%E7%BB%84/">数组</a>
+          <a href="../../tags/%E5%88%87%E7%89%87/">切片</a>
+          </div>
+      <nav class="post-nav">
+        <a class="prev" href="../../post/csdn_top_articles/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">Csdn博客文章汇总</span>
+            <span class="prev-text nav-mobile">上一篇</span>
+          </a>
+        <a class="next" href="../../post/oathkeeper/">
+            <span class="next-text nav-default">Oathkeeper 介绍和使用实例</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="yefengzhichen/yefengzhichen.github.io"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="zhutao_hust@foxmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/yefengzhichen" class="iconfont icon-github" title="github"></a>
+  <a href="https://yefengzhichen.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  <div class="busuanzi-footer">
+    <span id="busuanzi_container_site_pv"> 本站总访问量 <span id="busuanzi_value_site_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次 </span>
+      <span class="division">|</span>
+    <span id="busuanzi_container_site_uv"> 本站总访客数 <span id="busuanzi_value_site_uv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 人 </span>
+  </div>
+
+  <span class="copyright-year">
+    &copy; 
+    2022 - 
+    2023<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="../../js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>
