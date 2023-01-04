@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>博客 on yefengzhichen&#39;s blog</title>
+    <link>https://yefengzhichen.github.io/tags/%E5%8D%9A%E5%AE%A2/</link>
+    <description>Recent content in 博客 on yefengzhichen&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Fri, 02 Sep 2022 20:14:03 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/%E5%8D%9A%E5%AE%A2/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>GitHub&#43;Hugo搭建个人博客</title>
+      <link>https://yefengzhichen.github.io/post/hugo_blog/</link>
+      <pubDate>Fri, 02 Sep 2022 20:14:03 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/post/hugo_blog/</guid>
+      <description>GitHub仓库创建 GitHub Pages 是通过 GitHub 托管和发布的公共网页，首先需要创建一个名为username.github.io的仓库， username是Gi</description>
+    </item>
+    
+  </channel>
+</rss>

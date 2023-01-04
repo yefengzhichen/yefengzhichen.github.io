@@ -2,6 +2,34 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://yefengzhichen.github.io/categories/</loc>
+    <lastmod>2023-01-03T11:15:44+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/client-go/</loc>
+    <lastmod>2023-01-03T11:15:44+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/informer/</loc>
+    <lastmod>2023-01-03T11:15:44+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/kubernetes/</loc>
+    <lastmod>2023-01-03T11:15:44+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
     <loc>https://yefengzhichen.github.io/post/k8s_informer/</loc>
     <lastmod>2023-01-03T11:15:44+08:00</lastmod>
     <changefreq>weekly</changefreq>
@@ -16,8 +44,29 @@
   </url>
   
   <url>
+    <loc>https://yefengzhichen.github.io/tags/</loc>
+    <lastmod>2023-01-03T11:15:44+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
     <loc>https://yefengzhichen.github.io/</loc>
     <lastmod>2023-01-03T11:15:44+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/categories/%E4%BA%91%E5%8E%9F%E7%94%9F/</loc>
+    <lastmod>2023-01-03T11:15:44+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/gateway-api/</loc>
+    <lastmod>2022-11-30T14:49:18+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -30,8 +79,29 @@
   </url>
   
   <url>
+    <loc>https://yefengzhichen.github.io/tags/csdn/</loc>
+    <lastmod>2022-11-30T11:41:58+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
     <loc>https://yefengzhichen.github.io/post/csdn_top_articles/</loc>
     <lastmod>2022-11-30T11:41:58+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/categories/%E5%90%8E%E7%AB%AF/</loc>
+    <lastmod>2022-11-30T11:41:58+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/oathkeeper/</loc>
+    <lastmod>2022-11-23T18:52:15+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -44,8 +114,50 @@
   </url>
   
   <url>
+    <loc>https://yefengzhichen.github.io/tags/%E6%8E%88%E6%9D%83/</loc>
+    <lastmod>2022-11-23T18:52:15+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/%E8%AE%A4%E8%AF%81/</loc>
+    <lastmod>2022-11-23T18:52:15+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/cdn/</loc>
+    <lastmod>2022-10-17T11:28:33+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/%E8%A7%86%E9%A2%91%E7%82%B9%E6%92%AD/</loc>
+    <lastmod>2022-10-17T11:28:33+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
     <loc>https://yefengzhichen.github.io/post/video_on_demand/</loc>
     <lastmod>2022-10-17T11:28:33+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/envoy/</loc>
+    <lastmod>2022-09-17T20:13:50+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/opa/</loc>
+    <lastmod>2022-09-17T20:13:50+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -58,6 +170,20 @@
   </url>
   
   <url>
+    <loc>https://yefengzhichen.github.io/tags/%E9%89%B4%E6%9D%83/</loc>
+    <lastmod>2022-09-17T20:13:50+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/kubebuilder/</loc>
+    <lastmod>2022-09-09T15:19:26+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
     <loc>https://yefengzhichen.github.io/post/kubebuilder/</loc>
     <lastmod>2022-09-09T15:19:26+08:00</lastmod>
     <changefreq>weekly</changefreq>
@@ -65,8 +191,43 @@
   </url>
   
   <url>
+    <loc>https://yefengzhichen.github.io/tags/operator/</loc>
+    <lastmod>2022-09-09T15:19:26+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/code-server/</loc>
+    <lastmod>2022-09-03T20:13:39+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/nocalhost/</loc>
+    <lastmod>2022-09-03T20:13:39+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
     <loc>https://yefengzhichen.github.io/post/code_server_local_image/</loc>
     <lastmod>2022-09-03T20:13:39+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/%E8%B0%83%E8%AF%95/</loc>
+    <lastmod>2022-09-03T20:13:39+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/kt-connect/</loc>
+    <lastmod>2022-09-03T09:49:06+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -86,13 +247,15 @@
   </url>
   
   <url>
-    <loc>https://yefengzhichen.github.io/categories/</loc>
+    <loc>https://yefengzhichen.github.io/tags/hugo/</loc>
+    <lastmod>2022-09-02T20:14:03+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>https://yefengzhichen.github.io/tags/</loc>
+    <loc>https://yefengzhichen.github.io/tags/%E5%8D%9A%E5%AE%A2/</loc>
+    <lastmod>2022-09-02T20:14:03+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>

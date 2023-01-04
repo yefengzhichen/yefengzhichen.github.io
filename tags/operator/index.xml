@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>operator on yefengzhichen&#39;s blog</title>
+    <link>https://yefengzhichen.github.io/tags/operator/</link>
+    <description>Recent content in operator on yefengzhichen&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Fri, 09 Sep 2022 15:19:26 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/operator/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Kubebuilder使用介绍</title>
+      <link>https://yefengzhichen.github.io/post/kubebuilder/</link>
+      <pubDate>Fri, 09 Sep 2022 15:19:26 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/post/kubebuilder/</guid>
+      <description>Kubebuilder 是什么 Kubebuilder 是一个使用自定义资源定义（CRDs）来构建 Kubernetes API 的框架。与 Ruby on Rails 和 SpringBoot 等 web 开发框架类似，Kubebuilder 提高了开发人员使用 Go 语言</description>
+    </item>
+    
+  </channel>
+</rss>

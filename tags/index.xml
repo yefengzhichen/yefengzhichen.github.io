@@ -1,10 +1,200 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Tags on yefengzhichen</title>
+    <title>Tags on yefengzhichen&#39;s blog</title>
     <link>https://yefengzhichen.github.io/tags/</link>
-    <description>Recent content in Tags on yefengzhichen</description>
+    <description>Recent content in Tags on yefengzhichen&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en</language><atom:link href="https://yefengzhichen.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
+    <language>zh-cn</language>
+    <lastBuildDate>Tue, 03 Jan 2023 11:15:44 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>client-go</title>
+      <link>https://yefengzhichen.github.io/tags/client-go/</link>
+      <pubDate>Tue, 03 Jan 2023 11:15:44 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/client-go/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>informer</title>
+      <link>https://yefengzhichen.github.io/tags/informer/</link>
+      <pubDate>Tue, 03 Jan 2023 11:15:44 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/informer/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>kubernetes</title>
+      <link>https://yefengzhichen.github.io/tags/kubernetes/</link>
+      <pubDate>Tue, 03 Jan 2023 11:15:44 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/kubernetes/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>gateway api</title>
+      <link>https://yefengzhichen.github.io/tags/gateway-api/</link>
+      <pubDate>Wed, 30 Nov 2022 14:49:18 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/gateway-api/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>csdn</title>
+      <link>https://yefengzhichen.github.io/tags/csdn/</link>
+      <pubDate>Wed, 30 Nov 2022 11:41:58 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/csdn/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>oathkeeper</title>
+      <link>https://yefengzhichen.github.io/tags/oathkeeper/</link>
+      <pubDate>Wed, 23 Nov 2022 18:52:15 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/oathkeeper/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>授权</title>
+      <link>https://yefengzhichen.github.io/tags/%E6%8E%88%E6%9D%83/</link>
+      <pubDate>Wed, 23 Nov 2022 18:52:15 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/%E6%8E%88%E6%9D%83/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>认证</title>
+      <link>https://yefengzhichen.github.io/tags/%E8%AE%A4%E8%AF%81/</link>
+      <pubDate>Wed, 23 Nov 2022 18:52:15 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/%E8%AE%A4%E8%AF%81/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>cdn</title>
+      <link>https://yefengzhichen.github.io/tags/cdn/</link>
+      <pubDate>Mon, 17 Oct 2022 11:28:33 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/cdn/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>视频点播</title>
+      <link>https://yefengzhichen.github.io/tags/%E8%A7%86%E9%A2%91%E7%82%B9%E6%92%AD/</link>
+      <pubDate>Mon, 17 Oct 2022 11:28:33 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/%E8%A7%86%E9%A2%91%E7%82%B9%E6%92%AD/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>envoy</title>
+      <link>https://yefengzhichen.github.io/tags/envoy/</link>
+      <pubDate>Sat, 17 Sep 2022 20:13:50 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/envoy/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>opa</title>
+      <link>https://yefengzhichen.github.io/tags/opa/</link>
+      <pubDate>Sat, 17 Sep 2022 20:13:50 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/opa/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>鉴权</title>
+      <link>https://yefengzhichen.github.io/tags/%E9%89%B4%E6%9D%83/</link>
+      <pubDate>Sat, 17 Sep 2022 20:13:50 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/%E9%89%B4%E6%9D%83/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>kubebuilder</title>
+      <link>https://yefengzhichen.github.io/tags/kubebuilder/</link>
+      <pubDate>Fri, 09 Sep 2022 15:19:26 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/kubebuilder/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>operator</title>
+      <link>https://yefengzhichen.github.io/tags/operator/</link>
+      <pubDate>Fri, 09 Sep 2022 15:19:26 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/operator/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>code-server</title>
+      <link>https://yefengzhichen.github.io/tags/code-server/</link>
+      <pubDate>Sat, 03 Sep 2022 20:13:39 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/code-server/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>nocalhost</title>
+      <link>https://yefengzhichen.github.io/tags/nocalhost/</link>
+      <pubDate>Sat, 03 Sep 2022 20:13:39 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/nocalhost/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>调试</title>
+      <link>https://yefengzhichen.github.io/tags/%E8%B0%83%E8%AF%95/</link>
+      <pubDate>Sat, 03 Sep 2022 20:13:39 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/%E8%B0%83%E8%AF%95/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>kt-connect</title>
+      <link>https://yefengzhichen.github.io/tags/kt-connect/</link>
+      <pubDate>Sat, 03 Sep 2022 09:49:06 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/kt-connect/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>hugo</title>
+      <link>https://yefengzhichen.github.io/tags/hugo/</link>
+      <pubDate>Fri, 02 Sep 2022 20:14:03 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/hugo/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>博客</title>
+      <link>https://yefengzhichen.github.io/tags/%E5%8D%9A%E5%AE%A2/</link>
+      <pubDate>Fri, 02 Sep 2022 20:14:03 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/%E5%8D%9A%E5%AE%A2/</guid>
+      <description></description>
+    </item>
+    
   </channel>
 </rss>

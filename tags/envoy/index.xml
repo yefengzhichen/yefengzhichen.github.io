@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>envoy on yefengzhichen&#39;s blog</title>
+    <link>https://yefengzhichen.github.io/tags/envoy/</link>
+    <description>Recent content in envoy on yefengzhichen&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Sat, 17 Sep 2022 20:13:50 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/envoy/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>使用 Envoy 的 OPA 插件进行鉴权</title>
+      <link>https://yefengzhichen.github.io/post/envoy_opa_auth/</link>
+      <pubDate>Sat, 17 Sep 2022 20:13:50 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/post/envoy_opa_auth/</guid>
+      <description>背景 工作中的一个 IAM（身份与访问管理）服务中，使用到了 OPA（开放策略代理）进行鉴权，针对前端来的一个请求，主要处理逻辑如下图红色箭头所示</description>
+    </item>
+    
+  </channel>
+</rss>

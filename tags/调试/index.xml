@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>调试 on yefengzhichen&#39;s blog</title>
+    <link>https://yefengzhichen.github.io/tags/%E8%B0%83%E8%AF%95/</link>
+    <description>Recent content in 调试 on yefengzhichen&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Sat, 03 Sep 2022 20:13:39 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/%E8%B0%83%E8%AF%95/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>使用 code-server 和 nocalhost 制作 web 调试镜像</title>
+      <link>https://yefengzhichen.github.io/post/code_server_local_image/</link>
+      <pubDate>Sat, 03 Sep 2022 20:13:39 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/post/code_server_local_image/</guid>
+      <description>背景 之前写了一篇文章，分享了如何使用 kt-connect 来加速云原生的开发，但是在实际使用中发现一些问题，比如： 环境不一致，每个开发人员都需要安装和调试程序一</description>
+    </item>
+    
+    <item>
+      <title>使用 kt-connect 本地调试 k8s 集群内服务</title>
+      <link>https://yefengzhichen.github.io/post/kt_connect/</link>
+      <pubDate>Sat, 03 Sep 2022 09:49:06 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/post/kt_connect/</guid>
+      <description>一、kt-connect 介绍 背景 影响软件开发效率最大的问题依然是集成的问题，DevOps 通过持续交付流水线的方式不断的对软件进行集成，但是 DevOps</description>
+    </item>
+    
+  </channel>
+</rss>
