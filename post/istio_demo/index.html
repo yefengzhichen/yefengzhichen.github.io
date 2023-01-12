@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Istio 安装和示例实践 - yefengzhichen&#39;s blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="yefengzhichen" /><meta name="description" content="安装 需要先准备一个 kubernetes 集群，这里是用的 k3s 安装 的 1.25 版本。 下载 istio 先下载 istio 安装文件，执行： 1 curl -L https://istio.io/downloadIstio | sh - 如果测试机器下载不了，可以手动下载脚本和安装" /><meta name="keywords" content="Hugo, theme, even" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.92.1 with theme even" />
+
+
+<link rel="canonical" href="https://yefengzhichen.github.io/post/istio_demo/" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../favicon-16x16.png">
+<link rel="manifest" href="../../manifest.json">
+<link rel="mask-icon" href="../../safari-pinned-tab.svg" color="#5bbad5">
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<link href="../../sass/main.min.f92fd13721ddf72129410fd8250e73152cc6f2438082b6c0208dc24ee7c13fc4.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="Istio 安装和示例实践" />
+<meta property="og:description" content="安装 需要先准备一个 kubernetes 集群，这里是用的 k3s 安装 的 1.25 版本。 下载 istio 先下载 istio 安装文件，执行： 1 curl -L https://istio.io/downloadIstio | sh - 如果测试机器下载不了，可以手动下载脚本和安装" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yefengzhichen.github.io/post/istio_demo/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2023-01-05T19:23:49+08:00" />
+<meta property="article:modified_time" content="2023-01-05T19:23:49+08:00" />
+
+<meta itemprop="name" content="Istio 安装和示例实践">
+<meta itemprop="description" content="安装 需要先准备一个 kubernetes 集群，这里是用的 k3s 安装 的 1.25 版本。 下载 istio 先下载 istio 安装文件，执行： 1 curl -L https://istio.io/downloadIstio | sh - 如果测试机器下载不了，可以手动下载脚本和安装"><meta itemprop="datePublished" content="2023-01-05T19:23:49+08:00" />
+<meta itemprop="dateModified" content="2023-01-05T19:23:49+08:00" />
+<meta itemprop="wordCount" content="1675">
+<meta itemprop="keywords" content="kubernetes,istio,envoy,service mesh," /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Istio 安装和示例实践"/>
+<meta name="twitter:description" content="安装 需要先准备一个 kubernetes 集群，这里是用的 k3s 安装 的 1.25 版本。 下载 istio 先下载 istio 安装文件，执行： 1 curl -L https://istio.io/downloadIstio | sh - 如果测试机器下载不了，可以手动下载脚本和安装"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="../../">
+        <li class="mobile-menu-item">首页</li>
+      </a><a href="../../post/">
+        <li class="mobile-menu-item">列表</li>
+      </a><a href="../../tags/">
+        <li class="mobile-menu-item">标签</li>
+      </a><a href="../../categories/">
+        <li class="mobile-menu-item">分类</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="../../">首页</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../post/">列表</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../tags/">标签</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../categories/">分类</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">Istio 安装和示例实践</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2023-01-05 </span>
+        <div class="post-category">
+            <a href="../../categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
+            </div>
+          <span class="more-meta"> 约 1675 字 </span>
+          <span class="more-meta"> 预计阅读 4 分钟 </span>
+        <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#安装">安装</a>
+          <ul>
+            <li><a href="#下载-istio">下载 istio</a></li>
+            <li><a href="#安装-istio">安装 istio</a></li>
+          </ul>
+        </li>
+        <li><a href="#部署测试">部署测试</a>
+          <ul>
+            <li><a href="#部署-bookinfo">部署 Bookinfo</a></li>
+            <li><a href="#在集群外部访问">在集群外部访问</a></li>
+          </ul>
+        </li>
+        <li><a href="#测试-istio-特性">测试 istio 特性</a>
+          <ul>
+            <li><a href="#配置请求路由">配置请求路由</a></li>
+            <li><a href="#基于用户身份的路由">基于用户身份的路由</a></li>
+            <li><a href="#访问外部服务">访问外部服务</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h2 id="安装">安装</h2>
+<p>需要先准备一个 kubernetes 集群，这里是用的 <a href="https://docs.rancher.cn/docs/k3s/quick-start/_index#%E5%AE%89%E8%A3%85%E8%84%9A%E6%9C%AC">k3s 安装</a> 的 1.25 版本。</p>
+<h3 id="下载-istio">下载 istio</h3>
+<p>先下载 istio 安装文件，执行：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">curl -L https://istio.io/downloadIstio <span class="p">|</span> sh -
+</code></pre></td></tr></table>
+</div>
+</div><p>如果测试机器下载不了，可以手动下载脚本和安装文件传到测试机器，然后将 istioctl 文件路径加到系统环境变量中：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">vim ~/.bashrc   # 最后增加 export PATH={/xxx/istio-1.16.1}/bin:$PATH
+source ~/.bashrc
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="安装-istio">安装 istio</h3>
+<p>执行<code>istioctl install --set profile=demo -y</code>安装官方的 demo 配置组合，在 k3s 集群中，执行出现了以下问题：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">root@alton:~# istioctl install --set profile=demo -y
+Error: Get &#34;https://127.0.0.1:6443/api?timeout=32s&#34;: x509: certificate signed by unknown authority
+</code></pre></td></tr></table>
+</div>
+</div><p>后面才发现问题可能是，以前将 k3s 的 config 进行过复制操作，但是最近认证已经变更了，而~/.kube/config 还是老的，导致无法识别，解决办法：重新再执行以下命令复制即可。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
+</code></pre></td></tr></table>
+</div>
+</div><p>给命名空间添加标签，指示 Istio 在部署应用的时候，自动注入 Envoy 边车代理：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubectl label namespace default istio-injection<span class="o">=</span>enabled
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="部署测试">部署测试</h2>
+<h3 id="部署-bookinfo">部署 Bookinfo</h3>
+<p>使用官网示例，部署 Bookinfo 应用：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">cd istio-1.16.1
+kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml
+</code></pre></td></tr></table>
+</div>
+</div><p>等待部署完成，查看 pods：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@alton:~/zt/istio/istio-1.16.1# kubectl get pods
+NAME                             READY   STATUS    RESTARTS   AGE
+reviews-v1-569db879f5-6qgmk      2/2     Running   <span class="m">0</span>          20s
+ratings-v1-5f9699cfdf-nk8fn      2/2     Running   <span class="m">0</span>          20s
+details-v1-5ffd6b64f7-wdwb7      2/2     Running   <span class="m">0</span>          20s
+reviews-v2-65c4dc6fdc-9bbjj      2/2     Running   <span class="m">0</span>          20s
+productpage-v1-979d4d9fc-fknt8   2/2     Running   <span class="m">0</span>          20s
+reviews-v3-c9c4fb987-nfvrq       2/2     Running   <span class="m">0</span>          20s
+</code></pre></td></tr></table>
+</div>
+</div><p>通过<code>kubectl get pods reviews-v1-569db879f5-6qgmk -oyaml</code> 查看 pods 描述，可以看到注入了一个名为“istio-proxy”的 sidecar pods，如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="w">  </span>- <span class="nt">args</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="l">proxy</span><span class="w">
+</span><span class="w">    </span>- <span class="l">sidecar</span><span class="w">
+</span><span class="w">    </span>- --<span class="l">domain</span><span class="w">
+</span><span class="w">    </span>- <span class="l">$(POD_NAMESPACE).svc.cluster.local</span><span class="w">
+</span><span class="w">    </span>- --<span class="l">proxyLogLevel=warning</span><span class="w">
+</span><span class="w">    </span>- --<span class="l">proxyComponentLogLevel=misc:error</span><span class="w">
+</span><span class="w">    </span>- --<span class="l">log_output_level=default:info</span><span class="w">
+</span><span class="w">    </span>- --<span class="l">concurrency</span><span class="w">
+</span><span class="w">    </span>- <span class="s2">&#34;2&#34;</span><span class="w">
+</span><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l">docker.io/istio/proxyv2:1.16.1</span><span class="w">
+</span><span class="w">    </span><span class="nt">imagePullPolicy</span><span class="p">:</span><span class="w"> </span><span class="l">IfNotPresent</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">istio-proxy</span><span class="w">
+</span><span class="w">    </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">containerPort</span><span class="p">:</span><span class="w"> </span><span class="m">15090</span><span class="w">
+</span><span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">http-envoy-prom</span><span class="w">
+</span><span class="w">      </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l">TCP</span><span class="w">
+</span><span class="w">    </span><span class="nt">readinessProbe</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">failureThreshold</span><span class="p">:</span><span class="w"> </span><span class="m">30</span><span class="w">
+</span><span class="w">      </span><span class="nt">httpGet</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l">/healthz/ready</span><span class="w">
+</span><span class="w">        </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">15021</span><span class="w">
+</span><span class="w">        </span><span class="nt">scheme</span><span class="p">:</span><span class="w"> </span><span class="l">HTTP</span><span class="w">
+</span><span class="w">      </span><span class="nt">initialDelaySeconds</span><span class="p">:</span><span class="w"> </span><span class="m">1</span><span class="w">
+</span><span class="w">      </span><span class="nt">periodSeconds</span><span class="p">:</span><span class="w"> </span><span class="m">2</span><span class="w">
+</span><span class="w">      </span><span class="nt">successThreshold</span><span class="p">:</span><span class="w"> </span><span class="m">1</span><span class="w">
+</span><span class="w">      </span><span class="nt">timeoutSeconds</span><span class="p">:</span><span class="w"> </span><span class="m">3</span><span class="w">
+</span><span class="w">    </span><span class="nt">terminationMessagePath</span><span class="p">:</span><span class="w"> </span><span class="l">/dev/termination-log</span><span class="w">
+</span><span class="w">    </span><span class="nt">terminationMessagePolicy</span><span class="p">:</span><span class="w"> </span><span class="l">File</span><span class="w">
+</span><span class="w">    </span><span class="c"># 部分省略</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>验证是否部署成功：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@alton:~/zt/istio/istio-1.16.1# kubectl <span class="nb">exec</span> <span class="s2">&#34;</span><span class="k">$(</span>kubectl get pod -l <span class="nv">app</span><span class="o">=</span>ratings -o <span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.items[0].metadata.name}&#39;</span><span class="k">)</span><span class="s2">&#34;</span> -c ratings -- curl -sS productpage:9080/productpage <span class="p">|</span> grep -o <span class="s2">&#34;&lt;title&gt;.*&lt;/title&gt;&#34;</span>
+&lt;title&gt;Simple Bookstore App&lt;/title&gt;
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="在集群外部访问">在集群外部访问</h3>
+<p>如果是通过 Minikube 安装的集群，可以使用 Minikube 隧道提供一个外部负载均衡器。这里使用的 k3s，只能通过机器的 ip 和 nodePort 来访问。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@alton:~/zt/istio/istio-1.16.1# kubectl -n istio-system get service istio-ingressgateway -o <span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.spec.ports[?(@.name==&#34;http2&#34;)].nodePort}&#39;</span>
+<span class="m">31779</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>查看这个 svc，主要是向集群外部暴露访问地址和端口，上面是获取的 http 的 nodePort 端口。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Service</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">istio-ingressgateway</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">istio-system</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">allocateLoadBalancerNodePorts</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">  </span><span class="nt">clusterIP</span><span class="p">:</span><span class="w"> </span><span class="m">10.43.157.67</span><span class="w">
+</span><span class="w">  </span><span class="nt">clusterIPs</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="m">10.43.157.67</span><span class="w">
+</span><span class="w">  </span><span class="nt">externalTrafficPolicy</span><span class="p">:</span><span class="w"> </span><span class="l">Cluster</span><span class="w">
+</span><span class="w">  </span><span class="nt">internalTrafficPolicy</span><span class="p">:</span><span class="w"> </span><span class="l">Cluster</span><span class="w">
+</span><span class="w">  </span><span class="nt">ipFamilies</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="l">IPv4</span><span class="w">
+</span><span class="w">  </span><span class="nt">ipFamilyPolicy</span><span class="p">:</span><span class="w"> </span><span class="l">SingleStack</span><span class="w">
+</span><span class="w">  </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">status-port</span><span class="w">
+</span><span class="w">    </span><span class="nt">nodePort</span><span class="p">:</span><span class="w"> </span><span class="m">30587</span><span class="w">
+</span><span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">15021</span><span class="w">
+</span><span class="w">    </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l">TCP</span><span class="w">
+</span><span class="w">    </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="m">15021</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">http2</span><span class="w">
+</span><span class="w">    </span><span class="nt">nodePort</span><span class="p">:</span><span class="w"> </span><span class="m">31779</span><span class="w">
+</span><span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">80</span><span class="w">
+</span><span class="w">    </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l">TCP</span><span class="w">
+</span><span class="w">    </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="m">8080</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">https</span><span class="w">
+</span><span class="w">    </span><span class="nt">nodePort</span><span class="p">:</span><span class="w"> </span><span class="m">30159</span><span class="w">
+</span><span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">443</span><span class="w">
+</span><span class="w">    </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l">TCP</span><span class="w">
+</span><span class="w">    </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="m">8443</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tcp</span><span class="w">
+</span><span class="w">    </span><span class="nt">nodePort</span><span class="p">:</span><span class="w"> </span><span class="m">31621</span><span class="w">
+</span><span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">31400</span><span class="w">
+</span><span class="w">    </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l">TCP</span><span class="w">
+</span><span class="w">    </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="m">31400</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tls</span><span class="w">
+</span><span class="w">    </span><span class="nt">nodePort</span><span class="p">:</span><span class="w"> </span><span class="m">31129</span><span class="w">
+</span><span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">15443</span><span class="w">
+</span><span class="w">    </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l">TCP</span><span class="w">
+</span><span class="w">    </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="m">15443</span><span class="w">
+</span><span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">istio-ingressgateway</span><span class="w">
+</span><span class="w">    </span><span class="nt">istio</span><span class="p">:</span><span class="w"> </span><span class="l">ingressgateway</span><span class="w">
+</span><span class="w">  </span><span class="nt">sessionAffinity</span><span class="p">:</span><span class="w"> </span><span class="l">None</span><span class="w">
+</span><span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">LoadBalancer</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>在浏览器中，使用<code>http://nodeip:31779/productpage</code>就可以访问集群了，nodeip 即 k3s 集群 node 的外网 ip 地址。</p>
+<h2 id="测试-istio-特性">测试 istio 特性</h2>
+<h3 id="配置请求路由">配置请求路由</h3>
+<p>需要使用目标规则来定义 subset，使用虚拟服务来配置请求路由到哪个子集。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">// 配置虚拟服务
+kubectl apply -f samples/bookinfo/networking/virtual-service-all-v1.yaml
+// 配置目标规则
+kubectl apply -f samples/bookinfo/networking/destination-rule-all.yaml
+</code></pre></td></tr></table>
+</div>
+</div><p>使用<code>http://nodeip:31779/productpage</code>再次访问集群，多次刷新页面，评论部分不会显示评级星标。</p>
+<h3 id="基于用户身份的路由">基于用户身份的路由</h3>
+<p>可以将特定用户的所有流量路由到特定服务版本，可用于线上发布后进行回归测试。下面的例子设置用户 Jason 的所有流量将被路由到服务 reviews:v2，因此在页面上用测用户登陆时，评论处会显示星级。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">// 应用路由设置
+kubectl apply -f samples/bookinfo/networking/virtual-service-reviews-test-v2.yaml
+// 查看虚拟服务路由设置
+kubectl get virtualservice reviews -o yaml
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="访问外部服务">访问外部服务</h3>
+<p>默认情况下，来自 Istio-enable Pod 的所有出站流量都会重定向到其 Sidecar 代理，集群外部 URL 的可访问性取决于代理的配置。默认情况下，Istio 将 Envoy 代理配置为允许传递未知服务的请求。
+先使用遥测 API 来开启 enovy 访问日志：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">telemetry.istio.io/v1alpha1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Telemetry</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">mesh-default</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">istio-system</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">accessLogging</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">providers</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">envoy</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>因为前面已经开启了自动注入 sidecar，直接部署示例应用，并设置环境变量为 pod 的名称：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubectl apply -f samples/sleep/sleep.yaml
+<span class="nb">export</span> <span class="nv">SOURCE_POD</span><span class="o">=</span><span class="k">$(</span>kubectl get pod -l <span class="nv">app</span><span class="o">=</span>sleep -o <span class="nv">jsonpath</span><span class="o">={</span>.items..metadata.name<span class="o">}</span><span class="k">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>查看 global.outboundTrafficPolicy.mode 安装选项配置，它配置 sidecar 对外部服务的处理方式，其值有：</p>
+<ul>
+<li>ALLOW_ANY：默认值，允许调用未知的服务。</li>
+<li>REGISTRY_ONLY：阻止任何没有在网格中定义的 HTTP 服务或 service entry 的主机。</li>
+</ul>
+<p>查看是否配置为 ALLOW_ANY：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 输出为 ALLOW_ANY 或者为空，即为允许调用未知的服务</span>
+kubectl get istiooperator installed-state -n istio-system -o <span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.spec.meshConfig.outboundTrafficPolicy.mode}&#39;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>向外部发送请求进行测试：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@alton:~/zt/istio# kubectl <span class="nb">exec</span> <span class="s2">&#34;</span><span class="nv">$SOURCE_POD</span><span class="s2">&#34;</span> -c sleep -- curl -sSI https://www.baidu.com <span class="p">|</span> grep  <span class="s2">&#34;HTTP/&#34;</span><span class="p">;</span> kubectl <span class="nb">exec</span> <span class="s2">&#34;</span><span class="nv">$SOURCE_POD</span><span class="s2">&#34;</span> -c sleep -- curl -sI https://kubernetes.io/ <span class="p">|</span> grep <span class="s2">&#34;HTTP/&#34;</span>
+HTTP/1.1 <span class="m">200</span> OK
+HTTP/2 <span class="m">200</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>重新设置为 REGISTRY_ONLY 再进行测试，这里用<code>istioctl install</code>进行安装的，重新设置需执行：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@alton:~/zt/istio# istioctl install --set <span class="nv">profile</span><span class="o">=</span>demo -y --set meshConfig.outboundTrafficPolicy.mode<span class="o">=</span>REGISTRY_ONLY
+root@alton:~/zt/istio# kubectl get istiooperator installed-state -n istio-system -o <span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.spec.meshConfig.outboundTrafficPolicy.mode}&#39;</span>
+REGISTRY_ONLY
+</code></pre></td></tr></table>
+</div>
+</div><p>再次进行测试，请求已经被阻止了：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@alton:~/zt/istio# kubectl <span class="nb">exec</span> <span class="s2">&#34;</span><span class="nv">$SOURCE_POD</span><span class="s2">&#34;</span> -c sleep -- curl -sSI https://www.baidu.com <span class="p">|</span> grep  <span class="s2">&#34;HTTP/&#34;</span><span class="p">;</span> kubectl <span class="nb">exec</span> <span class="s2">&#34;</span><span class="nv">$SOURCE_POD</span><span class="s2">&#34;</span> -c sleep -- curl -sI https://kubernetes.io/ <span class="p">|</span> grep <span class="s2">&#34;HTTP/&#34;</span>
+curl: <span class="o">(</span>35<span class="o">)</span> OpenSSL SSL_connect: SSL_ERROR_SYSCALL in connection to www.baidu.com:443
+<span class="nb">command</span> terminated with <span class="nb">exit</span> code <span class="m">35</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>测试在服务网格中创建一个 ServiceEntry，以允许访问一个外部的 HTTP 服务：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubectl apply -f - <span class="s">&lt;&lt;EOF
+</span><span class="s">apiVersion: networking.istio.io/v1alpha3
+</span><span class="s">kind: ServiceEntry
+</span><span class="s">metadata:
+</span><span class="s">  name: httpbin-ext
+</span><span class="s">spec:
+</span><span class="s">  hosts:
+</span><span class="s">  - httpbin.org
+</span><span class="s">  ports:
+</span><span class="s">  - number: 80
+</span><span class="s">    name: http
+</span><span class="s">    protocol: HTTP
+</span><span class="s">  resolution: DNS
+</span><span class="s">  location: MESH_EXTERNAL
+</span><span class="s">EOF</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>测试向外部 HTTP 发送请求：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@alton:~/zt/istio#  kubectl <span class="nb">exec</span> -it <span class="nv">$SOURCE_POD</span> -c sleep -- curl http://httpbin.org/headers
+<span class="o">{</span>
+  <span class="s2">&#34;headers&#34;</span>: <span class="o">{</span>
+    <span class="s2">&#34;Accept&#34;</span>: <span class="s2">&#34;*/*&#34;</span>,
+    <span class="s2">&#34;Host&#34;</span>: <span class="s2">&#34;httpbin.org&#34;</span>,
+    <span class="s2">&#34;User-Agent&#34;</span>: <span class="s2">&#34;curl/7.87.0-DEV&#34;</span>,
+    <span class="s2">&#34;X-Amzn-Trace-Id&#34;</span>: <span class="s2">&#34;Root=1-63bb815d-1a017d290b48c2fa34471a3f&#34;</span>,
+    <span class="s2">&#34;X-B3-Sampled&#34;</span>: <span class="s2">&#34;1&#34;</span>,
+    <span class="s2">&#34;X-B3-Spanid&#34;</span>: <span class="s2">&#34;7aeb48cca0f822ad&#34;</span>,
+    <span class="s2">&#34;X-B3-Traceid&#34;</span>: <span class="s2">&#34;3ece8f6c652caa017aeb48cca0f822ad&#34;</span>,
+    <span class="s2">&#34;X-Envoy-Decorator-Operation&#34;</span>: <span class="s2">&#34;httpbin.org:80/*&#34;</span>,
+    <span class="c1">#...</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>查看 sidecar 里面的日志：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@alton:~/zt/istio# kubectl logs <span class="nv">$SOURCE_POD</span> -c istio-proxy <span class="p">|</span> tail
+<span class="o">[</span>2023-01-09T02:52:13.283Z<span class="o">]</span> <span class="s2">&#34;GET /headers HTTP/1.1&#34;</span> <span class="m">200</span> - via_upstream - <span class="s2">&#34;-&#34;</span> <span class="m">0</span> <span class="m">1189</span> <span class="m">510</span> <span class="m">509</span> <span class="s2">&#34;-&#34;</span> <span class="s2">&#34;curl/7.87.0-DEV&#34;</span> <span class="s2">&#34;535009a8-12ed-9358-8b0a-c54713f83e09&#34;</span> <span class="s2">&#34;httpbin.org&#34;</span> <span class="s2">&#34;3.229.200.44:80&#34;</span> outbound<span class="p">|</span>80<span class="o">||</span>httpbin.org 10.42.0.30:47352 3.220.55.57:80 10.42.0.30:58464 - default
+</code></pre></td></tr></table>
+</div>
+</div>
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">yefengzhichen</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2023-01-05
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="../../tags/kubernetes/">kubernetes</a>
+          <a href="../../tags/istio/">istio</a>
+          <a href="../../tags/envoy/">envoy</a>
+          <a href="../../tags/service-mesh/">service mesh</a>
+          </div>
+      <nav class="post-nav">
+        
+        <a class="next" href="../../post/k8s_informer/">
+            <span class="next-text nav-default">Kubernetes 的 informer 源码分析</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="yefengzhichen/yefengzhichen.github.io"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="zhutao_hust@foxmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/yefengzhichen" class="iconfont icon-github" title="github"></a>
+  <a href="https://yefengzhichen.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  <div class="busuanzi-footer">
+    <span id="busuanzi_container_site_pv"> 本站总访问量 <span id="busuanzi_value_site_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次 </span>
+      <span class="division">|</span>
+    <span id="busuanzi_container_site_uv"> 本站总访客数 <span id="busuanzi_value_site_uv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 人 </span>
+  </div>
+
+  <span class="copyright-year">
+    &copy; 
+    2022 - 
+    2023<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="../../js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

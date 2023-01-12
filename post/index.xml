@@ -6,7 +6,16 @@
     <description>Recent content in Posts on yefengzhichen&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Tue, 03 Jan 2023 11:15:44 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/post/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Thu, 05 Jan 2023 19:23:49 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/post/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Istio 安装和示例实践</title>
+      <link>https://yefengzhichen.github.io/post/istio_demo/</link>
+      <pubDate>Thu, 05 Jan 2023 19:23:49 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/post/istio_demo/</guid>
+      <description>安装 需要先准备一个 kubernetes 集群，这里是用的 k3s 安装 的 1.25 版本。 下载 istio 先下载 istio 安装文件，执行： 1 curl -L https://istio.io/downloadIstio | sh - 如果测试机器下载不了，可以手动下载脚本和安装</description>
+    </item>
+    
     <item>
       <title>Kubernetes 的 informer 源码分析</title>
       <link>https://yefengzhichen.github.io/post/k8s_informer/</link>

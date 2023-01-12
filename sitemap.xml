@@ -3,7 +3,70 @@
   
   <url>
     <loc>https://yefengzhichen.github.io/categories/</loc>
-    <lastmod>2023-01-03T11:15:44+08:00</lastmod>
+    <lastmod>2023-01-05T19:23:49+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/envoy/</loc>
+    <lastmod>2023-01-05T19:23:49+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/istio/</loc>
+    <lastmod>2023-01-05T19:23:49+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/post/istio_demo/</loc>
+    <lastmod>2023-01-05T19:23:49+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/kubernetes/</loc>
+    <lastmod>2023-01-05T19:23:49+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/post/</loc>
+    <lastmod>2023-01-05T19:23:49+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/service-mesh/</loc>
+    <lastmod>2023-01-05T19:23:49+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/</loc>
+    <lastmod>2023-01-05T19:23:49+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/</loc>
+    <lastmod>2023-01-05T19:23:49+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/categories/%E4%BA%91%E5%8E%9F%E7%94%9F/</loc>
+    <lastmod>2023-01-05T19:23:49+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -23,42 +86,7 @@
   </url>
   
   <url>
-    <loc>https://yefengzhichen.github.io/tags/kubernetes/</loc>
-    <lastmod>2023-01-03T11:15:44+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
     <loc>https://yefengzhichen.github.io/post/k8s_informer/</loc>
-    <lastmod>2023-01-03T11:15:44+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
-    <loc>https://yefengzhichen.github.io/post/</loc>
-    <lastmod>2023-01-03T11:15:44+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
-    <loc>https://yefengzhichen.github.io/tags/</loc>
-    <lastmod>2023-01-03T11:15:44+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
-    <loc>https://yefengzhichen.github.io/</loc>
-    <lastmod>2023-01-03T11:15:44+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
-    <loc>https://yefengzhichen.github.io/categories/%E4%BA%91%E5%8E%9F%E7%94%9F/</loc>
     <lastmod>2023-01-03T11:15:44+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -179,13 +207,6 @@
   <url>
     <loc>https://yefengzhichen.github.io/post/video_on_demand/</loc>
     <lastmod>2022-10-17T11:28:33+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
-    <loc>https://yefengzhichen.github.io/tags/envoy/</loc>
-    <lastmod>2022-09-17T20:13:50+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>

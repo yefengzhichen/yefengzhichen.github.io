@@ -6,7 +6,43 @@
     <description>Recent content in Tags on yefengzhichen&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Tue, 03 Jan 2023 11:15:44 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Thu, 05 Jan 2023 19:23:49 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>envoy</title>
+      <link>https://yefengzhichen.github.io/tags/envoy/</link>
+      <pubDate>Thu, 05 Jan 2023 19:23:49 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/envoy/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>istio</title>
+      <link>https://yefengzhichen.github.io/tags/istio/</link>
+      <pubDate>Thu, 05 Jan 2023 19:23:49 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/istio/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>kubernetes</title>
+      <link>https://yefengzhichen.github.io/tags/kubernetes/</link>
+      <pubDate>Thu, 05 Jan 2023 19:23:49 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/kubernetes/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>service mesh</title>
+      <link>https://yefengzhichen.github.io/tags/service-mesh/</link>
+      <pubDate>Thu, 05 Jan 2023 19:23:49 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/service-mesh/</guid>
+      <description></description>
+    </item>
+    
     <item>
       <title>client-go</title>
       <link>https://yefengzhichen.github.io/tags/client-go/</link>
@@ -22,15 +58,6 @@
       <pubDate>Tue, 03 Jan 2023 11:15:44 +0800</pubDate>
       
       <guid>https://yefengzhichen.github.io/tags/informer/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>kubernetes</title>
-      <link>https://yefengzhichen.github.io/tags/kubernetes/</link>
-      <pubDate>Tue, 03 Jan 2023 11:15:44 +0800</pubDate>
-      
-      <guid>https://yefengzhichen.github.io/tags/kubernetes/</guid>
       <description></description>
     </item>
     
@@ -121,15 +148,6 @@
       <pubDate>Mon, 17 Oct 2022 11:28:33 +0800</pubDate>
       
       <guid>https://yefengzhichen.github.io/tags/%E8%A7%86%E9%A2%91%E7%82%B9%E6%92%AD/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>envoy</title>
-      <link>https://yefengzhichen.github.io/tags/envoy/</link>
-      <pubDate>Sat, 17 Sep 2022 20:13:50 +0800</pubDate>
-      
-      <guid>https://yefengzhichen.github.io/tags/envoy/</guid>
       <description></description>
     </item>
     
