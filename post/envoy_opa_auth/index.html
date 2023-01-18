@@ -49,7 +49,7 @@
 <meta itemprop="name" content="使用 Envoy 的 OPA 插件进行鉴权">
 <meta itemprop="description" content="背景 工作中的一个 IAM（身份与访问管理）服务中，使用到了 OPA（开放策略代理）进行鉴权，针对前端来的一个请求，主要处理逻辑如下图红色箭头所示"><meta itemprop="datePublished" content="2022-09-17T20:13:50+08:00" />
 <meta itemprop="dateModified" content="2022-09-17T20:13:50+08:00" />
-<meta itemprop="wordCount" content="2775">
+<meta itemprop="wordCount" content="2772">
 <meta itemprop="keywords" content="envoy,opa,鉴权," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="使用 Envoy 的 OPA 插件进行鉴权"/>
 <meta name="twitter:description" content="背景 工作中的一个 IAM（身份与访问管理）服务中，使用到了 OPA（开放策略代理）进行鉴权，针对前端来的一个请求，主要处理逻辑如下图红色箭头所示"/>
@@ -132,7 +132,7 @@
         <div class="post-category">
             <a href="../../categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
             </div>
-          <span class="more-meta"> 约 2775 字 </span>
+          <span class="more-meta"> 约 2772 字 </span>
           <span class="more-meta"> 预计阅读 6 分钟 </span>
         <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
       </div>
@@ -212,7 +212,7 @@
 </span></code></pre></td>
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="nb">set</span> -x
-curl -sfL http://rancher-mirror.cnrancher.com/k3s/k3s-install.sh <span class="p">|</span> <span class="nv">INSTALL_K3S_MIRROR</span><span class="o">=</span>cn <span class="nv">K3S_KUBECONFIG_MODE</span><span class="o">=</span><span class="s2">&#34;644&#34;</span> <span class="nv">INSTALL_K3S_VERSION</span><span class="o">=</span><span class="s2">&#34;v1.21.8+k3s2&#34;</span> sh -s -
+curl -sfL https://rancher-mirror.rancher.cn/k3s/k3s-install.sh <span class="p">|</span> <span class="nv">INSTALL_K3S_MIRROR</span><span class="o">=</span>cn sh -
 </code></pre></td></tr></table>
 </div>
 </div><h3 id="创建-envoy-配置">创建 Envoy 配置</h3>

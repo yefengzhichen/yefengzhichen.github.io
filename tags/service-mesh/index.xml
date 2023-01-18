@@ -6,7 +6,25 @@
     <description>Recent content in service mesh on yefengzhichen&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Thu, 05 Jan 2023 19:23:49 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/service-mesh/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Thu, 12 Jan 2023 19:15:55 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/service-mesh/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Istio 多集群模型和部署示例</title>
+      <link>https://yefengzhichen.github.io/post/istio_multicluster/</link>
+      <pubDate>Thu, 12 Jan 2023 19:15:55 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/post/istio_multicluster/</guid>
+      <description>多集群部署模型 根据官网的 部署模型说明，istio 部署时，在下面四个纬度都可以进行自由选择： 单一或多个集群 单一或多个网络 单一或多控制平面 单一或</description>
+    </item>
+    
+    <item>
+      <title>Istio 多协议、多注册中心支持调研</title>
+      <link>https://yefengzhichen.github.io/post/istio_multi_protocols_multi_registries/</link>
+      <pubDate>Wed, 11 Jan 2023 14:30:26 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/post/istio_multi_protocols_multi_registries/</guid>
+      <description>问题背景 在大规模现网环境中使用 istio 等服务网格，通常会因为技术栈的不同遇到一些痛点，这里就以 istio 为例，比如： istio 如何对接各种外部注册中心：如 Cons</description>
+    </item>
+    
     <item>
       <title>Istio 安装和示例实践</title>
       <link>https://yefengzhichen.github.io/post/istio_demo/</link>

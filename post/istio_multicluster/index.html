@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Istio 多集群模型和部署示例 - yefengzhichen&#39;s blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="yefengzhichen" /><meta name="description" content="多集群部署模型 根据官网的 部署模型说明，istio 部署时，在下面四个纬度都可以进行自由选择： 单一或多个集群 单一或多个网络 单一或多控制平面 单一或" /><meta name="keywords" content="Hugo, theme, even" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.92.1 with theme even" />
+
+
+<link rel="canonical" href="https://yefengzhichen.github.io/post/istio_multicluster/" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../favicon-16x16.png">
+<link rel="manifest" href="../../manifest.json">
+<link rel="mask-icon" href="../../safari-pinned-tab.svg" color="#5bbad5">
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<link href="../../sass/main.min.f92fd13721ddf72129410fd8250e73152cc6f2438082b6c0208dc24ee7c13fc4.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="Istio 多集群模型和部署示例" />
+<meta property="og:description" content="多集群部署模型 根据官网的 部署模型说明，istio 部署时，在下面四个纬度都可以进行自由选择： 单一或多个集群 单一或多个网络 单一或多控制平面 单一或" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yefengzhichen.github.io/post/istio_multicluster/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2023-01-12T19:15:55+08:00" />
+<meta property="article:modified_time" content="2023-01-12T19:15:55+08:00" />
+
+<meta itemprop="name" content="Istio 多集群模型和部署示例">
+<meta itemprop="description" content="多集群部署模型 根据官网的 部署模型说明，istio 部署时，在下面四个纬度都可以进行自由选择： 单一或多个集群 单一或多个网络 单一或多控制平面 单一或"><meta itemprop="datePublished" content="2023-01-12T19:15:55+08:00" />
+<meta itemprop="dateModified" content="2023-01-12T19:15:55+08:00" />
+<meta itemprop="wordCount" content="4701">
+<meta itemprop="keywords" content="kubernetes,istio,multicluster,service mesh," /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Istio 多集群模型和部署示例"/>
+<meta name="twitter:description" content="多集群部署模型 根据官网的 部署模型说明，istio 部署时，在下面四个纬度都可以进行自由选择： 单一或多个集群 单一或多个网络 单一或多控制平面 单一或"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="../../">
+        <li class="mobile-menu-item">首页</li>
+      </a><a href="../../post/">
+        <li class="mobile-menu-item">列表</li>
+      </a><a href="../../tags/">
+        <li class="mobile-menu-item">标签</li>
+      </a><a href="../../categories/">
+        <li class="mobile-menu-item">分类</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="../../">首页</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../post/">列表</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../tags/">标签</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../categories/">分类</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">Istio 多集群模型和部署示例</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2023-01-12 </span>
+        <div class="post-category">
+            <a href="../../categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
+            </div>
+          <span class="more-meta"> 约 4701 字 </span>
+          <span class="more-meta"> 预计阅读 10 分钟 </span>
+        <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#多集群部署模型">多集群部署模型</a>
+          <ul>
+            <li><a href="#多网络部署">多网络部署</a></li>
+            <li><a href="#控制平面纬度">控制平面纬度</a></li>
+            <li><a href="#多网格部署">多网格部署</a></li>
+          </ul>
+        </li>
+        <li><a href="#多集群部署实践">多集群部署实践</a>
+          <ul>
+            <li><a href="#实践准备">实践准备</a></li>
+            <li><a href="#多网络多控制面板">多网络多控制面板</a></li>
+            <li><a href="#单网络多控制面板">单网络多控制面板</a></li>
+            <li><a href="#验证部署">验证部署</a></li>
+          </ul>
+        </li>
+        <li><a href="#问题">问题</a>
+          <ul>
+            <li><a href="#不能返回多版本结果">不能返回多版本结果</a></li>
+          </ul>
+        </li>
+        <li><a href="#多集群通信原理">多集群通信原理</a>
+          <ul>
+            <li><a href="#多网络多控制面板-1">多网络多控制面板</a></li>
+            <li><a href="#单网络多控制面板-1">单网络多控制面板</a></li>
+          </ul>
+        </li>
+        <li><a href="#参考">参考</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h2 id="多集群部署模型">多集群部署模型</h2>
+<p>根据官网的 <a href="https://istio.io/latest/docs/ops/deployment/deployment-models/">部署模型说明</a>，istio 部署时，在下面四个纬度都可以进行自由选择：</p>
+<ul>
+<li>单一或多个集群</li>
+<li>单一或多个网络</li>
+<li>单一或多控制平面</li>
+<li>单一或多个网格</li>
+</ul>
+<p>因此多集群情况下，后面三个都可以任意组合，总共有 8 种可能。</p>
+<h3 id="多网络部署">多网络部署</h3>
+<p>多集群可以处在不同的网络中，不同网络中的工作负载只能通过一个或多个 istio 网关相互访问。
+<img src="../../image/istio_multicluster/multi-net.svg" alt="multi-net" title="多网络部署：图片来自网络"></p>
+<h3 id="控制平面纬度">控制平面纬度</h3>
+<p>多集群部署可以共享一个控制平面实例。在这种情况下，控制平面实例可以驻留在一个或多个集群中：
+<img src="../../image/istio_multicluster/shared-control.svg" alt="shared-control" title="多集群共享控制平面：图片来自网络"></p>
+<p>多集群部署也可以使用不同的控制平面，下面是在东西两个地域，分别部署了一个控制平面：
+<img src="../../image/istio_multicluster/multi-control.svg" alt="multi-control" title="多集群多控制平面：图片来自网络"></p>
+<h3 id="多网格部署">多网格部署</h3>
+<p>通过网格联邦可以实现多网格部署，多网格主要优点是：</p>
+<ul>
+<li>组织边界：业务范围</li>
+<li>服务名称或命名空间复用：比如 default 的使用</li>
+<li>加强隔离：将测试工作负载与生产工作负载隔离</li>
+</ul>
+<p>部署架构如下：
+<img src="../../image/istio_multicluster/multi-mesh.svg" alt="multi-mesh" title="多集器多服务网格：图片来自网络"></p>
+<h2 id="多集群部署实践">多集群部署实践</h2>
+<h3 id="实践准备">实践准备</h3>
+<p>创建两个 k8s 集群，这里用两台云主机，分别安装 k3s 集群，参考 <a href="https://docs.rancher.cn/docs/k3s/installation/install-options/_index/">安装文档</a>，因为 k3s 的安装的 kubectl 命令默认用的 kubernetes 配置路径为/etc/rancher/k3s/k3s.yaml，这里先设置环境 KUBECONFIG=&quot;/root/.kube/config&quot;，保证 kubectl 和 istioctl 配置一致。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">vim ~/.bashrc <span class="c1"># 文件中添加 export KUBECONFIG=&#34;/root/.kube/config&#34;</span>
+<span class="nb">source</span> ～/.bashrc
+curl -sfL https://rancher-mirror.rancher.cn/k3s/k3s-install.sh <span class="p">|</span> <span class="nv">INSTALL_K3S_MIRROR</span><span class="o">=</span>cn sh -
+cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
+</code></pre></td></tr></table>
+</div>
+</div><p>查看两个集群节点上的 kubeconfig 配置，除了认证外其他配置基本一样：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w"></span><span class="nt">clusters</span><span class="p">:</span><span class="w">
+</span><span class="w"></span>- <span class="nt">cluster</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">certificate-authority-data</span><span class="p">:</span><span class="w"> </span><span class="l">xxx</span><span class="w"> </span><span class="c"># 省略</span><span class="w">
+</span><span class="w">    </span><span class="nt">server</span><span class="p">:</span><span class="w"> </span><span class="l">https://127.0.0.1:6443</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">default</span><span class="w">
+</span><span class="w"></span><span class="nt">contexts</span><span class="p">:</span><span class="w">
+</span><span class="w"></span>- <span class="nt">context</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">cluster</span><span class="p">:</span><span class="w"> </span><span class="l">default</span><span class="w">
+</span><span class="w">    </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l">default</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">default</span><span class="w">
+</span><span class="w"></span><span class="nt">current-context</span><span class="p">:</span><span class="w"> </span><span class="l">default</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Config</span><span class="w">
+</span><span class="w"></span><span class="nt">preferences</span><span class="p">:</span><span class="w"> </span>{}<span class="w">
+</span><span class="w"></span><span class="nt">users</span><span class="p">:</span><span class="w">
+</span><span class="w"></span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">default</span><span class="w">
+</span><span class="w">  </span><span class="nt">user</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">client-certificate-data</span><span class="p">:</span><span class="w"> </span><span class="l">xxx</span><span class="w"> </span><span class="c"># 省略</span><span class="w">
+</span><span class="w">    </span><span class="nt">client-key-data</span><span class="p">:</span><span class="w"> </span><span class="l">xxx</span><span class="w"> </span><span class="c"># 省略</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>需要在两个集群节点上做如下设置 kubernetes 的 context，这里两台云主机的内网地址分别为：192.168.60.113、192.168.60.9。这里在 192.168.60.113 主机上执行以下步骤：</p>
+<ul>
+<li>进入 kubeconfig 目录：<code>cd /root/.kube</code></li>
+<li>拷贝 config 为 config1：<code>cp config config1</code></li>
+<li>拷贝另一个集群的 config 为 config2：<code>scp root@192.168.60.9:/root/.kube/config config2</code></li>
+<li>修改 config1 和 config2，将集群名称、用户名称、context 名称改为不一样的，比如 cluster1、cluster2，并将 127.0.0.1 替换为内网地址</li>
+<li>将两个 config 合并为一个 config，<code>KUBECONFIG=config1:config2 kubectl config view --flatten &gt; config</code></li>
+</ul>
+<p>此时查看/root/.kube/config 配置为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w"></span><span class="nt">clusters</span><span class="p">:</span><span class="w">
+</span><span class="w"></span>- <span class="nt">cluster</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">server</span><span class="p">:</span><span class="w"> </span><span class="l">https://192.168.60.113:6443</span><span class="w">
+</span><span class="w">    </span><span class="nt">certificate-authority-data</span><span class="p">:</span><span class="w"> </span><span class="l">xxx</span><span class="w"> </span><span class="c"># 省略</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">cluster1</span><span class="w">
+</span><span class="w"></span>- <span class="nt">cluster</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">server</span><span class="p">:</span><span class="w"> </span><span class="l">https://192.168.60.9:6443</span><span class="w">
+</span><span class="w">    </span><span class="nt">certificate-authority-data</span><span class="p">:</span><span class="w"> </span><span class="l">xxx</span><span class="w"> </span><span class="c"># 省略</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">cluster2</span><span class="w">
+</span><span class="w"></span><span class="nt">contexts</span><span class="p">:</span><span class="w">
+</span><span class="w"></span>- <span class="nt">context</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">cluster</span><span class="p">:</span><span class="w"> </span><span class="l">cluster1</span><span class="w">
+</span><span class="w">    </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l">user-cluster1</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">context-cluster1</span><span class="w">
+</span><span class="w"></span>- <span class="nt">context</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">cluster</span><span class="p">:</span><span class="w"> </span><span class="l">cluster2</span><span class="w">
+</span><span class="w">    </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l">user-cluster2</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">context-cluster2</span><span class="w">
+</span><span class="w"></span><span class="nt">current-context</span><span class="p">:</span><span class="w"> </span><span class="l">context-cluster1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Config</span><span class="w">
+</span><span class="w"></span><span class="nt">preferences</span><span class="p">:</span><span class="w"> </span>{}<span class="w">
+</span><span class="w"></span><span class="nt">users</span><span class="p">:</span><span class="w">
+</span><span class="w"></span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">user-cluster1</span><span class="w">
+</span><span class="w">  </span><span class="nt">user</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">client-certificate-data</span><span class="p">:</span><span class="w"> </span><span class="l">xxx</span><span class="w"> </span><span class="c"># 省略</span><span class="w">
+</span><span class="w">    </span><span class="nt">client-key-data</span><span class="p">:</span><span class="w"> </span><span class="l">xxx</span><span class="w"> </span><span class="c"># 省略</span><span class="w">
+</span><span class="w"></span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">user-cluster2</span><span class="w">
+</span><span class="w">  </span><span class="nt">user</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">client-certificate-data</span><span class="p">:</span><span class="w"> </span><span class="l">xxx</span><span class="w"> </span><span class="c"># 省略</span><span class="w">
+</span><span class="w">    </span><span class="nt">client-key-data</span><span class="p">:</span><span class="w"> </span><span class="l">xxx</span><span class="w"> </span><span class="c"># 省略</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>并将上面的 kubeconfig 配置复制为 cluster2 集群节点的～/.kube/config。这时使用 kubectl config 就可以在两个环境切换了：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@cluster1:~/.kube# kubectl config use-context context-cluster1
+Switched to context <span class="s2">&#34;context-cluster1&#34;</span>.
+root@cluster1:~/.kube# kubectl get nodes
+NAME       STATUS   ROLES                  AGE     VERSION
+cluster1   Ready    control-plane,master   6h20m   v1.25.4+k3s1
+root@cluster1:~/.kube# kubectl config use-context context-cluster2
+Switched to context <span class="s2">&#34;context-cluster2&#34;</span>.
+root@cluster1:~/.kube# kubectl get nodes
+NAME      STATUS   ROLES                  AGE   VERSION
+cluster2  Ready    control-plane,master   50d   v1.25.4+k3s1
+</code></pre></td></tr></table>
+</div>
+</div><p>设置 context 的环境变量：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="nb">export</span> <span class="nv">CTX_CLUSTER1</span><span class="o">=</span>context-cluster1
+<span class="nb">export</span> <span class="nv">CTX_CLUSTER2</span><span class="o">=</span>context-cluster2
+</code></pre></td></tr></table>
+</div>
+</div><p>继续配置证书和密钥，使用 <a href="https://istio.io/latest/docs/tasks/security/cert-management/plugin-ca-cert/">这里的配置方式</a>，即需要先手动生成一个根证书，然后由根证书生成多个集群的中间证书。
+<img src="../../image/istio_multicluster/ca-hierarchy.svg" alt="ca-hierarchy" title="证书层级：图片来自网络"></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 创建根证书</span>
+<span class="nb">cd</span> ~/zt/istio/istio-1.16.1
+mkdir -p certs <span class="o">&amp;&amp;</span> <span class="nb">cd</span> certs
+make -f ../tools/certs/Makefile.selfsigned.mk root-ca
+<span class="c1"># 创建 cluster1 和 cluster2 的中间证书</span>
+make -f ../tools/certs/Makefile.selfsigned.mk cluster1-cacerts
+make -f ../tools/certs/Makefile.selfsigned.mk cluster2-cacerts
+
+<span class="c1"># 在安装 istio 之前，配置两个 istio 集群的证书</span>
+kubectl create --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER1</span><span class="si">}</span><span class="s2">&#34;</span> namespace istio-system
+kubectl create --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER2</span><span class="si">}</span><span class="s2">&#34;</span> namespace istio-system
+kubectl create secret --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER1</span><span class="si">}</span><span class="s2">&#34;</span> generic cacerts -n istio-system <span class="se">\
+</span><span class="se"></span>      --from-file<span class="o">=</span>cluster1/ca-cert.pem <span class="se">\
+</span><span class="se"></span>      --from-file<span class="o">=</span>cluster1/ca-key.pem <span class="se">\
+</span><span class="se"></span>      --from-file<span class="o">=</span>cluster1/root-cert.pem <span class="se">\
+</span><span class="se"></span>      --from-file<span class="o">=</span>cluster1/cert-chain.pem
+kubectl create secret --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER2</span><span class="si">}</span><span class="s2">&#34;</span> generic cacerts -n istio-system <span class="se">\
+</span><span class="se"></span>      --from-file<span class="o">=</span>cluster2/ca-cert.pem <span class="se">\
+</span><span class="se"></span>      --from-file<span class="o">=</span>cluster2/ca-key.pem <span class="se">\
+</span><span class="se"></span>      --from-file<span class="o">=</span>cluster2/root-cert.pem <span class="se">\
+</span><span class="se"></span>      --from-file<span class="o">=</span>cluster2/cert-chain.pem
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="多网络多控制面板">多网络多控制面板</h3>
+<p>多网络多控制面板部署方式，即在两个集群 cluster1 和 cluster2 中都部署 istio 控制面板，两个集群都成为主集群，cluster1 在 network1 中，cluster2 在 network2 中，两个集群必须通过东西向的 gateway 来通信，如下图所示：
+<img src="../../image/istio_multicluster/multi_net_multi_pri.svg" alt="multi_net_multi_pri" title="多网络多控制面板部署：图片来自网络"></p>
+<p>分别在 cluster1 和 cluster2 安装 istio 并配置 gateway：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># cluster1 安装 istio</span>
+kubectl --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER1</span><span class="si">}</span><span class="s2">&#34;</span> get namespace istio-system <span class="o">&amp;&amp;</span> <span class="se">\
+</span><span class="se"></span>  kubectl --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER1</span><span class="si">}</span><span class="s2">&#34;</span> label namespace istio-system topology.istio.io/network<span class="o">=</span>network1
+cat <span class="s">&lt;&lt;EOF &gt; cluster1.yaml
+</span><span class="s">apiVersion: install.istio.io/v1alpha1
+</span><span class="s">kind: IstioOperator
+</span><span class="s">spec:
+</span><span class="s">  # 增加 envoy 响应日志
+</span><span class="s">  meshConfig:
+</span><span class="s">    accessLogFile: /dev/stdout
+</span><span class="s">    accessLogEncoding: &#34;JSON&#34;
+</span><span class="s">  values:
+</span><span class="s">    global:
+</span><span class="s">      meshID: mesh1
+</span><span class="s">      multiCluster:
+</span><span class="s">        clusterName: cluster1
+</span><span class="s">      network: network1
+</span><span class="s">EOF</span>
+istioctl install --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER1</span><span class="si">}</span><span class="s2">&#34;</span> -f cluster1.yaml
+<span class="c1"># cluster1 部署 gateway</span>
+samples/multicluster/gen-eastwest-gateway.sh <span class="se">\
+</span><span class="se"></span>    --mesh mesh1 --cluster cluster1 --network network1 <span class="p">|</span> <span class="se">\
+</span><span class="se"></span>    istioctl --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER1</span><span class="si">}</span><span class="s2">&#34;</span> install -y -f -
+<span class="c1"># 查看 external ip，这个 ip 是这台 cluster1 云主机的内网 ip</span>
+kubectl --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER1</span><span class="si">}</span><span class="s2">&#34;</span> get svc istio-eastwestgateway -n istio-system
+NAME                    TYPE           CLUSTER-IP      EXTERNAL-IP      PORT<span class="o">(</span>S<span class="o">)</span>
+istio-eastwestgateway   LoadBalancer   10.45.180.156   192.168.60.113   15021:31814/TCP...
+<span class="c1"># cluster1 对外暴露 gateway 服务</span>
+kubectl --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER1</span><span class="si">}</span><span class="s2">&#34;</span> apply -n istio-system -f <span class="se">\
+</span><span class="se"></span>    samples/multicluster/expose-services.yaml
+
+<span class="c1"># cluster2 安装 istio</span>
+kubectl --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER2</span><span class="si">}</span><span class="s2">&#34;</span> get namespace istio-system <span class="o">&amp;&amp;</span> <span class="se">\
+</span><span class="se"></span>  kubectl --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER2</span><span class="si">}</span><span class="s2">&#34;</span> label namespace istio-system topology.istio.io/network<span class="o">=</span>network2
+cat <span class="s">&lt;&lt;EOF &gt; cluster2.yaml
+</span><span class="s">apiVersion: install.istio.io/v1alpha1
+</span><span class="s">kind: IstioOperator
+</span><span class="s">spec:
+</span><span class="s">  # 增加 envoy 响应日志
+</span><span class="s">  meshConfig:
+</span><span class="s">    accessLogFile: /dev/stdout
+</span><span class="s">    accessLogEncoding: &#34;JSON&#34;
+</span><span class="s">  values:
+</span><span class="s">    global:
+</span><span class="s">      meshID: mesh1
+</span><span class="s">      multiCluster:
+</span><span class="s">        clusterName: cluster2
+</span><span class="s">      network: network2
+</span><span class="s">EOF</span>
+istioctl install --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER2</span><span class="si">}</span><span class="s2">&#34;</span> -f cluster2.yaml
+<span class="c1"># cluster2 部署 gateway</span>
+samples/multicluster/gen-eastwest-gateway.sh <span class="se">\
+</span><span class="se"></span>    --mesh mesh1 --cluster cluster2 --network network2 <span class="p">|</span> <span class="se">\
+</span><span class="se"></span>    istioctl --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER2</span><span class="si">}</span><span class="s2">&#34;</span> install -y -f -
+<span class="c1"># 查看 external ip，这个 ip 是这台 cluster2 云主机的内网 ip</span>
+kubectl --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER2</span><span class="si">}</span><span class="s2">&#34;</span> get svc istio-eastwestgateway -n istio-system
+<span class="c1"># cluster2 对外暴露 gateway 服务</span>
+kubectl --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER2</span><span class="si">}</span><span class="s2">&#34;</span> apply -n istio-system -f <span class="se">\
+</span><span class="se"></span>    samples/multicluster/expose-services.yaml
+</code></pre></td></tr></table>
+</div>
+</div><p>在两个集群中分别设置另一个集群 api-server 的访问证书的 secret：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 设置 cluster2 集群访问 cluster1 的访问证书</span>
+istioctl x create-remote-secret <span class="se">\
+</span><span class="se"></span>    --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER1</span><span class="si">}</span><span class="s2">&#34;</span> <span class="se">\
+</span><span class="se"></span>    --name<span class="o">=</span>cluster1 <span class="p">|</span> <span class="se">\
+</span><span class="se"></span>    kubectl apply -f - --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER2</span><span class="si">}</span><span class="s2">&#34;</span>
+<span class="c1"># 设置 cluster1 集群访问 cluster2 的访问证书</span>
+istioctl x create-remote-secret <span class="se">\
+</span><span class="se"></span>    --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER2</span><span class="si">}</span><span class="s2">&#34;</span> <span class="se">\
+</span><span class="se"></span>    --name<span class="o">=</span>cluster2 <span class="p">|</span> <span class="se">\
+</span><span class="se"></span>    kubectl apply -f - --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER1</span><span class="si">}</span><span class="s2">&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>进行这些步骤后，多网络多控制面板部署方式就完成了，可以参考 <a href="https://yefengzhichen.github.io/post/istio_multicluster/">验证部署</a> 进行验证。</p>
+<h3 id="单网络多控制面板">单网络多控制面板</h3>
+<p><strong>注意：要使得安装的两个集群 pods、service 之间能互相通信，还需要在安装集群过程进行设置，比如使用 <a href="https://github.com/submariner-io/submariner">submariner</a>，以下步骤不包含此设置。</strong></p>
+<p>这种部署模式，是在两个集群 cluster1 和 cluster2 都部署 istio 控制面板，两个集群都成为主集群，两个集群在同一个网络中。如下图所示，这种配置方式每个控制面板都会观测两个集群的服务变化，并且两个集群的 pods 负载之间可以直接通信。</p>
+<p><img src="../../image/istio_multicluster/multiple_primary.svg" alt="envoy_arch" title="单网络多控制面板：图片来自网络"></p>
+<p>在 cluster1 创建 istio 配置：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">cat <span class="s">&lt;&lt;EOF &gt; cluster1.yaml
+</span><span class="s">apiVersion: install.istio.io/v1alpha1
+</span><span class="s">kind: IstioOperator
+</span><span class="s">spec:
+</span><span class="s">  # 增加 envoy 响应日志
+</span><span class="s">  meshConfig:
+</span><span class="s">    accessLogFile: /dev/stdout
+</span><span class="s">    accessLogEncoding: &#34;JSON&#34;
+</span><span class="s">  values:
+</span><span class="s">    global:
+</span><span class="s">      meshID: mesh1
+</span><span class="s">      multiCluster:
+</span><span class="s">        clusterName: cluster1
+</span><span class="s">      network: network1
+</span><span class="s">EOF</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>执行安装 istio，执行结果如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@cluster1:~/zt/istio/istio-1.16.1/multicluster# istioctl install --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER1</span><span class="si">}</span><span class="s2">&#34;</span> -f cluster1.yaml
+This will install the Istio 1.16.1 default profile with <span class="o">[</span><span class="s2">&#34;Istio core&#34;</span> <span class="s2">&#34;Istiod&#34;</span> <span class="s2">&#34;Ingress gateways&#34;</span><span class="o">]</span> components into the cluster. Proceed? <span class="o">(</span>y/N<span class="o">)</span> y
+✔ Istio core installed
+✔ Istiod installed
+✔ Ingress gateways installed
+✔ Installation <span class="nb">complete</span>
+Making this installation the default <span class="k">for</span> injection and validation.
+
+Thank you <span class="k">for</span> installing Istio 1.16.  Please take a few minutes to tell us about your install/upgrade experience!  https://forms.gle/99uiMML96AmsXY5d6
+</code></pre></td></tr></table>
+</div>
+</div><p>同样为 cluster2 集群创建配置并安装：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">cat <span class="s">&lt;&lt;EOF &gt; cluster2.yaml
+</span><span class="s">apiVersion: install.istio.io/v1alpha1
+</span><span class="s">kind: IstioOperator
+</span><span class="s">spec:
+</span><span class="s">  values:
+</span><span class="s">    global:
+</span><span class="s">      meshID: mesh1
+</span><span class="s">      multiCluster:
+</span><span class="s">        clusterName: cluster2
+</span><span class="s">      network: network1
+</span><span class="s">EOF</span>
+
+istioctl install --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER2</span><span class="si">}</span><span class="s2">&#34;</span> -f cluster2.yaml
+</code></pre></td></tr></table>
+</div>
+</div><p>在两个集群中分别设置另一个集群 api-server 的访问证书的 secret：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 设置 cluster2 集群访问 cluster1 的访问证书</span>
+istioctl x create-remote-secret <span class="se">\
+</span><span class="se"></span>    --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER1</span><span class="si">}</span><span class="s2">&#34;</span> <span class="se">\
+</span><span class="se"></span>    --name<span class="o">=</span>cluster1 <span class="p">|</span> <span class="se">\
+</span><span class="se"></span>    kubectl apply -f - --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER2</span><span class="si">}</span><span class="s2">&#34;</span>
+<span class="c1"># 设置 cluster1 集群访问 cluster2 的访问证书</span>
+istioctl x create-remote-secret <span class="se">\
+</span><span class="se"></span>    --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER2</span><span class="si">}</span><span class="s2">&#34;</span> <span class="se">\
+</span><span class="se"></span>    --name<span class="o">=</span>cluster2 <span class="p">|</span> <span class="se">\
+</span><span class="se"></span>    kubectl apply -f - --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER1</span><span class="si">}</span><span class="s2">&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>进行这些步骤后，多网络多控制面板部署方式就完成了，可以参考 <a href="https://yefengzhichen.github.io/post/istio_multicluster/">验证部署</a> 进行验证。</p>
+<h3 id="验证部署">验证部署</h3>
+<p>通过部署一个 HelloWorld 应用的 v1 版本在 cluster1，v2 版本在 cluster2，当收到请求，将会根据请求的版本来进行响应。同时在两个集群都会部署一个 Sleep 容器，用这些 pods 作为请求源模拟网格内的流量。</p>
+<p>在 cluster1 的 istio/istio-1.16.1 目录下执行以下命令来安装，在执行之前，可以在另一个窗口打印 istiod 的日志，查看执行输出结果：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 分别创建命名空间</span>
+kubectl create --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER1</span><span class="si">}</span><span class="s2">&#34;</span> namespace sample
+kubectl create --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER2</span><span class="si">}</span><span class="s2">&#34;</span> namespace sample
+<span class="c1"># 分别开启 istio 注入</span>
+kubectl label --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER1</span><span class="si">}</span><span class="s2">&#34;</span> namespace sample istio-injection<span class="o">=</span>enabled
+kubectl label --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER2</span><span class="si">}</span><span class="s2">&#34;</span> namespace sample istio-injection<span class="o">=</span>enabled
+<span class="c1"># 分别创建 service</span>
+kubectl apply --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER1</span><span class="si">}</span><span class="s2">&#34;</span> <span class="se">\
+</span><span class="se"></span>    -f samples/helloworld/helloworld.yaml <span class="se">\
+</span><span class="se"></span>    -l <span class="nv">service</span><span class="o">=</span>helloworld -n sample
+kubectl apply --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER2</span><span class="si">}</span><span class="s2">&#34;</span> <span class="se">\
+</span><span class="se"></span>    -f samples/helloworld/helloworld.yaml <span class="se">\
+</span><span class="se"></span>    -l <span class="nv">service</span><span class="o">=</span>helloworld -n sample
+<span class="c1"># 分别创建 deployment</span>
+kubectl apply --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER1</span><span class="si">}</span><span class="s2">&#34;</span> <span class="se">\
+</span><span class="se"></span>    -f samples/helloworld/helloworld.yaml <span class="se">\
+</span><span class="se"></span>    -l <span class="nv">version</span><span class="o">=</span>v1 -n sample
+kubectl apply --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER2</span><span class="si">}</span><span class="s2">&#34;</span> <span class="se">\
+</span><span class="se"></span>    -f samples/helloworld/helloworld.yaml <span class="se">\
+</span><span class="se"></span>    -l <span class="nv">version</span><span class="o">=</span>v2 -n sample
+</code></pre></td></tr></table>
+</div>
+</div><p>这时在 cluster2 的 istiod 对应的日志为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 创建 cluster1 的 service helloworld 产生的日志</span>
+2023-01-16T09:13:51.374303Z	info	ads	Incremental push, service helloworld.sample.svc.cluster.local at shard Kubernetes/cluster1 has no endpoints
+2023-01-16T09:13:51.474543Z	info	ads	Push debounce stable<span class="o">[</span>19<span class="o">]</span> <span class="m">2</span> <span class="k">for</span> config ServiceEntry/sample/helloworld.sample.svc.cluster.local: 100.177423ms since last change, 106.769424ms since last push, <span class="nv">full</span><span class="o">=</span><span class="nb">true</span>
+2023-01-16T09:13:51.475013Z	info	ads	XDS: Pushing:2023-01-16T09:13:51Z/12 Services:7 ConnectedEndpoints:1 Version:2023-01-16T09:13:51Z/12
+2023-01-16T09:13:51.475432Z	info	ads	CDS: PUSH <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:15 size:14.5kB cached:13/14
+2023-01-16T09:13:51.475475Z	info	ads	LDS: PUSH <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:0 size:0B
+2023-01-16T09:13:51.479356Z	info	ads	EDS: PUSH request <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:1 size:52B empty:1 cached:0/1 filtered:13
+<span class="c1"># 创建 cluster2 的 service helloworld 产生的日志</span>
+2023-01-16T09:15:26.712662Z	info	ads	Incremental push, service helloworld.sample.svc.cluster.local at shard Kubernetes/cluster2 has no endpoints
+2023-01-16T09:15:26.813742Z	info	ads	Push debounce stable<span class="o">[</span>20<span class="o">]</span> <span class="m">2</span> <span class="k">for</span> config ServiceEntry/sample/helloworld.sample.svc.cluster.local: 101.02765ms since last change, 104.914465ms since last push, <span class="nv">full</span><span class="o">=</span><span class="nb">true</span>
+2023-01-16T09:15:26.814195Z	info	ads	XDS: Pushing:2023-01-16T09:15:26Z/13 Services:7 ConnectedEndpoints:1 Version:2023-01-16T09:15:26Z/13
+2023-01-16T09:15:26.814514Z	info	ads	CDS: PUSH <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:15 size:14.5kB cached:13/14
+2023-01-16T09:15:26.814568Z	info	ads	EDS: PUSH INC <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:1 size:52B empty:1 cached:0/1
+2023-01-16T09:15:26.814602Z	info	ads	LDS: PUSH <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:0 size:0B
+<span class="c1"># 创建 cluster1 的 deployment helloworld 产生的日志</span>
+2023-01-16T09:16:04.805493Z	info	ads	Incremental push, service helloworld.sample.svc.cluster.local at shard Kubernetes/cluster1 has no endpoints
+2023-01-16T09:16:04.905918Z	info	ads	Push debounce stable<span class="o">[</span>21<span class="o">]</span> <span class="m">1</span> <span class="k">for</span> config ServiceEntry/sample/helloworld.sample.svc.cluster.local: 100.365169ms since last change, 100.364925ms since last push, <span class="nv">full</span><span class="o">=</span><span class="nb">false</span>
+2023-01-16T09:16:04.906018Z	info	ads	XDS: Incremental Pushing:2023-01-16T09:15:26Z/13 ConnectedEndpoints:1 Version:2023-01-16T09:15:26Z/13
+2023-01-16T09:16:06.813715Z	info	ads	Full push, new service sample/helloworld.sample.svc.cluster.local
+2023-01-16T09:16:06.914790Z	info	ads	Push debounce stable<span class="o">[</span>22<span class="o">]</span> <span class="m">1</span> <span class="k">for</span> config ServiceEntry/sample/helloworld.sample.svc.cluster.local: 100.821371ms since last change, 100.821083ms since last push, <span class="nv">full</span><span class="o">=</span><span class="nb">true</span>
+2023-01-16T09:16:06.915430Z	info	ads	XDS: Pushing:2023-01-16T09:16:06Z/14 Services:7 ConnectedEndpoints:1 Version:2023-01-16T09:16:06Z/14
+2023-01-16T09:16:06.915867Z	info	ads	CDS: PUSH <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:15 size:14.5kB cached:13/14
+2023-01-16T09:16:06.916113Z	info	ads	EDS: PUSH INC <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:1 size:217B empty:0 cached:0/1
+2023-01-16T09:16:06.916175Z	info	ads	LDS: PUSH <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:0 size:0B
+<span class="c1"># 创建 cluster2 的 deployment helloworld 产生的日志</span>
+2023-01-16T09:17:51.310335Z	info	Sidecar injection request <span class="k">for</span> sample/helloworld-v2-54dddc5567-***** <span class="o">(</span>actual name not yet known<span class="o">)</span>
+2023-01-16T09:17:52.458115Z	info	ads	Incremental push, service helloworld.sample.svc.cluster.local at shard Kubernetes/cluster2 has no endpoints
+2023-01-16T09:17:52.558430Z	info	ads	Push debounce stable<span class="o">[</span>23<span class="o">]</span> <span class="m">1</span> <span class="k">for</span> config ServiceEntry/sample/helloworld.sample.svc.cluster.local: 100.238395ms since last change, 100.238086ms since last push, <span class="nv">full</span><span class="o">=</span><span class="nb">false</span>
+2023-01-16T09:17:52.558500Z	info	ads	XDS: Incremental Pushing:2023-01-16T09:16:06Z/14 ConnectedEndpoints:1 Version:2023-01-16T09:16:06Z/14
+2023-01-16T09:17:52.963838Z	info	ads	ADS: new connection <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample-4
+2023-01-16T09:17:52.964083Z	info	ads	CDS: PUSH request <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample resources:18 size:15.9kB cached:13/14
+2023-01-16T09:17:52.978204Z	info	ads	EDS: PUSH request <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample resources:14 size:2.7kB empty:0 cached:14/14
+2023-01-16T09:17:52.995232Z	info	ads	LDS: PUSH request <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample resources:16 size:46.5kB
+2023-01-16T09:17:53.033523Z	info	ads	RDS: PUSH request <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample resources:8 size:4.8kB cached:7/8
+2023-01-16T09:17:53.471174Z	info	ads	CDS: PUSH <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample resources:18 size:15.9kB cached:13/14
+2023-01-16T09:17:53.471290Z	info	ads	EDS: PUSH <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample resources:14 size:2.7kB empty:0 cached:14/14
+2023-01-16T09:17:53.472629Z	info	ads	LDS: PUSH <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample resources:16 size:46.5kB
+2023-01-16T09:17:53.472977Z	info	ads	RDS: PUSH <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample resources:8 size:4.8kB cached:7/8
+2023-01-16T09:17:53.582899Z	info	ads	Push debounce stable<span class="o">[</span>24<span class="o">]</span> <span class="m">1</span> <span class="k">for</span> config ServiceEntry/sample/helloworld.sample.svc.cluster.local: 100.230617ms since last change, 100.230465ms since last push, <span class="nv">full</span><span class="o">=</span><span class="nb">false</span>
+2023-01-16T09:17:53.582963Z	info	ads	XDS: Incremental Pushing:2023-01-16T09:16:06Z/14 ConnectedEndpoints:2 Version:2023-01-16T09:16:06Z/14
+</code></pre></td></tr></table>
+</div>
+</div><p>分别查看创建的 pods：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@cluster1:~/zt/istio/istio-1.16.1# kubectl get pods --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER1</span><span class="si">}</span><span class="s2">&#34;</span> -nsample
+NAME                             READY   STATUS    RESTARTS   AGE
+helloworld-v1-78b9f5c87f-pkxxj   2/2     Running   <span class="m">0</span>          5m40s
+root@cluster1:~/zt/istio/istio-1.16.1# kubectl get pods --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER2</span><span class="si">}</span><span class="s2">&#34;</span> -nsample
+NAME                             READY   STATUS    RESTARTS   AGE
+helloworld-v2-54dddc5567-99j9l   2/2     Running   <span class="m">0</span>          3m57s
+</code></pre></td></tr></table>
+</div>
+</div><p>分别部署 Sleep 应用：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubectl apply --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER1</span><span class="si">}</span><span class="s2">&#34;</span> <span class="se">\
+</span><span class="se"></span>    -f samples/sleep/sleep.yaml -n sample
+kubectl apply --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER2</span><span class="si">}</span><span class="s2">&#34;</span> <span class="se">\
+</span><span class="se"></span>    -f samples/sleep/sleep.yaml -n sample
+</code></pre></td></tr></table>
+</div>
+</div><p>为了验证多集群的负载均衡能按预期执行，可以在 Sleep pod 多次调用 HelloWorld 服务。在 cluster1 发送一次请求：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubectl <span class="nb">exec</span> --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER1</span><span class="si">}</span><span class="s2">&#34;</span> -n sample -c sleep <span class="se">\
+</span><span class="se"></span>    <span class="s2">&#34;</span><span class="k">$(</span>kubectl get pod --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER1</span><span class="si">}</span><span class="s2">&#34;</span> -n sample -l <span class="se">\
+</span><span class="se"></span>    <span class="nv">app</span><span class="o">=</span>sleep -o <span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.items[0].metadata.name}&#39;</span><span class="k">)</span><span class="s2">&#34;</span> <span class="se">\
+</span><span class="se"></span>    -- curl helloworld.sample:5000/hello
+
+<span class="c1"># 多执行几次，会从 v1 pods 和 v2 pods 返回结果</span>
+Hello version: v1, instance: helloworld-v1-78b9f5c87f-pkxxj
+Hello version: v2, instance: helloworld-v2-54dddc5567-99j9l
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="问题">问题</h2>
+<h3 id="不能返回多版本结果">不能返回多版本结果</h3>
+<p>刚开始进行验证测试单网络多控制面板时，在 cluster1 执行访问 HelloWorld 服务，只能返回 v1 版本，在 cluster2 执行访问 HelloWorld 服务，只能返回 v2 版本。通过参考 <a href="https://istio.io/latest/docs/ops/diagnostic-tools/proxy-cmd/">调试 Envoy 和 Istiod</a>，执行了以下命令进行排查：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">istioctl proxy-config --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER2</span><span class="si">}</span><span class="s2">&#34;</span> cluster -n sample sleep-78ff5975c6-pdk2v --fqdn helloworld.sample.svc.cluster.local -o json
+<span class="o">[</span>
+    <span class="o">{</span>
+        <span class="s2">&#34;name&#34;</span>: <span class="s2">&#34;outbound|5000||helloworld.sample.svc.cluster.local&#34;</span>,
+        <span class="s2">&#34;type&#34;</span>: <span class="s2">&#34;EDS&#34;</span>,
+        <span class="s2">&#34;edsClusterConfig&#34;</span>: <span class="o">{</span>
+            <span class="s2">&#34;edsConfig&#34;</span>: <span class="o">{</span>
+                <span class="s2">&#34;ads&#34;</span>: <span class="o">{}</span>,
+                <span class="s2">&#34;initialFetchTimeout&#34;</span>: <span class="s2">&#34;0s&#34;</span>,
+                <span class="s2">&#34;resourceApiVersion&#34;</span>: <span class="s2">&#34;V3&#34;</span>
+            <span class="o">}</span>,
+            <span class="s2">&#34;serviceName&#34;</span>: <span class="s2">&#34;outbound|5000||helloworld.sample.svc.cluster.local&#34;</span>
+        <span class="o">}</span>,
+        <span class="s2">&#34;connectTimeout&#34;</span>: <span class="s2">&#34;10s&#34;</span>,
+        <span class="s2">&#34;lbPolicy&#34;</span>: <span class="s2">&#34;LEAST_REQUEST&#34;</span>,
+        <span class="s2">&#34;commonLbConfig&#34;</span>: <span class="o">{</span>
+            <span class="s2">&#34;localityWeightedLbConfig&#34;</span>: <span class="o">{}</span>
+        <span class="o">}</span>,
+    <span class="o">}</span>
+<span class="o">]</span>
+
+<span class="c1"># 查看 endpoints 发现 cluster2 的 sleep pods 中 envoy 配置两个集群的 helloworld 的 pod 地址</span>
+istioctl proxy-config --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER2</span><span class="si">}</span><span class="s2">&#34;</span> endpoints -nsample sleep-78ff5975c6-pdk2v --cluster <span class="s2">&#34;outbound|5000||helloworld.sample.svc.cluster.local&#34;</span>
+ENDPOINT            STATUS      OUTLIER CHECK     CLUSTER
+10.42.0.22:5000     HEALTHY     OK                outbound<span class="p">|</span>5000<span class="o">||</span>helloworld.sample.svc.cluster.local
+10.42.0.27:5000     HEALTHY     OK                outbound<span class="p">|</span>5000<span class="o">||</span>helloworld.sample.svc.cluster.local
+</code></pre></td></tr></table>
+</div>
+</div><p>发现 envoy 配置中 cluster 和 endpoints 配置是正常的，再排查是否是因为两个环境不能联通。在 cluster2 的 sleep pods 执行：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">/ $ curl  10.42.0.27:5000/hello
+upstream connect error or disconnect/reset before headers. reset reason: connection failure, transport failure reason: delayed connect error: 113
+</code></pre></td></tr></table>
+</div>
+</div><p>解决办法：需要在安装 kubernetes 集群进行配置，使得两个集群的 pods 能够互相访问，比如使用 <a href="https://github.com/submariner-io/submariner">submariner</a>。</p>
+<h2 id="多集群通信原理">多集群通信原理</h2>
+<h3 id="多网络多控制面板-1">多网络多控制面板</h3>
+<p>多网络多控制面板部署方式，两个集群通信的关键在于配置了 gateway，下面对其中涉及的 gateway 配置和 envoy 配置进行解析，来说明两个集群是如何通信的。首先是部署配置了 gateway 的控制面板，在前面是用以下命名部署的：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">samples/multicluster/gen-eastwest-gateway.sh \
+    --mesh mesh1 --cluster cluster1 --network network1 | \
+    istioctl --context=&#34;${CTX_CLUSTER1}&#34; install -y -f -
+</code></pre></td></tr></table>
+</div>
+</div><p>使用<code>samples/multicluster/gen-eastwest-gateway.sh --mesh mesh1 --cluster cluster1 --network network1 </code>查看生成的 yaml，主要是部署 gateway 的 deploy、service 等资源：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">install.istio.io/v1alpha1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">IstioOperator</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">eastwest</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">revision</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;&#34;</span><span class="w">
+</span><span class="w">  </span><span class="nt">profile</span><span class="p">:</span><span class="w"> </span><span class="l">empty</span><span class="w">
+</span><span class="w">  </span><span class="nt">components</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">ingressGateways</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">istio-eastwestgateway</span><span class="w">
+</span><span class="w">        </span><span class="nt">label</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">istio</span><span class="p">:</span><span class="w"> </span><span class="l">eastwestgateway</span><span class="w">
+</span><span class="w">          </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">istio-eastwestgateway</span><span class="w">
+</span><span class="w">          </span><span class="nt">topology.istio.io/network</span><span class="p">:</span><span class="w"> </span><span class="l">network1</span><span class="w">
+</span><span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">        </span><span class="nt">k8s</span><span class="p">:</span><span class="w"> </span><span class="c"># 设置 gateway 资源的环境变量和 service 端口</span><span class="w">
+</span><span class="w">          </span><span class="nt">env</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span><span class="c"># traffic through this gateway should be routed inside the network</span><span class="w">
+</span><span class="w">            </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">ISTIO_META_REQUESTED_NETWORK_VIEW</span><span class="w">
+</span><span class="w">              </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l">network1</span><span class="w">
+</span><span class="w">          </span><span class="nt">service</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span><span class="w">              </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">status-port</span><span class="w">
+</span><span class="w">                </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">15021</span><span class="w">
+</span><span class="w">                </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="m">15021</span><span class="w">
+</span><span class="w">              </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tls</span><span class="w">
+</span><span class="w">                </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">15443</span><span class="w">
+</span><span class="w">                </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="m">15443</span><span class="w">
+</span><span class="w">              </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tls-istiod</span><span class="w">
+</span><span class="w">                </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">15012</span><span class="w">
+</span><span class="w">                </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="m">15012</span><span class="w">
+</span><span class="w">              </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tls-webhook</span><span class="w">
+</span><span class="w">                </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">15017</span><span class="w">
+</span><span class="w">                </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="m">15017</span><span class="w">
+</span><span class="w">  </span><span class="nt">values</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">gateways</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">istio-ingressgateway</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">injectionTemplate</span><span class="p">:</span><span class="w"> </span><span class="l">gateway</span><span class="w">
+</span><span class="w">    </span><span class="nt">global</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">network</span><span class="p">:</span><span class="w"> </span><span class="l">network1</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>部署完成后，查看环境中的 IstioOperator 资源、deploy 资源、service 资源：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@cluster1:~/zt/istio/istio-1.16.1# kubectl get IstioOperator -nistio-system
+NAME                       REVISION   STATUS   AGE
+installed-state                                3h51m <span class="c1"># 第一次 istioctl install 生成的</span>
+installed-state-eastwest                       3h50m <span class="c1"># 第二次增加 gateway 时 istioctl install 生成的</span>
+root@cluster1:~/zt/istio/istio-1.16.1# kubectl get deploy -nistio-system
+NAME                    READY   UP-TO-DATE   AVAILABLE   AGE
+istiod                  1/1     <span class="m">1</span>            <span class="m">1</span>           4h22m
+istio-ingressgateway    1/1     <span class="m">1</span>            <span class="m">1</span>           4h22m
+istio-eastwestgateway   1/1     <span class="m">1</span>            <span class="m">1</span>           4h21m
+<span class="c1"># 查看 cluster2 的 service，暴露的端口跟上面 IstioOperator 一致</span>
+root@cluster2:~/zt/istio# kubectl --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER2</span><span class="si">}</span><span class="s2">&#34;</span> get svc istio-eastwestgateway -n istio-system
+NAME                    TYPE           CLUSTER-IP       EXTERNAL-IP    PORT<span class="o">(</span>S<span class="o">)</span>
+istio-eastwestgateway   LoadBalancer   10.145.117.132   192.168.60.9   15021:32700/TCP,15443:30138/TCP,15012:31335/TCP,15017:30145/TCP
+</code></pre></td></tr></table>
+</div>
+</div><p>要了解跨网络情况下两个集群的 pod 是如何通信的，即要知道示例中 cluster1 集群的 sleep pod 请求 helloworld 服务时，请求具体是怎么到达 cluster1 的 helloworld 服务的。</p>
+<p>通过查看 cluster1 集群的 sleep pod 中 envoy 的 cluster 配置（需要先获取 listeners 和 routes 来确定 cluster 名称），知道请求会被转发到 serviceName 对应的 endpoints：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="err">istioctl</span> <span class="err">proxy-config</span> <span class="err">--context=</span><span class="s2">&#34;${CTX_CLUSTER2}&#34;</span> <span class="err">cluster</span> <span class="err">-n</span> <span class="err">sample</span> <span class="err">sleep</span><span class="mi">-78</span><span class="err">ff</span><span class="mi">5975</span><span class="err">c</span><span class="mi">6</span><span class="err">-pdk</span><span class="mi">2</span><span class="err">v</span> <span class="err">--fqdn</span> <span class="err">helloworld.sample.svc.cluster.local</span> <span class="err">-o</span> <span class="err">json</span>
+
+<span class="p">[</span>
+    <span class="p">{</span>
+        <span class="nt">&#34;transportSocketMatches&#34;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;tlsMode-istio&#34;</span><span class="p">,</span>
+                <span class="nt">&#34;match&#34;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="nt">&#34;tlsMode&#34;</span><span class="p">:</span> <span class="s2">&#34;istio&#34;</span>
+                <span class="p">},</span>
+            <span class="p">},</span>
+        <span class="p">],</span>
+        <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;outbound|5000||helloworld.sample.svc.cluster.local&#34;</span><span class="p">,</span>
+        <span class="nt">&#34;type&#34;</span><span class="p">:</span> <span class="s2">&#34;EDS&#34;</span><span class="p">,</span>
+        <span class="nt">&#34;edsClusterConfig&#34;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&#34;edsConfig&#34;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nt">&#34;ads&#34;</span><span class="p">:</span> <span class="p">{},</span>
+                <span class="nt">&#34;initialFetchTimeout&#34;</span><span class="p">:</span> <span class="s2">&#34;0s&#34;</span><span class="p">,</span>
+                <span class="nt">&#34;resourceApiVersion&#34;</span><span class="p">:</span> <span class="s2">&#34;V3&#34;</span>
+            <span class="p">},</span>
+            <span class="nt">&#34;serviceName&#34;</span><span class="p">:</span> <span class="s2">&#34;outbound|5000||helloworld.sample.svc.cluster.local&#34;</span>
+        <span class="p">},</span>
+        <span class="nt">&#34;connectTimeout&#34;</span><span class="p">:</span> <span class="s2">&#34;10s&#34;</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">]</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>查看 cluster1 集群的 sleep pods 中 serviceName 对应的 endpoints 配置：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@cluster1:~/zt/istio/istio-1.16.1# istioctl proxy-config --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER1</span><span class="si">}</span><span class="s2">&#34;</span> endpoints -nsample sleep-78ff5975c6-4xpv4 --cluster <span class="s2">&#34;outbound|5000||helloworld.sample.svc.cluster.local&#34;</span>
+ENDPOINT               STATUS      OUTLIER CHECK     CLUSTER
+10.44.0.13:5000        HEALTHY     OK                outbound<span class="p">|</span>5000<span class="o">||</span>helloworld.sample.svc.cluster.local
+192.168.60.9:15443     HEALTHY     OK                outbound<span class="p">|</span>5000<span class="o">||</span>helloworld.sample.svc.cluster.local
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看到其中一个 endpoint 指向的是 cluster2 的 istio-eastwestgateway 暴露的 15443 端口，即 istio 自动将 cluster2 集群的 helloworld-v2 pod 的地址和端口替换为了 cluster2 集群 istio-eastwestgateway 地址，达到了通过 gateway 来转发两个集群之间的请求。因为 gateway 和 sidecar 用的镜像相同，都是使用的 envoy，通过查看 cluster2 的 gateway pods 中对应的 endpoints 配置：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@cluster1:~/zt/istio/istio-1.16.1# istioctl proxy-config --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER2</span><span class="si">}</span><span class="s2">&#34;</span> endpoints -nistio-system istio-eastwestgateway-74bcf5c77c-m5qbr --cluster <span class="s2">&#34;outbound|5000||helloworld.sample.svc.cluster.local&#34;</span>
+ENDPOINT            STATUS      OUTLIER CHECK     CLUSTER
+10.144.0.15:5000    HEALTHY     OK                outbound<span class="p">|</span>5000<span class="o">||</span>helloworld.sample.svc.cluster.local
+root@cluster1:~/zt/istio/istio-1.16.1# kubectl --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER2</span><span class="si">}</span><span class="s2">&#34;</span> get endpoints -nsample helloworld
+NAME         ENDPOINTS         AGE
+helloworld   10.144.0.15:5000   4h51m
+</code></pre></td></tr></table>
+</div>
+</div><p>因此 cluster2 的 gateway pods 会将请求转发到 helloworld 的 pods 去。</p>
+<h3 id="单网络多控制面板-1">单网络多控制面板</h3>
+<p>在单网络多控制面板部署方式下，两个集群没有 gateway 配置。cluster2 的 sleep pods 中 envoy 配置两个集群的 helloworld 的 pod 地址：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">istioctl proxy-config --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER2</span><span class="si">}</span><span class="s2">&#34;</span> endpoints -nsample sleep-78ff5975c6-pdk2v --cluster <span class="s2">&#34;outbound|5000||helloworld.sample.svc.cluster.local&#34;</span>
+ENDPOINT            STATUS      OUTLIER CHECK     CLUSTER
+10.42.0.22:5000     HEALTHY     OK                outbound<span class="p">|</span>5000<span class="o">||</span>helloworld.sample.svc.cluster.local
+10.42.0.27:5000     HEALTHY     OK                outbound<span class="p">|</span>5000<span class="o">||</span>helloworld.sample.svc.cluster.local
+</code></pre></td></tr></table>
+</div>
+</div><p>因此只要 cluster2 的 sleep pods 可以直接通过 pods ip 连接 cluster1 的 helloworld pods，就可以直接进行通信，因此问题关键在于需要打通两个环境的 pods ip 的直连，比如 <a href="https://github.com/submariner-io/submariner">submariner</a>。</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://istio.io/latest/docs/ops/deployment/deployment-models/">istio 部署模型说明</a></li>
+<li><a href="https://istio.io/latest/docs/setup/install/multicluster/">istio 多集群部署</a></li>
+<li><a href="https://istio.io/latest/docs/ops/diagnostic-tools/proxy-cmd/">调试 Envoy 和 Istiod</a></li>
+<li><a href="https://github.com/submariner-io/submariner">submariner 项目地址</a></li>
+</ul>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">yefengzhichen</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2023-01-12
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="../../tags/kubernetes/">kubernetes</a>
+          <a href="../../tags/istio/">istio</a>
+          <a href="../../tags/multicluster/">multicluster</a>
+          <a href="../../tags/service-mesh/">service mesh</a>
+          </div>
+      <nav class="post-nav">
+        
+        <a class="next" href="../../post/istio_multi_protocols_multi_registries/">
+            <span class="next-text nav-default">Istio 多协议、多注册中心支持调研</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="yefengzhichen/yefengzhichen.github.io"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="zhutao_hust@foxmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/yefengzhichen" class="iconfont icon-github" title="github"></a>
+  <a href="https://yefengzhichen.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  <div class="busuanzi-footer">
+    <span id="busuanzi_container_site_pv"> 本站总访问量 <span id="busuanzi_value_site_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次 </span>
+      <span class="division">|</span>
+    <span id="busuanzi_container_site_uv"> 本站总访客数 <span id="busuanzi_value_site_uv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 人 </span>
+  </div>
+
+  <span class="copyright-year">
+    &copy; 
+    2022 - 
+    2023<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="../../js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

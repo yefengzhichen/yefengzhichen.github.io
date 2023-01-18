@@ -49,7 +49,7 @@
 <meta itemprop="name" content="Istio 安装和示例实践">
 <meta itemprop="description" content="安装 需要先准备一个 kubernetes 集群，这里是用的 k3s 安装 的 1.25 版本。 下载 istio 先下载 istio 安装文件，执行： 1 curl -L https://istio.io/downloadIstio | sh - 如果测试机器下载不了，可以手动下载脚本和安装"><meta itemprop="datePublished" content="2023-01-05T19:23:49+08:00" />
 <meta itemprop="dateModified" content="2023-01-05T19:23:49+08:00" />
-<meta itemprop="wordCount" content="1675">
+<meta itemprop="wordCount" content="1816">
 <meta itemprop="keywords" content="kubernetes,istio,envoy,service mesh," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Istio 安装和示例实践"/>
 <meta name="twitter:description" content="安装 需要先准备一个 kubernetes 集群，这里是用的 k3s 安装 的 1.25 版本。 下载 istio 先下载 istio 安装文件，执行： 1 curl -L https://istio.io/downloadIstio | sh - 如果测试机器下载不了，可以手动下载脚本和安装"/>
@@ -132,7 +132,7 @@
         <div class="post-category">
             <a href="../../categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
             </div>
-          <span class="more-meta"> 约 1675 字 </span>
+          <span class="more-meta"> 约 1816 字 </span>
           <span class="more-meta"> 预计阅读 4 分钟 </span>
         <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
       </div>
@@ -206,7 +206,7 @@ source ~/.bashrc
 Error: Get &#34;https://127.0.0.1:6443/api?timeout=32s&#34;: x509: certificate signed by unknown authority
 </code></pre></td></tr></table>
 </div>
-</div><p>后面才发现问题可能是，以前将 k3s 的 config 进行过复制操作，但是最近认证已经变更了，而~/.kube/config 还是老的，导致无法识别，解决办法：重新再执行以下命令复制即可。</p>
+</div><p>后面才发现问题可能是，以前将 k3s 的 config 进行过复制操作，但是最近认证已经变更了，而~/.kube/config 还是老的，istioctl默认是从~/.kube/config获取集群信息的，导致无法识别，解决办法：重新再执行以下命令复制即可。最好是在安装时，设置环境变量KUBECONFIG=&quot;/root/.kube/config&quot;，因为k3s的kubectl命令默认使用的配置路径是/etc/rancher/k3s/k3s.yaml。</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
@@ -686,7 +686,11 @@ curl: <span class="o">(</span>35<span class="o">)</span> OpenSSL SSL_connect: SS
           <a href="../../tags/service-mesh/">service mesh</a>
           </div>
       <nav class="post-nav">
-        
+        <a class="prev" href="../../post/istio_multi_protocols_multi_registries/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">Istio 多协议、多注册中心支持调研</span>
+            <span class="prev-text nav-mobile">上一篇</span>
+          </a>
         <a class="next" href="../../post/k8s_informer/">
             <span class="next-text nav-default">Kubernetes 的 informer 源码分析</span>
             <span class="next-text nav-mobile">下一篇</span>

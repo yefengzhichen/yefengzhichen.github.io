@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Istio 多协议、多注册中心支持调研 - yefengzhichen&#39;s blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="yefengzhichen" /><meta name="description" content="问题背景 在大规模现网环境中使用 istio 等服务网格，通常会因为技术栈的不同遇到一些痛点，这里就以 istio 为例，比如： istio 如何对接各种外部注册中心：如 Cons" /><meta name="keywords" content="Hugo, theme, even" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.92.1 with theme even" />
+
+
+<link rel="canonical" href="https://yefengzhichen.github.io/post/istio_multi_protocols_multi_registries/" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../favicon-16x16.png">
+<link rel="manifest" href="../../manifest.json">
+<link rel="mask-icon" href="../../safari-pinned-tab.svg" color="#5bbad5">
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<link href="../../sass/main.min.f92fd13721ddf72129410fd8250e73152cc6f2438082b6c0208dc24ee7c13fc4.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="Istio 多协议、多注册中心支持调研" />
+<meta property="og:description" content="问题背景 在大规模现网环境中使用 istio 等服务网格，通常会因为技术栈的不同遇到一些痛点，这里就以 istio 为例，比如： istio 如何对接各种外部注册中心：如 Cons" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yefengzhichen.github.io/post/istio_multi_protocols_multi_registries/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2023-01-11T14:30:26+08:00" />
+<meta property="article:modified_time" content="2023-01-11T14:30:26+08:00" />
+
+<meta itemprop="name" content="Istio 多协议、多注册中心支持调研">
+<meta itemprop="description" content="问题背景 在大规模现网环境中使用 istio 等服务网格，通常会因为技术栈的不同遇到一些痛点，这里就以 istio 为例，比如： istio 如何对接各种外部注册中心：如 Cons"><meta itemprop="datePublished" content="2023-01-11T14:30:26+08:00" />
+<meta itemprop="dateModified" content="2023-01-11T14:30:26+08:00" />
+<meta itemprop="wordCount" content="3076">
+<meta itemprop="keywords" content="kubernetes,istio,envoy,service mesh," /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Istio 多协议、多注册中心支持调研"/>
+<meta name="twitter:description" content="问题背景 在大规模现网环境中使用 istio 等服务网格，通常会因为技术栈的不同遇到一些痛点，这里就以 istio 为例，比如： istio 如何对接各种外部注册中心：如 Cons"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="../../">
+        <li class="mobile-menu-item">首页</li>
+      </a><a href="../../post/">
+        <li class="mobile-menu-item">列表</li>
+      </a><a href="../../tags/">
+        <li class="mobile-menu-item">标签</li>
+      </a><a href="../../categories/">
+        <li class="mobile-menu-item">分类</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="../../">首页</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../post/">列表</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../tags/">标签</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../categories/">分类</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">Istio 多协议、多注册中心支持调研</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2023-01-11 </span>
+        <div class="post-category">
+            <a href="../../categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
+            </div>
+          <span class="more-meta"> 约 3076 字 </span>
+          <span class="more-meta"> 预计阅读 7 分钟 </span>
+        <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#问题背景">问题背景</a></li>
+        <li><a href="#问题现状">问题现状</a>
+          <ul>
+            <li><a href="#istio-注册中心现状">istio 注册中心现状</a></li>
+            <li><a href="#istio-协议支持现状">istio 协议支持现状</a></li>
+            <li><a href="#envoy-配置说明和架构">envoy 配置说明和架构</a></li>
+            <li><a href="#istio-服务发现和请求流转过程">istio 服务发现和请求流转过程</a></li>
+            <li><a href="#dubbo-说明">dubbo 说明</a></li>
+          </ul>
+        </li>
+        <li><a href="#解决方案探讨">解决方案探讨</a>
+          <ul>
+            <li><a href="#对接多种注册中心问题">对接多种注册中心问题</a></li>
+            <li><a href="#支持多种协议问题">支持多种协议问题</a></li>
+          </ul>
+        </li>
+        <li><a href="#参考">参考</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h2 id="问题背景">问题背景</h2>
+<p>在大规模现网环境中使用 istio 等服务网格，通常会因为技术栈的不同遇到一些痛点，这里就以 istio 为例，比如：</p>
+<ul>
+<li>istio 如何对接各种外部注册中心：如 Consul、Zookeeper、Nacos 等？</li>
+<li>istio 如何支持除 http/gRPC/tcp 等协议之外的协议，如 Dubbo、thrift 等？</li>
+</ul>
+<p>下面先介绍 istio 对这些问题支持的现状和相关的背景知识，再结合社区项目来讨论下解决方案。</p>
+<h2 id="问题现状">问题现状</h2>
+<h3 id="istio-注册中心现状">istio 注册中心现状</h3>
+<p>istio 最新版 1.16 只支持 kubernetes 的注册中心，参考 <a href="https://istio.io/latest/docs/reference/commands/pilot-discovery/">pilot-discovery 命令说明</a> 中 registries 参数说明：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">--registries &lt;stringSlice&gt;		Comma separated list of platform service registries to read from (choose one or more from {Kubernetes, Mock}) (default `[Kubernetes]`)
+</code></pre></td></tr></table>
+</div>
+</div><p>之前版本中还支持过 consul 注册中心，不过在后面中删除了，因为外部的服务注册中心将会通过 MCP-over-XDS 来支持，参考 <a href="https://github.com/istio/istio/pull/25833">删除 consul 注册中心提交</a>。目前最新版本的 istio 只支持 kubernetes 的注册中心，其它注册中心通过 MCP-over-XDS 来支持。</p>
+<h3 id="istio-协议支持现状">istio 协议支持现状</h3>
+<p>参考 istio 官网的 <a href="https://istio.io/latest/docs/ops/configuration/traffic-management/protocol-selection/">协议选择说明</a>，istio 目前支持的协议：</p>
+<ul>
+<li>http, http2, https</li>
+<li>tcp</li>
+<li>tls</li>
+<li>grpc, grpc-web</li>
+<li>mongo, mysql, redis（实验阶段）</li>
+</ul>
+<p>而 envoy 目前支持的协议，是通过 envoy 的配置设置不同的过滤器来实现的，参考 <a href="https://www.envoyproxy.io/docs/envoy/latest/configuration/listeners/network_filters/network_filters">过滤器说明</a>，主要支持协议：</p>
+<ul>
+<li>http</li>
+<li>tcp</li>
+<li>tls</li>
+<li>thrift, Dubbo</li>
+<li>mongo, mysql, redis, kafka, rocketMQ, ZooKeeper 等等</li>
+</ul>
+<p>从上面可以看到 envoy 支持的协议较多，istio 支持协议少，支持多协议的主要瓶颈在于 istio。如果不依赖第三方项目，使用除 http、grpc、tcp（实验中的 mongo、redis、mysql）外的协议，必须 <a href="https://istio.io/latest/docs/reference/config/networking/envoy-filter/">使用 envoyfilter 来定制 Pilot 生成的 envoy 配置</a>，但使用 envoy filter 手动设置 envoy 配置的主要缺点时：配置麻烦，需要根据不同协议和服务来配置多次。</p>
+<h3 id="envoy-配置说明和架构">envoy 配置说明和架构</h3>
+<p>之前在博客 <a href="https://yefengzhichen.github.io/post/envoy_opa_auth/">使用 Envoy 的 OPA 插件进行鉴权</a> 中，对 envoy 的配置字段做了简单说明，如下所示：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">static_resources</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">listeners</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">address</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">socket_address</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="m">0.0.0.0</span><span class="w">
+</span><span class="w">        </span><span class="nt">port_value</span><span class="p">:</span><span class="w"> </span><span class="m">8000</span><span class="w">
+</span><span class="w">    </span><span class="nt">filter_chains</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">filters</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">envoy.filters.network.http_connection_manager    </span><span class="w"> </span><span class="c"># 监听器网络过滤器限定名称，这里是 http 连接管理器</span><span class="w">
+</span><span class="w">        </span><span class="nt">typed_config</span><span class="p">:</span><span class="w">                   </span><span class="c"># http 连接管理器的类型</span><span class="w">
+</span><span class="w">          </span><span class="nt">&#34;@type&#34;: </span><span class="l">type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager</span><span class="w">
+</span><span class="w">          </span><span class="nt">codec_type</span><span class="p">:</span><span class="w"> </span><span class="l">auto             </span><span class="w"> </span><span class="c"># 编解码器类型</span><span class="w">
+</span><span class="w">          </span><span class="nt">stat_prefix</span><span class="p">:</span><span class="w"> </span><span class="l">ingress_http    </span><span class="w"> </span><span class="c"># 为连接管理器发生统计时的前缀</span><span class="w">
+</span><span class="w">          </span><span class="nt">route_config</span><span class="p">:</span><span class="w">                 </span><span class="c"># 路由配置，在配置 envoy.filters.http.router 时会使用</span><span class="w">
+</span><span class="w">            </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">local_route</span><span class="w">
+</span><span class="w">            </span><span class="nt">virtual_hosts</span><span class="p">:</span><span class="w">              </span><span class="c"># 虚拟主机</span><span class="w">
+</span><span class="w">            </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">backend</span><span class="w">
+</span><span class="w">              </span><span class="nt">domains</span><span class="p">:</span><span class="w">                  </span><span class="c"># 匹配的 domain</span><span class="w">
+</span><span class="w">              </span>- <span class="s2">&#34;*&#34;</span><span class="w">
+</span><span class="w">              </span><span class="nt">routes</span><span class="p">:</span><span class="w">
+</span><span class="w">              </span>- <span class="nt">match</span><span class="p">:</span><span class="w">                  </span><span class="c"># 匹配的 url</span><span class="w">
+</span><span class="w">                  </span><span class="nt">prefix</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;/&#34;</span><span class="w">
+</span><span class="w">                </span><span class="nt">route</span><span class="p">:</span><span class="w">
+</span><span class="w">                  </span><span class="nt">cluster</span><span class="p">:</span><span class="w"> </span><span class="l">service</span><span class="w">
+</span><span class="w">          </span><span class="nt">http_filters</span><span class="p">:</span><span class="w">                 </span><span class="c"># 使用的 http 过滤器</span><span class="w">
+</span><span class="w">          </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">envoy.ext_authz      </span><span class="w"> </span><span class="c"># http 过滤器限定名称</span><span class="w">
+</span><span class="w">            </span><span class="nt">typed_config</span><span class="p">:</span><span class="w">               </span><span class="c"># http 过滤器类型</span><span class="w">
+</span><span class="w">              </span><span class="nt">&#34;@type&#34;: </span><span class="l">type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz</span><span class="w">
+</span><span class="w">              </span><span class="nt">transport_api_version</span><span class="p">:</span><span class="w"> </span><span class="l">V3</span><span class="w"> </span><span class="c"># 协议版本</span><span class="w">
+</span><span class="w">              </span><span class="nt">with_request_body</span><span class="p">:</span><span class="w">        </span><span class="c"># 转发请求体设置</span><span class="w">
+</span><span class="w">                </span><span class="nt">max_request_bytes</span><span class="p">:</span><span class="w"> </span><span class="m">8192</span><span class="w">
+</span><span class="w">                </span><span class="nt">allow_partial_message</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">              </span><span class="nt">grpc_service</span><span class="p">:</span><span class="w">             </span><span class="c"># 转发 grpc 地址</span><span class="w">
+</span><span class="w">                </span><span class="nt">google_grpc</span><span class="p">:</span><span class="w">
+</span><span class="w">                  </span><span class="nt">target_uri</span><span class="p">:</span><span class="w"> </span><span class="m">127.0.0.1</span><span class="p">:</span><span class="m">9191</span><span class="w">
+</span><span class="w">                  </span><span class="nt">stat_prefix</span><span class="p">:</span><span class="w"> </span><span class="l">ext_authz</span><span class="w">
+</span><span class="w">                </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="m">0.</span><span class="l">5s</span><span class="w">
+</span><span class="w">          </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">envoy.filters.http.router    </span><span class="w"> </span><span class="c"># 使用路由过滤器，typed_config 只有一种，进行了省略</span><span class="w">
+</span><span class="w">  </span><span class="nt">clusters</span><span class="p">:</span><span class="w"> </span><span class="c"># 上游集群配置，在过滤器路由中会用到</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">service</span><span class="w">
+</span><span class="w">    </span><span class="nt">connect_timeout</span><span class="p">:</span><span class="w"> </span><span class="m">0.</span><span class="l">25s</span><span class="w">
+</span><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">strict_dns</span><span class="w">
+</span><span class="w">    </span><span class="nt">lb_policy</span><span class="p">:</span><span class="w"> </span><span class="l">round_robin</span><span class="w">
+</span><span class="w">    </span><span class="nt">load_assignment</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">cluster_name</span><span class="p">:</span><span class="w"> </span><span class="l">service</span><span class="w">
+</span><span class="w">      </span><span class="nt">endpoints</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">lb_endpoints</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">endpoint</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span><span class="nt">address</span><span class="p">:</span><span class="w">
+</span><span class="w">              </span><span class="nt">socket_address</span><span class="p">:</span><span class="w">
+</span><span class="w">                </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="m">127.0.0.1</span><span class="w">
+</span><span class="w">                </span><span class="nt">port_value</span><span class="p">:</span><span class="w"> </span><span class="m">8080</span><span class="w">
+</span><span class="w"></span><span class="nn">...</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>主要涉及以下几个概念：</p>
+<ul>
+<li>listeners：envoy 监听器，在端口上进行监听，根据设置的网络过滤器 filters 配置，使用对应的协议（如 http、tls、dubbo 等）进行处理。</li>
+<li>filters：<a href="https://www.envoyproxy.io/docs/envoy/latest/configuration/listeners/network_filters/network_filters">网络过滤器</a>，比如“HTTP connection manager”、“Dubbo proxy”等等。</li>
+<li>x_filters：协议过滤器，比如 http 网络过滤器中的协议过滤器为 http_filters，dubbo 网络过滤器的协议过滤器为 dubbo_filters。</li>
+<li>clusters：上游集群配置，会配置服务发现方式和负载均衡方式。</li>
+<li>endpoints：上游集群实际的服务地址，对应 kubernetes 是服务的 endpoints 地址。</li>
+</ul>
+<p>下图为 envoy 的架构，展示了 listeners、filters、clusters、endpoints 的关系，可以看到请求处理的过程。
+<img src="../../image/istio_multi_protocols_multi_registries/envoy_arch.png" alt="envoy_arch" title="envoy 架构：图片来自网络"></p>
+<p>上面 yaml 中展示的是静态配置，envoy 可以通过文件系统或查询一个或多个管理服务器来发现它的各种动态资源，这些发现服务及其对应的 api 统称为 xDS，参考 <a href="https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol">官网 xds 协议说明</a>，支持 v3（envoy 1.19 之后版本要使用 v3）xDS 的配置类型有：</p>
+<ul>
+<li>envoy.config.listener.v3.Listener</li>
+<li>envoy.config.route.v3.RouteConfiguration</li>
+<li>envoy.config.route.v3.ScopedRouteConfiguration</li>
+<li>envoy.config.route.v3.VirtualHost</li>
+<li>envoy.config.cluster.v3.Cluster</li>
+<li>envoy.config.endpoint.v3.ClusterLoadAssignment</li>
+<li>envoy.extensions.transport_sockets.tls.v3.Secret</li>
+<li>envoy.service.runtime.v3.Runtime</li>
+</ul>
+<h3 id="istio-服务发现和请求流转过程">istio 服务发现和请求流转过程</h3>
+<p>在博客 <a href="https://jimmysong.io/blog/istio-components-and-ports/">Istio 中的各组件端口及功能详解</a> 中，展示了 istio sidecar 各组件的端口和它们之间的交互图如下：
+<img src="../../image/istio_multi_protocols_multi_registries/istio_components.webp" alt="istio_components.webp" title="istio sidecar 交互图：图片来自网络"></p>
+<p>在博客 <a href="https://www.zhaohuabing.com/post/2018-09-25-istio-traffic-management-impl-intro/">Istio 流量管理实现机制深度解析</a> 中，从 istio 系统架构、配置文件和代码对 istio 流量管理的架构和实现机制进行了分析，可以清晰看到 istio 中流量的具体流转过程。</p>
+<p>我结合对这些文章的理解，用下面的架构图来简单说明下 istio 服务发现过程和请求流转过程，图中蓝色表示 pods，浅绿色表示 containers，白色表示里面的进程。</p>
+<p><img src="../../image/istio_multi_protocols_multi_registries/istio_svc_discovery.png" alt="istio_svc_discovery" title="istio 服务发现和请求流程过程"></p>
+<p>服务发现过程：</p>
+<ul>
+<li>在指定命名空间开启 istio 注入，比如<code>kubectl label namespace default istio-injection=enabled</code></li>
+<li>创建资源的 crd，比如 bookinfo 示例下的资源，这时 kubernetes 的 webhook 机制会通知到 pilot-discovery，即 pilot-discovery 就能感知到这些资源的 services、endpoints 等</li>
+<li>资源 pods 中，envoy 进程由 pilot-agent 启动，启动后 envoy 和 pilot-discovery 维持着长连接</li>
+<li>pilot-discovery 根据 services、endpoints 信息，生成 xDS 接口支持的 envoy 配置信息</li>
+<li>当 pilot-discovery 发现有变更时，就会将更新推送给 envoy</li>
+<li>envoy 通过 xDS 发现服务获取到变更后，更新配置并生效，此时 envoy 就可以管理本地应用的入向和出向流量了</li>
+</ul>
+<p>请求流程过程，以图中客户端请求 productpage 服务为例（省略了 gateway 和 service 相关逻辑），如红色箭头所示，具体流程为：</p>
+<ul>
+<li>客户端请求到达 productpage pod 后，流量经过 iptables 会转到 envoy 进程</li>
+<li>envoy 进程，根据请求端口把请求路由到 productpage container 的应用进程 productpage</li>
+<li>productpage 应用进程会调用 review 服务，出向流量会被转发到 envoy 进程</li>
+<li>envoy 进程根据请求 host 和端口，找到 envoy 中 review cluster 配置的后端服务 pods 地址，根据负载均衡配置选择一个 pod 进行请求</li>
+<li>请求到 review 的 pod 后，流量同样经过 iptables 会转到 envoy 进程，最后转发到 reviews container 的应用进程 review</li>
+<li>review 处理请求后，结果按原路返回，最终返回到客户端</li>
+</ul>
+<h3 id="dubbo-说明">dubbo 说明</h3>
+<p>借用 <a href="https://cn.dubbo.apache.org/zh/overview/what/overview/">官方网站说明</a>，Dubbo 是一款 RPC 服务开发框架，用于解决微服务架构下的服务治理与通信问题，目前 Dubbo3 已经是一站式的微服务解决方案提供：</p>
+<ul>
+<li>基于 HTTP/2 的 Triple 协议以及面向代理 API 的编程体验。</li>
+<li>强大的流量治理能力，如地址发现（如 Nacos、Zookeeper、Consul、Etcd）、负载均衡、路由选址、动态配置等。</li>
+<li>多语言 SDK 实现，涵盖 Java、Golang、Javascript 等，更多语言实现将会陆续发布。</li>
+<li>灵活的适配与扩展能力，可轻松与微服务体系其他组件如 Tracing、Transaction 等适配。</li>
+<li>Dubbo Mesh 解决方案，<a href="https://cn.dubbo.apache.org/zh/overview/tasks/mesh/">同时支持 Sidecar、Proxyless 等灵活的 Mesh 部署方案</a></li>
+</ul>
+<p>Dubbo2 和 Dubbo3 区别： Dubbo2 是将接口的信息全部注册到注册中心，而一个应用实例一般会存在多个接口，这样一来注册的数据量就要大很多，而且有冗余。Dubbo3 应用级服务发现的机制是同一个应用实例仅在注册中心注册一条数据。简单来说就是，Dubbo2 是接口粒度，Dubbo3 是应用粒度，可参考 <a href="https://cn.dubbo.apache.org/zh/docs/examples/service-discovery/">dubbo 服务发现</a>。</p>
+<h2 id="解决方案探讨">解决方案探讨</h2>
+<p>以下是搜索开源项目得到的解决办法，因未进行实践，还不知道是否能满足实际使用，后续在实践中进一步验证后，再来完善实践解决方案。</p>
+<h3 id="对接多种注册中心问题">对接多种注册中心问题</h3>
+<p>可行解决方案：Aeraki + Dubbo2istio 项目，Dubbo2istio 将 Dubbo 服务注册表中的 Dubbo 服务自动同步到 Istio 服务网格中，目前已经支持 ZooKeeper，Nacos 和 Etcd，参考：</p>
+<ul>
+<li><a href="https://www.aeraki.net/zh/docs/v1.x/tutorials/dubbo/">将 Dubbo 服务接入到 Aeraki Mesh</a></li>
+<li><a href="https://github.com/aeraki-mesh/aeraki">Aeraki Github 地址</a></li>
+</ul>
+<h3 id="支持多种协议问题">支持多种协议问题</h3>
+<p>可行解决方案：Aeraki + MetaProtocol Proxy，Aeraki 将规则转化为 envoy 代理配置并下发，MetaProtocol Proxy 中已经支持了 Dubbo， Thrift ，bRPC 和一系列私有协议。如果使用闭源的专有协议，只需编写一个 MetaProtocol 编解码器即可支持，可参考 <a href="https://github.com/aeraki-mesh/aeraki/blob/master/README.zh-CN.md">aeraki github 说明</a> 进行使用。</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://jimmysong.io/blog/beyond-istio-oss/">Istio 服务网格的现状与未来</a></li>
+<li><a href="https://www.zhaohuabing.com/post/2018-09-25-istio-traffic-management-impl-intro/">Istio 流量管理实现机制深度解析</a></li>
+<li><a href="https://www.zhaohuabing.com/post/2020-06-02-third-party-registry/">如何将第三方服务中心注册集成到 Istio</a></li>
+<li><a href="https://blog.csdn.net/gengzhikui1992/article/details/117449972">Envoy 架构理解&ndash;理解 xDS/Listener/Cluster/Router/Filter</a></li>
+<li><a href="https://jimmysong.io/blog/istio-components-and-ports/">istio 各组件端口和功能详解</a></li>
+<li><a href="https://www.zhaohuabing.com/post/2021-03-02-manage-any-layer-7-traffic-in-istio/">How to Manage Any Layer-7 Traffic in an Istio Service Mesh</a></li>
+<li><a href="https://icloudnative.io/envoy-handbook/docs/gettingstarted/architecture/">Envoy 架构与配置结构</a></li>
+</ul>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">yefengzhichen</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2023-01-11
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="../../tags/kubernetes/">kubernetes</a>
+          <a href="../../tags/istio/">istio</a>
+          <a href="../../tags/envoy/">envoy</a>
+          <a href="../../tags/service-mesh/">service mesh</a>
+          </div>
+      <nav class="post-nav">
+        <a class="prev" href="../../post/istio_multicluster/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">Istio 多集群模型和部署示例</span>
+            <span class="prev-text nav-mobile">上一篇</span>
+          </a>
+        <a class="next" href="../../post/istio_demo/">
+            <span class="next-text nav-default">Istio 安装和示例实践</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="yefengzhichen/yefengzhichen.github.io"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="zhutao_hust@foxmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/yefengzhichen" class="iconfont icon-github" title="github"></a>
+  <a href="https://yefengzhichen.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  <div class="busuanzi-footer">
+    <span id="busuanzi_container_site_pv"> 本站总访问量 <span id="busuanzi_value_site_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次 </span>
+      <span class="division">|</span>
+    <span id="busuanzi_container_site_uv"> 本站总访客数 <span id="busuanzi_value_site_uv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 人 </span>
+  </div>
+
+  <span class="copyright-year">
+    &copy; 
+    2022 - 
+    2023<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="../../js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>
