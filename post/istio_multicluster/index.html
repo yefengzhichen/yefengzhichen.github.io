@@ -587,7 +587,7 @@ istioctl x create-remote-secret <span class="se">\
 </span><span class="se"></span>    kubectl apply -f - --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER1</span><span class="si">}</span><span class="s2">&#34;</span>
 </code></pre></td></tr></table>
 </div>
-</div><p>进行这些步骤后，多网络多控制面板部署方式就完成了，可以参考 <a href="https://yefengzhichen.github.io/post/istio_multicluster/">验证部署</a> 进行验证。</p>
+</div><p>进行这些步骤后，多网络多控制面板部署方式就完成了，可以参考 <a href="https://yefengzhichen.github.io/post/istio_multicluster/#%E9%AA%8C%E8%AF%81%E9%83%A8%E7%BD%B2">验证部署</a> 进行验证。</p>
 <h3 id="单网络多控制面板">单网络多控制面板</h3>
 <p><strong>注意：要使得安装的两个集群 pods、service 之间能互相通信，还需要在安装集群过程进行设置，比如使用 <a href="https://github.com/submariner-io/submariner">submariner</a>，以下步骤不包含此设置。</strong></p>
 <p>这种部署模式，是在两个集群 cluster1 和 cluster2 都部署 istio 控制面板，两个集群都成为主集群，两个集群在同一个网络中。如下图所示，这种配置方式每个控制面板都会观测两个集群的服务变化，并且两个集群的 pods 负载之间可以直接通信。</p>
@@ -714,7 +714,7 @@ istioctl x create-remote-secret <span class="se">\
 </span><span class="se"></span>    kubectl apply -f - --context<span class="o">=</span><span class="s2">&#34;</span><span class="si">${</span><span class="nv">CTX_CLUSTER1</span><span class="si">}</span><span class="s2">&#34;</span>
 </code></pre></td></tr></table>
 </div>
-</div><p>进行这些步骤后，多网络多控制面板部署方式就完成了，可以参考 <a href="https://yefengzhichen.github.io/post/istio_multicluster/">验证部署</a> 进行验证。</p>
+</div><p>进行这些步骤后，多网络多控制面板部署方式就完成了，可以参考 <a href="https://yefengzhichen.github.io/post/istio_multicluster/#%E9%AA%8C%E8%AF%81%E9%83%A8%E7%BD%B2">验证部署</a> 进行验证。</p>
 <h3 id="验证部署">验证部署</h3>
 <p>通过部署一个 HelloWorld 应用的 v1 版本在 cluster1，v2 版本在 cluster2，当收到请求，将会根据请求的版本来进行响应。同时在两个集群都会部署一个 Sleep 容器，用这些 pods 作为请求源模拟网格内的流量。</p>
 <p>在 cluster1 的 istio/istio-1.16.1 目录下执行以下命令来安装，在执行之前，可以在另一个窗口打印 istiod 的日志，查看执行输出结果：</p>
