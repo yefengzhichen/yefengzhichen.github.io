@@ -437,8 +437,10 @@ kubectl create secret --context<span class="o">=</span><span class="s2">&#34;</s
 <li>root-cert.pem：根证书</li>
 <li>root-key.pem： 根密钥</li>
 <li>root-ca.conf： 用来生成根证书的openssl配置</li>
-<li>root-cert.csr：为根证书生成的证书签名请求文件
-为clsuter1和cluster2生成的文件夹中包含以下文件：</li>
+<li>root-cert.csr：为根证书生成的证书签名请求文件</li>
+</ul>
+<p>为clsuter1和cluster2生成的文件夹中包含以下文件：</p>
+<ul>
 <li>ca-cert.pem：中间证书</li>
 <li>ca-key.pem：中间密钥</li>
 <li>cert-chain.pem： 生成的给istiod用的证书链</li>
@@ -1271,7 +1273,11 @@ ENDPOINT            STATUS      OUTLIER CHECK     CLUSTER
           <a href="../../tags/service-mesh/">service mesh</a>
           </div>
       <nav class="post-nav">
-        
+        <a class="prev" href="../../post/dubbo_demo/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">dubbo 多种部署场景测试</span>
+            <span class="prev-text nav-mobile">上一篇</span>
+          </a>
         <a class="next" href="../../post/istio_multi_protocols_multi_registries/">
             <span class="next-text nav-default">Istio 多协议、多注册中心支持调研</span>
             <span class="next-text nav-mobile">下一篇</span>

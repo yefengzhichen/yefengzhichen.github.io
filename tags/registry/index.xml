@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>registry on yefengzhichen&#39;s blog</title>
+    <link>https://yefengzhichen.github.io/tags/registry/</link>
+    <description>Recent content in registry on yefengzhichen&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Tue, 21 Feb 2023 17:47:45 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/registry/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>dubbo 多种部署场景测试</title>
+      <link>https://yefengzhichen.github.io/post/dubbo_demo/</link>
+      <pubDate>Tue, 21 Feb 2023 17:47:45 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/post/dubbo_demo/</guid>
+      <description>测试准备 介绍 以下介绍是摘自 Dubbo 官网，Dubbo 是一款 RPC 服务开发框架，用于解决微服务架构下的服务治理与通信问题，官方提供了 Java、Golang</description>
+    </item>
+    
+  </channel>
+</rss>

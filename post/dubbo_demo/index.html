@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>dubbo 多种部署场景测试 - yefengzhichen&#39;s blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="yefengzhichen" /><meta name="description" content="测试准备 介绍 以下介绍是摘自 Dubbo 官网，Dubbo 是一款 RPC 服务开发框架，用于解决微服务架构下的服务治理与通信问题，官方提供了 Java、Golang" /><meta name="keywords" content="Hugo, theme, even" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.92.1 with theme even" />
+
+
+<link rel="canonical" href="https://yefengzhichen.github.io/post/dubbo_demo/" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../favicon-16x16.png">
+<link rel="manifest" href="../../manifest.json">
+<link rel="mask-icon" href="../../safari-pinned-tab.svg" color="#5bbad5">
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<link href="../../sass/main.min.f92fd13721ddf72129410fd8250e73152cc6f2438082b6c0208dc24ee7c13fc4.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="dubbo 多种部署场景测试" />
+<meta property="og:description" content="测试准备 介绍 以下介绍是摘自 Dubbo 官网，Dubbo 是一款 RPC 服务开发框架，用于解决微服务架构下的服务治理与通信问题，官方提供了 Java、Golang" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yefengzhichen.github.io/post/dubbo_demo/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2023-02-21T17:47:45+08:00" />
+<meta property="article:modified_time" content="2023-02-21T17:47:45+08:00" />
+
+<meta itemprop="name" content="dubbo 多种部署场景测试">
+<meta itemprop="description" content="测试准备 介绍 以下介绍是摘自 Dubbo 官网，Dubbo 是一款 RPC 服务开发框架，用于解决微服务架构下的服务治理与通信问题，官方提供了 Java、Golang"><meta itemprop="datePublished" content="2023-02-21T17:47:45+08:00" />
+<meta itemprop="dateModified" content="2023-02-21T17:47:45+08:00" />
+<meta itemprop="wordCount" content="5091">
+<meta itemprop="keywords" content="kubernetes,dubbo,registry,service mesh," /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="dubbo 多种部署场景测试"/>
+<meta name="twitter:description" content="测试准备 介绍 以下介绍是摘自 Dubbo 官网，Dubbo 是一款 RPC 服务开发框架，用于解决微服务架构下的服务治理与通信问题，官方提供了 Java、Golang"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="../../">
+        <li class="mobile-menu-item">首页</li>
+      </a><a href="../../post/">
+        <li class="mobile-menu-item">列表</li>
+      </a><a href="../../tags/">
+        <li class="mobile-menu-item">标签</li>
+      </a><a href="../../categories/">
+        <li class="mobile-menu-item">分类</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="../../">首页</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../post/">列表</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../tags/">标签</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../categories/">分类</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">dubbo 多种部署场景测试</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2023-02-21 </span>
+        <div class="post-category">
+            <a href="../../categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
+            </div>
+          <span class="more-meta"> 约 5091 字 </span>
+          <span class="more-meta"> 预计阅读 11 分钟 </span>
+        <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#测试准备">测试准备</a>
+      <ul>
+        <li><a href="#介绍">介绍</a></li>
+        <li><a href="#前置准备">前置准备</a></li>
+      </ul>
+    </li>
+    <li><a href="#dubbo-接入多注册中心">dubbo 接入多注册中心</a>
+      <ul>
+        <li><a href="#dubbo-接入-zookeeper">dubbo 接入 zookeeper</a></li>
+        <li><a href="#dubbo-接入-consul">dubbo 接入 consul</a></li>
+        <li><a href="#dubbo-接入-nacos">dubbo 接入 nacos</a></li>
+        <li><a href="#dubbo-接入-kubernetes">dubbo 接入 kubernetes</a>
+          <ul>
+            <li><a href="#服务发现配置说明">服务发现配置说明</a></li>
+            <li><a href="#部署测试-demo">部署测试 demo</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li><a href="#dubbo-结合-spring-boot-使用">dubbo 结合 spring boot 使用</a></li>
+    <li><a href="#dubbo-接入服务网格">Dubbo 接入服务网格</a>
+      <ul>
+        <li><a href="#dubbo-proxy-部署">Dubbo proxy 部署</a>
+          <ul>
+            <li><a href="#服务发现配置说明-1">服务发现配置说明</a></li>
+            <li><a href="#部署测试-demo-1">部署测试 demo</a></li>
+            <li><a href="#proto-编译">proto 编译</a></li>
+          </ul>
+        </li>
+        <li><a href="#dubbo-proxyless-部署">dubbo Proxyless 部署</a>
+          <ul>
+            <li><a href="#优势和缺点">优势和缺点</a></li>
+            <li><a href="#服务发现配置说明-2">服务发现配置说明</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li><a href="#参考">参考</a></li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h1 id="测试准备">测试准备</h1>
+<h2 id="介绍">介绍</h2>
+<p>以下介绍是摘自 Dubbo 官网，Dubbo 是一款 RPC 服务开发框架，用于解决微服务架构下的服务治理与通信问题，官方提供了 Java、Golang 等多语言 SDK 实现。使用 Dubbo 开发的微服务原生具备相互之间的远程地址发现与通信能力， 利用 Dubbo 提供的丰富服务治理特性，可以实现诸如服务发现、负载均衡、流量调度等服务治理诉求。在云原生时代，Dubbo 相继衍生出了 Dubbo3、Proxyless Mesh 等架构与解决方案，在易用性、超大规模微服务实践、云原生基础设施适配、安全性等几大方向上进行了全面升级。</p>
+<p>至于更详细的概念与架构介绍，可参考 <a href="https://cn.dubbo.apache.org/zh-cn/overview/what/overview/">dubbo 概念与架构</a>。</p>
+<p>这里基于官网文档和 github 示例，测试了 dubbo 多种部署场景，分别是原始 dubo 接入不同的注册中心、dubbo 结合 spring boot、dubbo 接入服务网格。</p>
+<h2 id="前置准备">前置准备</h2>
+<p>本地是用的 k3s 单节点集群，安装 istio 过程在之前博客 <a href="https://yefengzhichen.github.io/post/istio_demo/">Istio 安装和示例实践</a>，下面是创建测试用的命名空间。
+需要提前安装好环境：</p>
+<ul>
+<li>kubernetes（这里是 k3s 安装的单节点）</li>
+<li>docker</li>
+<li>kubens</li>
+<li>istio</li>
+</ul>
+<p>kubens 在 ubuntu 上可以使用下面命令安装：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># ubuntu 安装 kubectx 和 kubens</span>
+snap install kubectx --classic
+<span class="c1"># 获取 dubbo 测试代码</span>
+git clone https://github.com/apache/dubbo-samples.git
+</code></pre></td></tr></table>
+</div>
+</div><h1 id="dubbo-接入多注册中心">dubbo 接入多注册中心</h1>
+<p>这里直接使用 dubbo 微服务开发框架，测试接入不同的注册中心，来了解使用不同的注册中心时具体的配置差异，测试代码来源于 dubbo 的 github 示例项目 <a href="https://github.com/apache/dubbo-samples">dubbo-samples</a>。</p>
+<h2 id="dubbo-接入-zookeeper">dubbo 接入 zookeeper</h2>
+<p>此例是 dubbo 框架直接使用 zookeeper 做为注册中心，没有接入 k8s 和服务网格。进入测试代码目录，其目录结构为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="nb">cd</span> 3-extensions/registry/dubbo-samples-zookeeper
+tree -L <span class="m">10</span>
+.
+├── pom.xml
+├── src
+│   ├── main
+│   │   ├── java
+│   │   │   └── org
+│   │   │       └── apache
+│   │   │           └── dubbo
+│   │   │               └── samples
+│   │   │                   ├── ConsumerBootstrap.java
+│   │   │                   ├── ProviderBootstrap.java
+│   │   │                   ├── action
+│   │   │                   │   └── GreetingServiceConsumer.java
+│   │   │                   ├── api
+│   │   │                   │   └── GreetingService.java
+│   │   │                   └── impl
+│   │   │                       └── AnnotatedGreetingService.java
+│   │   └── resources
+│   │       ├── log4j.properties
+│   │       └── spring
+│   │           ├── dubbo-consumer.properties
+│   │           └── dubbo-provider.properties
+</code></pre></td></tr></table>
+</div>
+</div><p>provider 的 dubbo-provider.properties 配置为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="l">dubbo.application.name=zookeeper-demo-provider</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.registry.address=zookeeper://${zookeeper.address:localhost}:${zookeeper.port:2181}</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.protocol.name=dubbo</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.protocol.port=20880</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.provider.token=true</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>consumer 的 dubbo-consumer.properties 配置为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="l">dubbo.application.name=zookeeper-demo-consumer</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.registry.address=zookeeper://${zookeeper.address:localhost}:${zookeeper.port:2181}</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.consumer.timeout=3000</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>查看 consumer 中调用 api 的代码，greetingService 没有指定具体的 bean，这里是使用 DubboReference 自动注入 AnnotatedGreetingService 的：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-java" data-lang="java"><span class="nd">@Component</span><span class="o">(</span><span class="s">&#34;annotatedConsumer&#34;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">GreetingServiceConsumer</span> <span class="o">{</span>
+
+    <span class="nd">@DubboReference</span><span class="o">(</span><span class="n">version</span> <span class="o">=</span> <span class="s">&#34;1.0.0&#34;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">GreetingService</span> <span class="n">greetingService</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="n">String</span> <span class="nf">doSayHello</span><span class="o">(</span><span class="n">String</span> <span class="n">name</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">greetingService</span><span class="o">.</span><span class="na">sayHello</span><span class="o">(</span><span class="n">name</span><span class="o">);</span>
+    <span class="o">}</span>
+
+<span class="o">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>执行以下命令部署测试：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">docker run --name some-zookeeper -p 2181:2181 --restart always -d zookeeper
+<span class="c1"># 部署 provider</span>
+./mvnw clean compile exec:java -pl 3-extensions/registry/dubbo-samples-zookeeper -Dexec.mainClass<span class="o">=</span><span class="s2">&#34;org.apache.dubbo.samples.ProviderBootstrap&#34;</span>
+<span class="c1"># 部署 consumer</span>
+./mvnw clean compile exec:java -pl 3-extensions/registry/dubbo-samples-zookeeper -Dexec.mainClass<span class="o">=</span><span class="s2">&#34;org.apache.dubbo.samples.ConsumerBootstrap&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="dubbo-接入-consul">dubbo 接入 consul</h2>
+<p>此例是 dubbo 框架直接使用 consul 做为注册中心，没有接入 k8s 和服务网格。进入测试代码目录，其目录结构为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="nb">cd</span> 3-extensions/registry/dubbo-samples-consul
+tree -L <span class="m">10</span>
+.
+├── pom.xml
+└── src
+    ├── main
+    │   ├── java
+    │   │   └── org
+    │   │       └── apache
+    │   │           └── dubbo
+    │   │               └── samples
+    │   │                   └── consul
+    │   │                       ├── ConsulConsumer.java
+    │   │                       ├── ConsulProvider.java
+    │   │                       ├── api
+    │   │                       │   └── DemoService.java
+    │   │                       └── impl
+    │   │                           └── DemoServiceImpl.java
+    │   └── resources
+    │       ├── log4j.properties
+    │       └── spring
+    │           ├── dubbo-demo-consumer.xml
+    │           └── dubbo-demo-provider.xml
+</code></pre></td></tr></table>
+</div>
+</div><p>provider 的 dubbo-demo-provider.xml 配置为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-xml" data-lang="xml"><span class="nt">&lt;beans</span> <span class="na">xmlns:xsi=</span><span class="s">&#34;http://www.w3.org/2001/XMLSchema-instance&#34;</span>
+       <span class="na">xmlns:dubbo=</span><span class="s">&#34;http://dubbo.apache.org/schema/dubbo&#34;</span>
+       <span class="na">xmlns=</span><span class="s">&#34;http://www.springframework.org/schema/beans&#34;</span> <span class="na">xmlns:context=</span><span class="s">&#34;http://www.springframework.org/schema/context&#34;</span>
+       <span class="na">xsi:schemaLocation=</span><span class="s">&#34;http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+</span><span class="s">       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd&#34;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;context:property-placeholder/&gt;</span>
+
+    <span class="nt">&lt;dubbo:application</span> <span class="na">name=</span><span class="s">&#34;consul-provider-demo&#34;</span><span class="nt">/&gt;</span>
+
+    <span class="nt">&lt;dubbo:registry</span> <span class="na">address=</span><span class="s">&#34;consul://${consul.address:127.0.0.1}:8500&#34;</span><span class="nt">/&gt;</span>
+
+    <span class="nt">&lt;dubbo:provider</span> <span class="na">token=</span><span class="s">&#34;true&#34;</span><span class="nt">/&gt;</span>
+
+    <span class="nt">&lt;bean</span> <span class="na">id=</span><span class="s">&#34;demoService&#34;</span> <span class="na">class=</span><span class="s">&#34;org.apache.dubbo.samples.consul.impl.DemoServiceImpl&#34;</span><span class="nt">/&gt;</span>
+
+    <span class="nt">&lt;dubbo:service</span> <span class="na">interface=</span><span class="s">&#34;org.apache.dubbo.samples.consul.api.DemoService&#34;</span> <span class="na">ref=</span><span class="s">&#34;demoService&#34;</span><span class="nt">/&gt;</span>
+
+<span class="nt">&lt;/beans&gt;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>consumer 的 dubbo-demo-consumer.xml 配置为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-xml" data-lang="xml"><span class="nt">&lt;beans</span> <span class="na">xmlns:xsi=</span><span class="s">&#34;http://www.w3.org/2001/XMLSchema-instance&#34;</span>
+       <span class="na">xmlns:dubbo=</span><span class="s">&#34;http://dubbo.apache.org/schema/dubbo&#34;</span>
+       <span class="na">xmlns=</span><span class="s">&#34;http://www.springframework.org/schema/beans&#34;</span> <span class="na">xmlns:context=</span><span class="s">&#34;http://www.springframework.org/schema/context&#34;</span>
+       <span class="na">xsi:schemaLocation=</span><span class="s">&#34;http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+</span><span class="s">       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd&#34;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;context:property-placeholder/&gt;</span>
+
+    <span class="nt">&lt;dubbo:application</span> <span class="na">name=</span><span class="s">&#34;consul-consumer-demo&#34;</span><span class="nt">/&gt;</span>
+
+    <span class="nt">&lt;dubbo:registry</span> <span class="na">address=</span><span class="s">&#34;consul://${consul.address:127.0.0.1}:8500&#34;</span><span class="nt">/&gt;</span>
+
+    <span class="nt">&lt;dubbo:reference</span> <span class="na">scope=</span><span class="s">&#34;remote&#34;</span> <span class="na">id=</span><span class="s">&#34;demoService&#34;</span> <span class="na">check=</span><span class="s">&#34;true&#34;</span> <span class="na">interface=</span><span class="s">&#34;org.apache.dubbo.samples.consul.api.DemoService&#34;</span><span class="nt">/&gt;</span>
+
+<span class="nt">&lt;/beans&gt;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>查看 consumer 中调用 api 的代码，ConsulConsumer 中是通过 xml 配置文件，指定的 demoService 为 DemoServiceImpl：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-java" data-lang="java"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ConsulConsumer</span> <span class="o">{</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">ClassPathXmlApplicationContext</span> <span class="n">context</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ClassPathXmlApplicationContext</span><span class="o">(</span><span class="s">&#34;spring/dubbo-demo-consumer.xml&#34;</span><span class="o">);</span>
+        <span class="n">context</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+        <span class="n">DemoService</span> <span class="n">demoService</span> <span class="o">=</span> <span class="o">(</span><span class="n">DemoService</span><span class="o">)</span> <span class="n">context</span><span class="o">.</span><span class="na">getBean</span><span class="o">(</span><span class="s">&#34;demoService&#34;</span><span class="o">);</span>
+        <span class="n">String</span> <span class="n">hello</span> <span class="o">=</span> <span class="n">demoService</span><span class="o">.</span><span class="na">sayHello</span><span class="o">(</span><span class="s">&#34;consul&#34;</span><span class="o">);</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">hello</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+</code></pre></td></tr></table>
+</div>
+</div><p>执行以下命令部署测试：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">docker run -p8500:8500 consul:latest
+<span class="c1"># 部署 provider</span>
+./mvnw clean compile exec:java -pl 3-extensions/registry/dubbo-samples-consul -Dexec.mainClass<span class="o">=</span><span class="s2">&#34;org.apache.dubbo.samples.ConsulProvider&#34;</span>
+<span class="c1"># 部署 consumer</span>
+./mvnw clean compile exec:java -pl 3-extensions/registry/dubbo-samples-consul -Dexec.mainClass<span class="o">=</span><span class="s2">&#34;org.apache.dubbo.samples.ConsulConsumer&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="dubbo-接入-nacos">dubbo 接入 nacos</h2>
+<p>此例是 dubbo 框架直接使用 nacos 做为注册中心，没有接入 k8s 和服务网格。进入测试代码目录，其目录结构为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="nb">cd</span> 3-extensions/registry/dubbo-samples-nacos/dubbo-samples-nacos-registry
+tree -L <span class="m">10</span>
+.
+├── pom.xml
+├── src
+│   ├── main
+│   │   ├── java
+│   │   │   └── org
+│   │   │       └── apache
+│   │   │           └── dubbo
+│   │   │               └── samples
+│   │   │                   ├── ConsumerBootstrap.java
+│   │   │                   ├── ProviderBootstrap.java
+│   │   │                   ├── action
+│   │   │                   │   └── GreetingServiceConsumer.java
+│   │   │                   ├── api
+│   │   │                   │   └── GreetingService.java
+│   │   │                   └── impl
+│   │   │                       └── AnnotatedGreetingService.java
+│   │   └── resources
+│   │       ├── log4j.properties
+│   │       └── spring
+│   │           ├── dubbo-consumer.properties
+│   │           └── dubbo-provider.properties
+</code></pre></td></tr></table>
+</div>
+</div><p>provider 的 dubbo-provider.properties 配置为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="l">dubbo.application.name=nacos-registry-demo-provider</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.registry.address=nacos://${nacos.address:localhost}:8848?username=nacos&amp;password=nacos</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.protocol.name=dubbo</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.protocol.port=20880</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.provider.token=true</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>consumer 的 dubbo-consumer.properties 配置为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="l">dubbo.application.name=nacos-registry-demo-consumer</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.registry.address=nacos://${nacos.address:localhost}:8848?username=nacos&amp;password=nacos</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.consumer.timeout=3000</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>查看 consumer 中调用 api 的代码，greetingService 没有指定具体的 bean，这里是使用 DubboReference 自动注入 AnnotatedGreetingService 的：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-java" data-lang="java"><span class="nd">@Component</span><span class="o">(</span><span class="s">&#34;annotatedConsumer&#34;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">GreetingServiceConsumer</span> <span class="o">{</span>
+
+    <span class="nd">@DubboReference</span><span class="o">(</span><span class="n">version</span> <span class="o">=</span> <span class="s">&#34;1.0.0&#34;</span><span class="o">)</span>
+    <span class="kd">private</span> <span class="n">GreetingService</span> <span class="n">greetingService</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="n">String</span> <span class="nf">doSayHello</span><span class="o">(</span><span class="n">String</span> <span class="n">name</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">greetingService</span><span class="o">.</span><span class="na">sayHello</span><span class="o">(</span><span class="n">name</span><span class="o">);</span>
+    <span class="o">}</span>
+
+<span class="o">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>执行以下命令部署测试：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">docker run --name some-zookeeper -p 2181:2181 --restart always -d zookeeper
+<span class="c1"># 部署 provider</span>
+./mvnw clean compile exec:java -pl 3-extensions/registry/dubbo-samples-nacos/dubbo-samples-nacos-registry -Dexec.mainClass<span class="o">=</span><span class="s2">&#34;org.apache.dubbo.samples.ProviderBootstrap&#34;</span>
+<span class="c1"># 部署 consumer</span>
+./mvnw clean compile exec:java -pl 3-extensions/registry/dubbo-samples-nacos/dubbo-samples-nacos-registry -Dexec.mainClass<span class="o">=</span><span class="s2">&#34;org.apache.dubbo.samples.ConsumerBootstrap&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="dubbo-接入-kubernetes">dubbo 接入 kubernetes</h2>
+<p>dubbo 可以直接以 api-server 为注册中心，将 Dubbo 应用部署到 Kubernetes 并复用 Kubernetes Native Service，用例来自 <a href="https://cn.dubbo.apache.org/zh-cn/overview/tasks/kubernetes/deploy-on-k8s/">部署到 Kubernetes</a>。</p>
+<h3 id="服务发现配置说明">服务发现配置说明</h3>
+<p>provider 的配置文件为如下 dubbo-provider.properties：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="l">dubbo.application.name=dubbo-samples-apiserver-provider </span><span class="w"> </span><span class="c"># 当前应用名称</span><span class="w">
+</span><span class="w"></span><span class="c"># 应用级服务发现 metadata 为 local，即从 provider 获取时，MetadataService 服务所用的端口号</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.application.metadataServicePort=20885</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.registry.address=N/A </span><span class="w"> </span><span class="c"># 注册中心地址设置为 k8s</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.protocol.name=tri    </span><span class="w"> </span><span class="c"># dubbo 协议</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.protocol.port=20880  </span><span class="w"> </span><span class="c"># 服务端口</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.application.qosEnable=true   </span><span class="w"> </span><span class="c"># 是否启用 qos 运维端口</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.application.qosAcceptForeignIp=true  </span><span class="w"> </span><span class="c"># 是否接收除 localhost 本机访问之外的外部请求</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.provider.token=true  </span><span class="w"> </span><span class="c"># 令牌验证为 true，表示随机生成动态令牌</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>consumer 的配置文件 dubbo-consumer.properties 如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="l">dubbo.application.name=dubbo-samples-apiserver-consumer</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.application.metadataServicePort=20885</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.registry.address=kubernetes://DEFAULT_MASTER_HOST?registry-type=service&amp;duplicate=false&amp;namespace=dubbo-demo&amp;trustCerts=true&amp;subscribed-services=dubbo-samples-apiserver-provider</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.consumer.timeout=3000</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.application.qosEnable=true</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.application.qosAcceptForeignIp=true</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><h3 id="部署测试-demo">部署测试 demo</h3>
+<p>Dubbo 项目要访问 apiserver，需要设置对应的权限，这里创建了 Role、RoleBinding、ServiceAccount：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="nb">cd</span> dubbo-samples
+<span class="c1"># 初始化命名空间和账号</span>
+kubectl apply -f 3-extensions/registry/dubbo-samples-kubernetes/dubbo-samples-apiserver-provider/src/main/resources/k8s/ServiceAccount.yml
+<span class="c1"># 切换命名空间</span>
+kubens dubbo-demo
+</code></pre></td></tr></table>
+</div>
+</div><p>部署 provider：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 部署 Service</span>
+kubectl apply -f 3-extensions/registry/dubbo-samples-kubernetes/dubbo-samples-apiserver-provider/src/main/resources/k8s/Service.yml
+<span class="c1"># 部署 Deployment</span>
+kubectl apply -f 3-extensions/registry/dubbo-samples-kubernetes/dubbo-samples-apiserver-provider/src/main/resources/k8s/Deployment.yml
+</code></pre></td></tr></table>
+</div>
+</div><p>部署 consumer：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 部署 Service</span>
+kubectl apply -f 3-extensions/registry/dubbo-samples-kubernetes/dubbo-samples-apiserver-consumer/src/main/resources/k8s/Service.yml
+<span class="c1"># 部署 Deployment</span>
+kubectl apply -f 3-extensions/registry/dubbo-samples-kubernetes/dubbo-samples-apiserver-consumer/src/main/resources/k8s/Deployment.yml
+</code></pre></td></tr></table>
+</div>
+</div><p>这是分别查看 consumer 和 provider 的日志，可以看到：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># provider</span>
+4.0.32:36986 -&gt; /10.44.0.30:20880 is established., dubbo version: 3.1.0, current host: 10.44.0.30
+greeting service received: Kubernetes Api Server
+<span class="c1"># consumer</span>
+<span class="o">[</span>16/02/23 06:47:03:003 UTC<span class="o">]</span> main  INFO deploy.DefaultApplicationDeployer:  <span class="o">[</span>DUBBO<span class="o">]</span> Dubbo Application<span class="o">[</span>1.1<span class="o">](</span>dubbo-samples-apiserver-consumer<span class="o">)</span> is ready., dubbo version: 3.1.0, current host: 10.44.0.32
+result: hello, Kubernetes Api Server
+</code></pre></td></tr></table>
+</div>
+</div><h1 id="dubbo-结合-spring-boot-使用">dubbo 结合 spring boot 使用</h1>
+<p>Dubbo 的 SPI(Service Provider Interface)，用于根据名称获取 Interface 接口的实现类，根据条件激活 Interface 接口的实现类集合，即一组实现类，这是根据 JAVA SPI 扩展而来。这里使用 spring boot 和 zookeeper 注册中心，来简单测试接口方式调用其他服务。</p>
+<p>进入测试代码目录，其目录结构为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="nb">cd</span> dubbo-samples
+<span class="nb">cd</span> 1-basic/dubbo-samples-spring-boot
+tree -L <span class="m">12</span>
+.
+├── dubbo-samples-spring-boot-consumer
+│   ├── pom.xml
+│   ├── src
+│   │   ├── main
+│   │   │   ├── java
+│   │   │   │   └── org
+│   │   │   │       └── apache
+│   │   │   │           └── dubbo
+│   │   │   │               └── springboot
+│   │   │   │                   └── demo
+│   │   │   │                       └── consumer
+│   │   │   │                           ├── ConsumerApplication.java
+│   │   │   │                           └── Task.java
+│   │   │   └── resources
+│   │   │       └── application.yml
+├── dubbo-samples-spring-boot-interface
+│   ├── pom.xml
+│   ├── src
+│   │   └── main
+│   │       └── java
+│   │           └── org
+│   │               └── apache
+│   │                   └── dubbo
+│   │                       └── springboot
+│   │                           └── demo
+│   │                               └── DemoService.java
+├── dubbo-samples-spring-boot-provider
+│   ├── pom.xml
+│   ├── src
+│   │   └── main
+│   │       ├── java
+│   │       │   └── org
+│   │       │       └── apache
+│   │       │           └── dubbo
+│   │       │               └── springboot
+│   │       │                   └── demo
+│   │       │                       └── provider
+│   │       │                           ├── DemoServiceImpl.java
+│   │       │                           └── ProviderApplication.java
+│   │       └── resources
+│   │           └── application.yml
+├── pom.xml
+</code></pre></td></tr></table>
+</div>
+</div><p>provider 的 application.yml 配置为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">dubbo</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">application</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">dubbo-springboot-demo-provider</span><span class="w">
+</span><span class="w">  </span><span class="nt">protocol</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">dubbo</span><span class="w">
+</span><span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span>-<span class="m">1</span><span class="w">
+</span><span class="w">  </span><span class="nt">registry</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l">zookeeper://${zookeeper.address:127.0.0.1}:2181</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>consumer 的 application.yml 配置为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">dubbo</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">application</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">dubbo-springboot-demo-consumer</span><span class="w">
+</span><span class="w">  </span><span class="nt">protocol</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">dubbo</span><span class="w">
+</span><span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span>-<span class="m">1</span><span class="w">
+</span><span class="w">  </span><span class="nt">registry</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l">zookeeper://${zookeeper.address:127.0.0.1}:2181</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>查看 consumer 中调用 api 的代码，demoService 没有指定具体的 bean，这里是使用 DubboReference 自动注入 DemoServiceImpl 的：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-java" data-lang="java"><span class="nd">@Component</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Task</span> <span class="kd">implements</span> <span class="n">CommandLineRunner</span> <span class="o">{</span>
+    <span class="nd">@DubboReference</span>
+    <span class="kd">private</span> <span class="n">DemoService</span> <span class="n">demoService</span><span class="o">;</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">(</span><span class="n">String</span><span class="o">...</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+        <span class="n">String</span> <span class="n">result</span> <span class="o">=</span> <span class="n">demoService</span><span class="o">.</span><span class="na">sayHello</span><span class="o">(</span><span class="s">&#34;world&#34;</span><span class="o">);</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&#34;Receive result ======&gt; &#34;</span> <span class="o">+</span> <span class="n">result</span><span class="o">);</span>
+
+        <span class="k">new</span> <span class="n">Thread</span><span class="o">(()-&gt;</span> <span class="o">{</span>
+            <span class="k">while</span> <span class="o">(</span><span class="kc">true</span><span class="o">)</span> <span class="o">{</span>
+                <span class="k">try</span> <span class="o">{</span>
+                    <span class="n">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="n">1000</span><span class="o">);</span>
+                    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="k">new</span> <span class="n">Date</span><span class="o">()</span> <span class="o">+</span> <span class="s">&#34; Receive result ======&gt; &#34;</span> <span class="o">+</span> <span class="n">demoService</span><span class="o">.</span><span class="na">sayHello</span><span class="o">(</span><span class="s">&#34;world&#34;</span><span class="o">));</span>
+                <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+                    <span class="n">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">interrupt</span><span class="o">();</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">}).</span><span class="na">start</span><span class="o">();</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>执行以下命令部署测试：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">docker run --name some-zookeeper -p 2181:2181 --restart always -d zookeeper
+./mvnw clean install -pl 1-basic/dubbo-samples-spring-boot
+./mvnw clean install -pl 1-basic/dubbo-samples-spring-boot/dubbo-samples-spring-boot-interface
+<span class="c1"># 部署 provider</span>
+./mvnw clean compile exec:java -pl 1-basic/dubbo-samples-spring-boot/dubbo-samples-spring-boot-provider -Dexec.mainClass<span class="o">=</span><span class="s2">&#34;org.apache.dubbo.springboot.demo.provider.ProviderApplication&#34;</span>
+<span class="c1"># 部署 consumer</span>
+./mvnw clean compile exec:java -pl 1-basic/dubbo-samples-spring-boot/dubbo-samples-spring-boot-consumer -Dexec.mainClass<span class="o">=</span><span class="s2">&#34;org.apache.dubbo.springboot.demo.consumer.ConsumerApplication&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><h1 id="dubbo-接入服务网格">Dubbo 接入服务网格</h1>
+<p>Dubbo 应用实例作为数据面组件，支持两种部署模式：</p>
+<ul>
+<li>Proxy 模式。Dubbo 进程与 Envoy 部署在同一 pod，进出 Dubbo 的流量都经 Envoy 代理拦截，由 Envoy 执行流量管控。</li>
+<li>Proxyless 模式。Dubbo 进程独立部署，进程间直接通信，通过 xDS 协议与控制面直接交互。</li>
+</ul>
+<h2 id="dubbo-proxy-部署">Dubbo proxy 部署</h2>
+<p>Dubbo 提供了 ThinSDK 的部署模式，在此模式下，Dubbo ThinSDK 将只提供面向业务应用的编程 API、RPC 传输通信能力，其余服务治理 包括地址发现、负载均衡、路由寻址等都统一下沉到 Sidecar，Sidecar 负责与控制面直接通信并接收各种流量管控规则。</p>
+<h3 id="服务发现配置说明-1">服务发现配置说明</h3>
+<p>provider 的配置文件 dubbo-provider.properties 内容如下，具体字段说明可以在 <a href="https://cn.dubbo.apache.org/zh-cn/docs3-v2/java-sdk/reference-manual/config/properties/">配置项参考手册
+</a> 中找到。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="l">dubbo.application.name=dubbo-samples-mesh-provider </span><span class="w"> </span><span class="c"># 当前应用名称</span><span class="w">
+</span><span class="w"></span><span class="c"># 应用级服务发现 metadata 为 local，即从 provider 获取时，MetadataService 服务所用的端口号</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.application.metadataServicePort=20885</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.registry.address=N/A </span><span class="w"> </span><span class="c"># 注册中心地址，N/A 没有注册到注册中心</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.protocol.name=tri    </span><span class="w"> </span><span class="c"># triple 协议</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.protocol.port=50052  </span><span class="w"> </span><span class="c"># 服务端口</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.application.qosEnable=true   </span><span class="w"> </span><span class="c"># 是否启用 qos 运维端口</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.application.qosAcceptForeignIp=true  </span><span class="w"> </span><span class="c"># 是否接收除 localhost 本机访问之外的外部请求</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>consumer 的配置文件 dubbo-consumer.properties 如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="l">dubbo.application.name=dubbo-samples-mesh-consumer</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.application.metadataServicePort=20885</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.registry.address=N/A</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.protocol.name=tri</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.protocol.port=50052</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.consumer.timeout=30000   </span><span class="w"> </span><span class="c"># 远程服务调用超时时间（毫秒）</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.application.qosEnable=true</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.application.qosAcceptForeignIp=true</span><span class="w">
+</span><span class="w"></span><span class="c"># Dubbo Mesh 模式的开关。开启后，可适配 SideCar 模式，将 Dubbo 服务调用转换为 K8S 标准调用。仅支持 Triple 协议，兼容 GRPC。设置为 true 后，原生对接 K8S，无需第三方注册中心，设置 dubbo.registry.address=N/A 即可</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.consumer.meshEnable=true</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><h3 id="部署测试-demo-1">部署测试 demo</h3>
+<p>创建命名空间：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 初始化命名空间 并开启自动注入</span>
+kubectl apply -f 3-extensions/registry/dubbo-samples-mesh-k8s/deploy/Namespace.yml
+<span class="c1"># 切换命名空间</span>
+kubens dubbo-demo
+</code></pre></td></tr></table>
+</div>
+</div><p>部署 provider：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 部署 Service</span>
+kubectl apply -f 3-extensions/registry/dubbo-samples-mesh-k8s/deploy/provider/Service.yml
+<span class="c1"># 部署 Deployment</span>
+kubectl apply -f 3-extensions/registry/dubbo-samples-mesh-k8s/deploy/provider/Deployment.yml
+</code></pre></td></tr></table>
+</div>
+</div><p>部署 consumer：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 部署 Service</span>
+kubectl apply -f 3-extensions/registry/dubbo-samples-mesh-k8s/deploy/consumer/Service.yml
+<span class="c1"># 部署 Deployment</span>
+kubectl apply -f 3-extensions/registry/dubbo-samples-mesh-k8s/deploy/consumer/Deployment.yml
+</code></pre></td></tr></table>
+</div>
+</div><p>查看 consumer pods 的日志：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="o">[</span>16/02/23 07:52:45:045 UTC<span class="o">]</span> main  INFO deploy.DefaultApplicationDeployer:  <span class="o">[</span>DUBBO<span class="o">]</span> Dubbo Application<span class="o">[</span>1.1<span class="o">](</span>dubbo-samples-mesh-consumer<span class="o">)</span> is ready., dubbo version: 3.1.0, current host: 10.44.0.35
+<span class="o">====================</span> dubbo unary invoke loop <span class="nv">started</span> <span class="o">====================</span>
+<span class="o">[</span>16/02/23 07:52:50:050 UTC<span class="o">]</span> main  INFO action.GreetingServiceConsumer: consumer Unary reply &lt;-message: <span class="s2">&#34;hello,service mesh, response from provider-v1: 10.44.0.34:50052, client: 10.44.0.34, local: dubbo-samples-mesh-provider, remote: null, isProviderSide: true&#34;</span>
+
+<span class="o">====================</span> dubbo unary invoke <span class="m">0</span> <span class="nv">end</span> <span class="o">====================</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>此时 consumer sidecar 的日志如下，可以看到 envoy 匹配到了名为“outbound|50052||dubbo-samples-mesh-provider.dubbo-demo.svc.cluster.local”：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="o">{</span><span class="s2">&#34;response_code_details&#34;</span>:<span class="s2">&#34;via_upstream&#34;</span>,<span class="s2">&#34;upstream_cluster&#34;</span>:<span class="s2">&#34;outbound|50052||dubbo-samples-mesh-provider.dubbo-demo.svc.cluster.local&#34;</span>,<span class="s2">&#34;start_time&#34;</span>:<span class="s2">&#34;2023-02-16T07:52:50.557Z&#34;</span>,<span class="s2">&#34;authority&#34;</span>:<span class="s2">&#34;dubbo-samples-mesh-provider.dubbo-demo.svc.cluster.local:50052&#34;</span>,<span class="s2">&#34;method&#34;</span>:<span class="s2">&#34;POST&#34;</span>,<span class="s2">&#34;downstream_local_address&#34;</span>:<span class="s2">&#34;10.45.207.12:50052&#34;</span>,<span class="s2">&#34;request_id&#34;</span>:<span class="s2">&#34;31f42e7a-05c0-4750-b554-b297f76e91fc&#34;</span>,<span class="s2">&#34;user_agent&#34;</span>:null,<span class="s2">&#34;route_name&#34;</span>:<span class="s2">&#34;default&#34;</span>,<span class="s2">&#34;downstream_remote_address&#34;</span>:<span class="s2">&#34;10.44.0.35:55540&#34;</span>,<span class="s2">&#34;bytes_received&#34;</span>:19,<span class="s2">&#34;connection_termination_details&#34;</span>:null,<span class="s2">&#34;response_flags&#34;</span>:<span class="s2">&#34;-&#34;</span>,<span class="s2">&#34;upstream_transport_failure_reason&#34;</span>:null,<span class="s2">&#34;response_code&#34;</span>:200,<span class="s2">&#34;upstream_local_address&#34;</span>:<span class="s2">&#34;10.44.0.35:35986&#34;</span>,<span class="s2">&#34;upstream_service_time&#34;</span>:<span class="s2">&#34;230&#34;</span>,<span class="s2">&#34;duration&#34;</span>:274,<span class="s2">&#34;path&#34;</span>:<span class="s2">&#34;/org.apache.dubbo.samples.Greeter/greet&#34;</span>,<span class="s2">&#34;x_forwarded_for&#34;</span>:null,<span class="s2">&#34;bytes_sent&#34;</span>:163,<span class="s2">&#34;requested_server_name&#34;</span>:null,<span class="s2">&#34;protocol&#34;</span>:<span class="s2">&#34;HTTP/2&#34;</span>,<span class="s2">&#34;upstream_host&#34;</span>:<span class="s2">&#34;10.44.0.34:50052&#34;</span><span class="o">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>查看 provider pod 的日志：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="o">[</span>16/02/23 07:28:49:049 UTC<span class="o">]</span> main  INFO deploy.DefaultApplicationDeployer:  <span class="o">[</span>DUBBO<span class="o">]</span> Dubbo Application<span class="o">[</span>1.1<span class="o">](</span>dubbo-samples-mesh-provider<span class="o">)</span> is ready., dubbo version: 3.1.0, current host: 10.44.0.34
+<span class="o">===============</span> dubbo service <span class="nv">started</span> <span class="o">===============</span>
+<span class="o">[</span>16/02/23 07:52:50:050 UTC<span class="o">]</span> tri-protocol-50052-thread-1  INFO impl.GreeterImpl: Server <span class="nb">test</span> dubbo tri mesh received greet request name: <span class="s2">&#34;service mesh&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="proto-编译">proto 编译</h3>
+<p>这个项目中使用的是 triple 协议，triple 协议是 Dubbo3 推出的主力协议，这个协议兼容 gRPC ，以 HTTP2 作为传输层构建新的协议。这里测试将 proto 文件编译为 java 文件，方便项目中查看。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="nb">cd</span> 3-extensions/registry/dubbo-samples-mesh-k8s/dubbo-samples-mesh-provider
+mvn clean compile
+<span class="c1">## 输出</span>
+<span class="o">[</span>INFO<span class="o">]</span> --- protobuf-maven-plugin:0.6.1:compile <span class="o">(</span>default<span class="o">)</span> @ dubbo-samples-mesh-provider ---
+<span class="o">[</span>INFO<span class="o">]</span> Building protoc plugin: dubbo
+<span class="o">[</span>INFO<span class="o">]</span> Compiling <span class="m">1</span> proto file<span class="o">(</span>s<span class="o">)</span> to /xx/dubbo-samples/3-extensions/registry/dubbo-samples-mesh-k8s/dubbo-samples-mesh-provider/target/generated-sources/protobuf/java
+<span class="o">[</span>INFO<span class="o">]</span>
+<span class="o">[</span>INFO<span class="o">]</span> --- protobuf-maven-plugin:0.6.1:compile-custom <span class="o">(</span>default<span class="o">)</span> @ dubbo-samples-mesh-provider ---
+<span class="o">[</span>INFO<span class="o">]</span> Building protoc plugin: dubbo
+<span class="o">[</span>INFO<span class="o">]</span> Compiling <span class="m">1</span> proto file<span class="o">(</span>s<span class="o">)</span> to /xx/dubbo-samples/3-extensions/registry/dubbo-samples-mesh-k8s/dubbo-samples-mesh-provider/target/generated-sources/protobuf/grpc-java
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看到编译生成的 java 文件在“target/generated-sources/protobuf“，进入此目录后查看：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">➜  protobuf git:<span class="o">(</span>master<span class="o">)</span> ✗ tree -L <span class="m">6</span>
+.
+├── grpc-java
+│   └── org
+│       └── apache
+│           └── dubbo
+│               └── samples
+│                   └── GreeterGrpc.java
+└── java
+    └── org
+        └── apache
+            └── dubbo
+                └── samples
+                    ├── DubboGreeterTriple.java
+                    ├── Greeter.java
+                    ├── GreeterOuterClass.java
+                    ├── GreeterReply.java
+                    ├── GreeterReplyOrBuilder.java
+                    ├── GreeterRequest.java
+                    └── GreeterRequestOrBuilder.java
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="dubbo-proxyless-部署">dubbo Proxyless 部署</h2>
+<p>Dubbo 3.1 版本添加了 Proxyless Mesh，Proxyless 模式是指 dubbo 直接与 istiod 通信，实现 dubbo 与 Control Plane 的直接通信，进而实现控制面对流量管控、服务治理、可观测性、安全等的统一管控，规避 sidecar 模式带来的性能损耗与部署架构复杂性。</p>
+<h3 id="优势和缺点">优势和缺点</h3>
+<p>优势：</p>
+<ul>
+<li>没有额外的 Proxy 中转损耗，因此更适用于性能敏感应用</li>
+<li>更有利于遗留系统的平滑迁移</li>
+<li>架构简单，容易运维部署</li>
+<li>适用于几乎所有的部署环境</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>无法获取接口所对应的应用名：需要配置 providedBy 来标记此服务来自哪个应用</li>
+<li>Istio 认证方式限制：jwtPolicy 需要设置为 first-party-jwt，即没有过期时间，需要安装到所有 pods</li>
+<li>只支持 http 协议和 grpc 协议， Proxyless 模式下应用级服务发现通过 Kubernetes Native Service 来进行应用服务发现，由于 istio 的限制，目前只支持 http 协议和 grpc 协议的流量拦截转发</li>
+</ul>
+<h3 id="服务发现配置说明-2">服务发现配置说明</h3>
+<p>provider 的配置文件为如下 dubbo-provider.properties：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="l">dubbo.application.name=dubbo-samples-xds-provider  </span><span class="w"> </span><span class="c"># 当前应用名称</span><span class="w">
+</span><span class="w"></span><span class="c"># 应用级服务发现 metadataType 为 local，即从 provider 获取时，MetadataService 服务所用的端口号</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.application.metadataServicePort=20885</span><span class="w">
+</span><span class="w"></span><span class="c"># metadataType 配置为 local，则该属性设置 MetadataService 服务所用的通信协议，默认为 dubbo</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.application.metadataServiceProtocol=dubbo</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.registry.address=xds://istiod.istio-system.svc:15012 </span><span class="w"> </span><span class="c"># 注册中心</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.protocol.name=tri</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.protocol.port=50051</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.application.qosEnable=true</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.application.qosAcceptForeignIp=true</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>consumer 的配置文件 dubbo-consumer.properties 如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="l">dubbo.application.name=dubbo-samples-xds-consumer</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.application.metadataServicePort=20885</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.application.metadataServiceProtocol=dubbo</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.registry.address=xds://istiod.istio-system.svc:15012</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.consumer.timeout=3000</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.consumer.check=false</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.application.qosEnable=true</span><span class="w">
+</span><span class="w"></span><span class="l">dubbo.application.qosAcceptForeignIp=true</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><h1 id="参考">参考</h1>
+<ul>
+<li><a href="https://github.com/apache/dubbo-samples">dubbo-samples</a></li>
+<li><a href="https://cn.dubbo.apache.org/zh-cn/docs3-v2/java-sdk/concepts-and-architecture/mesh/">Dubbo Mesh</a></li>
+<li><a href="https://cn.dubbo.apache.org/zh-cn/overview/tasks/mesh/dubbo-mesh/">Mesh 部署方案</a></li>
+</ul>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">yefengzhichen</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2023-02-21
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="../../tags/kubernetes/">kubernetes</a>
+          <a href="../../tags/dubbo/">dubbo</a>
+          <a href="../../tags/registry/">registry</a>
+          <a href="../../tags/service-mesh/">service mesh</a>
+          </div>
+      <nav class="post-nav">
+        
+        <a class="next" href="../../post/istio_multicluster/">
+            <span class="next-text nav-default">Istio 多集群模型和部署示例</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="yefengzhichen/yefengzhichen.github.io"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="zhutao_hust@foxmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/yefengzhichen" class="iconfont icon-github" title="github"></a>
+  <a href="https://yefengzhichen.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  <div class="busuanzi-footer">
+    <span id="busuanzi_container_site_pv"> 本站总访问量 <span id="busuanzi_value_site_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次 </span>
+      <span class="division">|</span>
+    <span id="busuanzi_container_site_uv"> 本站总访客数 <span id="busuanzi_value_site_uv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 人 </span>
+  </div>
+
+  <span class="copyright-year">
+    &copy; 
+    2022 - 
+    2023<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="../../js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>
