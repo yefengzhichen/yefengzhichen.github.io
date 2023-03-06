@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-  <title>Istio 接入第三方注册中心调研 - yefengzhichen&#39;s blog</title>
+  <title>Istio 使用 Aeraki 接入第三方注册中心 - yefengzhichen&#39;s blog</title>
   <meta name="renderer" content="webkit" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
 
@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
 
 
-<meta name="author" content="yefengzhichen" /><meta name="description" content="背景 这里调研的场景是，将使用 dubbo2 框架的应用迁移到 istio 网格中，原有 dubbo 协议使用的注册中心可能有 zookeeper、nacos、etcd。 dubbo 接入 mesh 方案" /><meta name="keywords" content="Hugo, theme, even" />
+<meta name="author" content="yefengzhichen" /><meta name="description" content="背景 需求场景是，将 dubbo2 框架的应用迁移到 istio 网格中，dubbo2 使用的注册中心可能有 zookeeper、nacos、etcd，这里对dubbo接入" /><meta name="keywords" content="Hugo, theme, even" />
 
 
 
@@ -39,20 +39,20 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
 
 
-<meta property="og:title" content="Istio 接入第三方注册中心调研" />
-<meta property="og:description" content="背景 这里调研的场景是，将使用 dubbo2 框架的应用迁移到 istio 网格中，原有 dubbo 协议使用的注册中心可能有 zookeeper、nacos、etcd。 dubbo 接入 mesh 方案" />
+<meta property="og:title" content="Istio 使用 Aeraki 接入第三方注册中心" />
+<meta property="og:description" content="背景 需求场景是，将 dubbo2 框架的应用迁移到 istio 网格中，dubbo2 使用的注册中心可能有 zookeeper、nacos、etcd，这里对dubbo接入" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://yefengzhichen.github.io/post/istio_dubbo_registry/" /><meta property="article:section" content="post" />
 <meta property="article:published_time" content="2023-02-28T11:34:07+08:00" />
 <meta property="article:modified_time" content="2023-02-28T11:34:07+08:00" />
 
-<meta itemprop="name" content="Istio 接入第三方注册中心调研">
-<meta itemprop="description" content="背景 这里调研的场景是，将使用 dubbo2 框架的应用迁移到 istio 网格中，原有 dubbo 协议使用的注册中心可能有 zookeeper、nacos、etcd。 dubbo 接入 mesh 方案"><meta itemprop="datePublished" content="2023-02-28T11:34:07+08:00" />
+<meta itemprop="name" content="Istio 使用 Aeraki 接入第三方注册中心">
+<meta itemprop="description" content="背景 需求场景是，将 dubbo2 框架的应用迁移到 istio 网格中，dubbo2 使用的注册中心可能有 zookeeper、nacos、etcd，这里对dubbo接入"><meta itemprop="datePublished" content="2023-02-28T11:34:07+08:00" />
 <meta itemprop="dateModified" content="2023-02-28T11:34:07+08:00" />
-<meta itemprop="wordCount" content="4846">
+<meta itemprop="wordCount" content="4864">
 <meta itemprop="keywords" content="kubernetes,dubbo,registry,istio," /><meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="Istio 接入第三方注册中心调研"/>
-<meta name="twitter:description" content="背景 这里调研的场景是，将使用 dubbo2 框架的应用迁移到 istio 网格中，原有 dubbo 协议使用的注册中心可能有 zookeeper、nacos、etcd。 dubbo 接入 mesh 方案"/>
+<meta name="twitter:title" content="Istio 使用 Aeraki 接入第三方注册中心"/>
+<meta name="twitter:description" content="背景 需求场景是，将 dubbo2 框架的应用迁移到 istio 网格中，dubbo2 使用的注册中心可能有 zookeeper、nacos、etcd，这里对dubbo接入"/>
 
 <!--[if lte IE 9]>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
@@ -125,14 +125,14 @@
           <article class="post">
     
     <header class="post-header">
-      <h1 class="post-title">Istio 接入第三方注册中心调研</h1>
+      <h1 class="post-title">Istio 使用 Aeraki 接入第三方注册中心</h1>
 
       <div class="post-meta">
         <span class="post-time"> 2023-02-28 </span>
         <div class="post-category">
             <a href="../../categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
             </div>
-          <span class="more-meta"> 约 4846 字 </span>
+          <span class="more-meta"> 约 4864 字 </span>
           <span class="more-meta"> 预计阅读 10 分钟 </span>
         <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
       </div>
@@ -172,7 +172,7 @@
 </div>
     <div class="post-content">
       <h1 id="背景">背景</h1>
-<p>这里调研的场景是，将使用 dubbo2 框架的应用迁移到 istio 网格中，原有 dubbo 协议使用的注册中心可能有 zookeeper、nacos、etcd。</p>
+<p>需求场景是，将 dubbo2 框架的应用迁移到 istio 网格中，dubbo2 使用的注册中心可能有 zookeeper、nacos、etcd，这里对dubbo接入网格的几种方式做个对比。</p>
 <h2 id="dubbo-接入-mesh-方案">dubbo 接入 mesh 方案</h2>
 <p>dubbo 接入 mesh，这里要区分 dubbo 和 dubbo3，目前的方案有：</p>
 <ul>

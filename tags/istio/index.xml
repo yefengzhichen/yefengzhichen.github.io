@@ -8,12 +8,12 @@
     <language>zh-cn</language>
     <lastBuildDate>Tue, 28 Feb 2023 11:34:07 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/istio/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Istio 接入第三方注册中心调研</title>
+      <title>Istio 使用 Aeraki 接入第三方注册中心</title>
       <link>https://yefengzhichen.github.io/post/istio_dubbo_registry/</link>
       <pubDate>Tue, 28 Feb 2023 11:34:07 +0800</pubDate>
       
       <guid>https://yefengzhichen.github.io/post/istio_dubbo_registry/</guid>
-      <description>背景 这里调研的场景是，将使用 dubbo2 框架的应用迁移到 istio 网格中，原有 dubbo 协议使用的注册中心可能有 zookeeper、nacos、etcd。 dubbo 接入 mesh 方案</description>
+      <description>背景 需求场景是，将 dubbo2 框架的应用迁移到 istio 网格中，dubbo2 使用的注册中心可能有 zookeeper、nacos、etcd，这里对dubbo接入</description>
     </item>
     
     <item>
