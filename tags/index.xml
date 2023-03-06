@@ -6,20 +6,29 @@
     <description>Recent content in Tags on yefengzhichen&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Tue, 21 Feb 2023 17:47:45 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Tue, 28 Feb 2023 11:34:07 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>dubbo</title>
       <link>https://yefengzhichen.github.io/tags/dubbo/</link>
-      <pubDate>Tue, 21 Feb 2023 17:47:45 +0800</pubDate>
+      <pubDate>Tue, 28 Feb 2023 11:34:07 +0800</pubDate>
       
       <guid>https://yefengzhichen.github.io/tags/dubbo/</guid>
       <description></description>
     </item>
     
     <item>
+      <title>istio</title>
+      <link>https://yefengzhichen.github.io/tags/istio/</link>
+      <pubDate>Tue, 28 Feb 2023 11:34:07 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/istio/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>kubernetes</title>
       <link>https://yefengzhichen.github.io/tags/kubernetes/</link>
-      <pubDate>Tue, 21 Feb 2023 17:47:45 +0800</pubDate>
+      <pubDate>Tue, 28 Feb 2023 11:34:07 +0800</pubDate>
       
       <guid>https://yefengzhichen.github.io/tags/kubernetes/</guid>
       <description></description>
@@ -28,7 +37,7 @@
     <item>
       <title>registry</title>
       <link>https://yefengzhichen.github.io/tags/registry/</link>
-      <pubDate>Tue, 21 Feb 2023 17:47:45 +0800</pubDate>
+      <pubDate>Tue, 28 Feb 2023 11:34:07 +0800</pubDate>
       
       <guid>https://yefengzhichen.github.io/tags/registry/</guid>
       <description></description>
@@ -44,11 +53,11 @@
     </item>
     
     <item>
-      <title>istio</title>
-      <link>https://yefengzhichen.github.io/tags/istio/</link>
-      <pubDate>Thu, 12 Jan 2023 19:15:55 +0800</pubDate>
+      <title>pilot-agent</title>
+      <link>https://yefengzhichen.github.io/tags/pilot-agent/</link>
+      <pubDate>Fri, 03 Feb 2023 18:46:11 +0800</pubDate>
       
-      <guid>https://yefengzhichen.github.io/tags/istio/</guid>
+      <guid>https://yefengzhichen.github.io/tags/pilot-agent/</guid>
       <description></description>
     </item>
     

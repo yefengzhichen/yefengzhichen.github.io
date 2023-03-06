@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Istio 接入第三方注册中心调研 - yefengzhichen&#39;s blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="yefengzhichen" /><meta name="description" content="背景 这里调研的场景是，将使用 dubbo2 框架的应用迁移到 istio 网格中，原有 dubbo 协议使用的注册中心可能有 zookeeper、nacos、etcd。 dubbo 接入 mesh 方案" /><meta name="keywords" content="Hugo, theme, even" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.92.1 with theme even" />
+
+
+<link rel="canonical" href="https://yefengzhichen.github.io/post/istio_dubbo_registry/" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../favicon-16x16.png">
+<link rel="manifest" href="../../manifest.json">
+<link rel="mask-icon" href="../../safari-pinned-tab.svg" color="#5bbad5">
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<link href="../../sass/main.min.f92fd13721ddf72129410fd8250e73152cc6f2438082b6c0208dc24ee7c13fc4.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="Istio 接入第三方注册中心调研" />
+<meta property="og:description" content="背景 这里调研的场景是，将使用 dubbo2 框架的应用迁移到 istio 网格中，原有 dubbo 协议使用的注册中心可能有 zookeeper、nacos、etcd。 dubbo 接入 mesh 方案" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yefengzhichen.github.io/post/istio_dubbo_registry/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2023-02-28T11:34:07+08:00" />
+<meta property="article:modified_time" content="2023-02-28T11:34:07+08:00" />
+
+<meta itemprop="name" content="Istio 接入第三方注册中心调研">
+<meta itemprop="description" content="背景 这里调研的场景是，将使用 dubbo2 框架的应用迁移到 istio 网格中，原有 dubbo 协议使用的注册中心可能有 zookeeper、nacos、etcd。 dubbo 接入 mesh 方案"><meta itemprop="datePublished" content="2023-02-28T11:34:07+08:00" />
+<meta itemprop="dateModified" content="2023-02-28T11:34:07+08:00" />
+<meta itemprop="wordCount" content="4846">
+<meta itemprop="keywords" content="kubernetes,dubbo,registry,istio," /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Istio 接入第三方注册中心调研"/>
+<meta name="twitter:description" content="背景 这里调研的场景是，将使用 dubbo2 框架的应用迁移到 istio 网格中，原有 dubbo 协议使用的注册中心可能有 zookeeper、nacos、etcd。 dubbo 接入 mesh 方案"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="../../">
+        <li class="mobile-menu-item">首页</li>
+      </a><a href="../../post/">
+        <li class="mobile-menu-item">列表</li>
+      </a><a href="../../tags/">
+        <li class="mobile-menu-item">标签</li>
+      </a><a href="../../categories/">
+        <li class="mobile-menu-item">分类</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="../../">首页</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../post/">列表</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../tags/">标签</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../categories/">分类</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">Istio 接入第三方注册中心调研</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2023-02-28 </span>
+        <div class="post-category">
+            <a href="../../categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
+            </div>
+          <span class="more-meta"> 约 4846 字 </span>
+          <span class="more-meta"> 预计阅读 10 分钟 </span>
+        <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#背景">背景</a>
+      <ul>
+        <li><a href="#dubbo-接入-mesh-方案">dubbo 接入 mesh 方案</a></li>
+        <li><a href="#istio-支持第三方注册中心原理">istio 支持第三方注册中心原理</a></li>
+      </ul>
+    </li>
+    <li><a href="#dubbo2-接入-aeraki-mesh">dubbo2 接入 Aeraki Mesh</a>
+      <ul>
+        <li><a href="#安装-istio-和-aeraki">安装 istio 和 Aeraki</a></li>
+        <li><a href="#接入-zookeeper-实例">接入 zookeeper 实例</a></li>
+        <li><a href="#接入-nacos-实例">接入 nacos 实例</a></li>
+        <li><a href="#接入-etcd-实例">接入 etcd 实例</a></li>
+      </ul>
+    </li>
+    <li><a href="#dubbo-demo-代码解读">dubbo-demo 代码解读</a>
+      <ul>
+        <li><a href="#maven-和-pom-说明">Maven 和 POM 说明</a></li>
+        <li><a href="#代码解读">代码解读</a></li>
+      </ul>
+    </li>
+    <li><a href="#aeraki-mesh-逻辑分析">Aeraki mesh 逻辑分析</a></li>
+    <li><a href="#dubbo2istio-源码分析">dubbo2istio 源码分析</a></li>
+    <li><a href="#参考">参考</a></li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h1 id="背景">背景</h1>
+<p>这里调研的场景是，将使用 dubbo2 框架的应用迁移到 istio 网格中，原有 dubbo 协议使用的注册中心可能有 zookeeper、nacos、etcd。</p>
+<h2 id="dubbo-接入-mesh-方案">dubbo 接入 mesh 方案</h2>
+<p>dubbo 接入 mesh，这里要区分 dubbo 和 dubbo3，目前的方案有：</p>
+<ul>
+<li>dubbo2：开源社区方案，如 Aeraki。</li>
+<li>dubbo3：需开启新特性，支持两种部署方式。
+<ul>
+<li>Sidecar 模式：只能用 Triple 协议，Dubbo ThinSDK 将只提供面向业务应用的编程 API、RPC 传输通信能力，其余服务治理 包括地址发现、负载均衡、路由寻址等都统一下沉到 Sidecar。</li>
+<li>Proxyless 模式：同时支持 Dubbo2、Triple 协议，但只支持应用级服务发现的地址模型，Dubbo3 SDK 直接实现 xDS 协议解析，Dubbo 进程可以与控制面（Control Plane）直接通信，进而实现控制面对流量管控、服务治理、可观测性、安全等的统一管控。</li>
+</ul>
+</li>
+</ul>
+<p>dubbo3 的新特性主要是以下几点，可参考 <a href="https://cn.dubbo.apache.org/zh-cn/overview/tasks/migration/2to3/">升级到 Dubbo3</a> 来迁移 dubbo3：</p>
+<ul>
+<li>新的地址发现模型（应用级服务发现）。</li>
+<li>下一代基于 HTTP/2 的 Triple 协议。</li>
+<li>统一的路由规则。</li>
+</ul>
+<p>这几种方案的对比如下，考虑到目前使用的是 dubbo2，并且使用 zookeeper 作为注册中心，只能选择 aeraki 或者类似的开源项目。</p>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>dubbo 版本</th>
+<th>支持协议</th>
+<th>支持注册中心</th>
+<th>调用方式</th>
+<th>优点</th>
+<th>缺点｜</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>社区项目 aeraki</td>
+<td>dubbo2</td>
+<td>所有</td>
+<td>zookeeper、nacos、etcd</td>
+<td>interface 级</td>
+<td>兼容 dubbo3、支持协议较多</td>
+<td>部分功能可能受限，同时会有一定的性能和容量瓶颈</td>
+</tr>
+<tr>
+<td>dubbo3 Sidecar</td>
+<td>dubbo3</td>
+<td>triple</td>
+<td>只支持 k8s</td>
+<td>应用级，providedBy 参数指定</td>
+<td>平滑升级、多语言、业务侵入小</td>
+<td>不支持自定义注册中心、sidecar 的性能损耗、部署环境受限</td>
+</tr>
+<tr>
+<td>dubbo3 proxyless</td>
+<td>dubbo3</td>
+<td>triple、dubbo2</td>
+<td>只支持 k8s</td>
+<td>应用级，providedBy 参数指定</td>
+<td>没有 proxy 中转的损耗、架构简单、便于遗留系统的平滑迁移</td>
+<td>不支持自定义注册中心、无法获取接口所对应的应用名</td>
+</tr>
+</tbody>
+</table>
+<h2 id="istio-支持第三方注册中心原理">istio 支持第三方注册中心原理</h2>
+<p>istio 1.8 不再通过 in-tree 方式支持外部注册中心，istio 1.9 改为 MCP-over-XDS 的方式支持外部注册中心。其支持的流程为：</p>
+<ul>
+<li>为第三方注册中心编写 MCP-over-XDS server。</li>
+<li>MCP-over-XDS server 获取第三方注册中心的数据，并转换为 ServiceEntry。</li>
+<li>推送给 pilot（如 nacos，pilot 启动时需设置 configSource 参数） 或者写到 ServiceEntry CR 中（如 dubbo2istio）。</li>
+<li>pilot 接受到数据后，会对比内存中的数据，保证数据一致。</li>
+</ul>
+<p>通过这种方式，原有 SDK 注册和调用方式不需要做更改，能更加快速的迁移原有服务。因为 nacos 已经支持了 MCP-over-XDS，这里看下 nacos 支持时，是怎么配置的。nacos 配置：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="l">nacos.istio.mcp.server.enabled=true</span><span class="w"> </span><span class="c"># nacos 开启 istio 同步</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>istio 配置：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">rootNamespace</span><span class="p">:</span><span class="w"> </span><span class="l">istio-system</span><span class="w">
+</span><span class="w"></span><span class="nt">trustDomain</span><span class="p">:</span><span class="w"> </span><span class="l">cluster.local</span><span class="w">
+</span><span class="w"></span><span class="nt">configSources</span><span class="p">:</span><span class="w"> </span><span class="c"># 配置 xds 地址为 nacos</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l">xds://xxx:18848</span><span class="w">
+</span><span class="w"></span><span class="c"># 开启捕获 DNS 请求，解析自定义的 ServiceEntry，参考 [dns 代理](https://preliminary.istio.io/latest/zh/docs/ops/configuration/traffic-management/dns-proxy/)</span><span class="w">
+</span><span class="w"></span><span class="nt">proxyMetadata</span><span class="p">:</span><span class="w">  </span><span class="c"># 为代理提供的额外环境变量，会写到代理的启动配置中</span><span class="w">
+</span><span class="w">  </span><span class="nt">ISTIO_META_DNS_AUTO_ALLOCATE</span><span class="p">:</span><span class="w"> </span><span class="l">\&#34;true\&#34;</span><span class="w"> </span><span class="c"># 为每个 ServiceEntry 自动分配一个不同的独立地址</span><span class="w">
+</span><span class="w">  </span><span class="nt">ISTIO_META_DNS_CAPTURE</span><span class="p">:</span><span class="w"> </span><span class="l">\&#34;true\&#34; </span><span class="w"> </span><span class="c"># 开启 dns 代理，应用程序的 DNS 请求将会被重定向到 Sidecar</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><h1 id="dubbo2-接入-aeraki-mesh">dubbo2 接入 Aeraki Mesh</h1>
+<p>这里参考 <a href="https://www.aeraki.net/zh/docs/v1.x/tutorials/dubbo/">Aeraki 官网实例</a>，并将其安装步骤做了简化，下面说明了 dubbo 在 Aeraki Mesh 中，如何接入不同的注册中心 zookeeper、nacos、etcd。</p>
+<h2 id="安装-istio-和-aeraki">安装 istio 和 Aeraki</h2>
+<p>istio 安装配置文件 istio_config.yaml：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">install.istio.io/v1alpha1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">IstioOperator</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">profile</span><span class="p">:</span><span class="w"> </span><span class="l">default</span><span class="w">
+</span><span class="w">  </span><span class="nt">values</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">global</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">logging</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">level</span><span class="p">:</span><span class="w"> </span><span class="l">default:debug</span><span class="w">
+</span><span class="w">  </span><span class="nt">meshConfig</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">enableTracing</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="c"># 是否开启 trace，需要设置 trace 收集配置</span><span class="w">
+</span><span class="w">    </span><span class="nt">accessLogFile</span><span class="p">:</span><span class="w"> </span><span class="l">/dev/stdout</span><span class="w">
+</span><span class="w">    </span><span class="nt">accessLogFormat</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;[%START_TIME%] %REQ(X-META-PROTOCOL-APPLICATION-PROTOCOL)%
+</span><span class="s2">     %RESPONSE_CODE% %RESPONSE_CODE_DETAILS% %CONNECTION_TERMINATION_DETAILS% \&#34;%UPSTREAM_TRANSPORT_FAILURE_REASON%\&#34;
+</span><span class="s2">     %BYTES_RECEIVED% %BYTES_SENT% %DURATION% \&#34;%REQ(X-FORWARDED-FOR)%\&#34; \&#34;%REQ(X-REQUEST-ID)%\&#34; %UPSTREAM_CLUSTER%
+</span><span class="s2">     %UPSTREAM_LOCAL_ADDRESS% %DOWNSTREAM_LOCAL_ADDRESS% %DOWNSTREAM_REMOTE_ADDRESS% %ROUTE_NAME%\n&#34;</span><span class="w">
+</span><span class="w">    </span><span class="nt">defaultConfig</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">holdApplicationUntilProxyStarts</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="c"># 添加一个 hook 来延迟应用启动，等 pod 代理准备好接收流量后</span><span class="w">
+</span><span class="w">      </span><span class="nt">proxyMetadata</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">ISTIO_META_DNS_CAPTURE</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;true&#34;</span><span class="w"> </span><span class="c"># 开启 dns 代理</span><span class="w">
+</span><span class="w">      </span><span class="nt">proxyStatsMatcher</span><span class="p">:</span><span class="w">    </span><span class="c"># 代理统计匹配器</span><span class="w">
+</span><span class="w">        </span><span class="nt">inclusionPrefixes</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span>- <span class="l">thrift</span><span class="w">
+</span><span class="w">          </span>- <span class="l">dubbo</span><span class="w">
+</span><span class="w">          </span>- <span class="l">kafka</span><span class="w">
+</span><span class="w">          </span>- <span class="l">meta_protocol</span><span class="w">
+</span><span class="w">        </span><span class="nt">inclusionRegexps</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span>- <span class="l">.*dubbo.*</span><span class="w">
+</span><span class="w">          </span>- <span class="l">.*thrift.*</span><span class="w">
+</span><span class="w">          </span>- <span class="l">.*kafka.*</span><span class="w">
+</span><span class="w">          </span>- <span class="l">.*zookeeper.*</span><span class="w">
+</span><span class="w">          </span>- <span class="l">.*meta_protocol.*</span><span class="w">
+</span><span class="w">      </span><span class="nt">tracing</span><span class="p">:</span><span class="w"> </span><span class="c"># tracing 配置</span><span class="w">
+</span><span class="w">        </span><span class="nt">sampling</span><span class="p">:</span><span class="w"> </span><span class="m">100</span><span class="w">
+</span><span class="w">        </span><span class="nt">zipkin</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l">zipkin.istio-system:9411</span><span class="w">
+</span><span class="w">  </span><span class="nt">components</span><span class="p">:</span><span class="w">   </span><span class="c"># 参考 [IstioComponentSetSpec](https://istio.io/latest/docs/reference/config/istio.operator.v1alpha1/#IstioComponentSetSpec)</span><span class="w">
+</span><span class="w">    </span><span class="nt">pilot</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">hub</span><span class="p">:</span><span class="w"> </span><span class="l">istio   </span><span class="w"> </span><span class="c"># 镜像</span><span class="w">
+</span><span class="w">      </span><span class="nt">tag</span><span class="p">:</span><span class="w"> </span><span class="m">1.14.5</span><span class="w">   </span><span class="c"># tag</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="nb">cd</span> aeraki
+vim istio_config.yaml <span class="c1"># 编辑 istio 配置</span>
+istioctl install -y -f istio_config.yaml <span class="c1"># 安装 istio</span>
+make install    <span class="c1"># 安装 aeraki</span>
+
+<span class="c1"># 下载代码和创建命名空间</span>
+git clone https://github.com/aeraki-mesh/dubbo2istio.git
+<span class="nb">cd</span> dubbo2istio
+kubectl create ns meta-dubbo
+kubectl label namespace meta-dubbo istio-injection<span class="o">=</span>enabled --overwrite<span class="o">=</span><span class="nb">true</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="接入-zookeeper-实例">接入 zookeeper 实例</h2>
+<p>执行命令：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubectl apply -f demo/k8s/zk -n meta-dubbo
+</code></pre></td></tr></table>
+</div>
+</div><p>等待服务启动后查看部署情况：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@dev:~/zt/istio/dubbo2istio# kubens meta-dubbo
+✔ Active namespace is <span class="s2">&#34;meta-dubbo&#34;</span>
+root@dev:~/zt/istio/dubbo2istio# kubectl get pods
+NAME                                            READY   STATUS    RESTARTS   AGE
+dubbo2istio-5c49bc5f8d-4wns5                    1/1     Running   <span class="m">0</span>          79m
+dubbo-sample-consumer-6749fc7df9-lc7hj          2/2     Running   <span class="m">0</span>          79m
+dubbo-sample-provider-v2-566c4fd8bb-9w6mg       2/2     Running   <span class="m">0</span>          79m
+dubbo-sample-provider-v1-86d5d5cc7c-vvg5d       2/2     Running   <span class="m">0</span>          79m
+zookeeper-cc7f59dd6-tlnpg                       1/1     Running   <span class="m">0</span>          79m
+dubbo-sample-second-provider-7958bfbbdc-qnz7b   2/2     Running   <span class="m">0</span>          79m
+</code></pre></td></tr></table>
+</div>
+</div><p>查看 consumer 日志：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">Periodically call dubbo server
+Start a http server for e2e test
+...
+Hello Aeraki, response from dubbo-sample-provider-v1-86d5d5cc7c-vvg5d/10.42.0.27
+Hello Aeraki, response from dubbo-sample-provider-v2-566c4fd8bb-9w6mg/10.42.0.30
+Hello Aeraki, response from dubbo-sample-provider-v1-86d5d5cc7c-vvg5d/10.42.0.27
+Hello Aeraki, response from dubbo-sample-provider-v2-566c4fd8bb-9w6mg/10.42.0.30
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="接入-nacos-实例">接入 nacos 实例</h2>
+<p>执行命令：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 先卸载上面的 zookeeper 部署</span>
+kubectl delete -f demo/k8s/zk -n meta-dubbo
+kubectl apply -f demo/k8s/nacos -n meta-dubbo
+</code></pre></td></tr></table>
+</div>
+</div><p>同样查看 consumer 日志：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">Periodically call dubbo server
+Start a http server <span class="k">for</span> e2e <span class="nb">test</span>
+...
+Hello Aeraki, response from dubbo-sample-provider-v1-76c9c7f88c-6mbbk/10.42.0.40
+Hello Aeraki, response from dubbo-sample-provider-v2-5bb778d49b-ln8d4/10.42.0.39
+Hello Aeraki, response from dubbo-sample-provider-v1-76c9c7f88c-6mbbk/10.42.0.40
+Hello Aeraki, response from dubbo-sample-provider-v2-5bb778d49b-ln8d4/10.42.0.39
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="接入-etcd-实例">接入 etcd 实例</h2>
+<p>执行命令：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 先卸载上面的 nacos 部署</span>
+kubectl delete -f demo/k8s/nacos -n meta-dubbo
+kubectl apply -f demo/k8s/etcd -n meta-dubbo
+</code></pre></td></tr></table>
+</div>
+</div><p>同样查看 consumer 日志：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">Periodically call dubbo server
+Start a http server <span class="k">for</span> e2e <span class="nb">test</span>
+...
+Hello Aeraki, response from dubbo-sample-provider-v1-5d9496c8bc-zdhdk/10.42.0.51
+Hello Aeraki, response from dubbo-sample-provider-v2-59c8778bb-8hbmk/10.42.0.54
+Hello Aeraki, response from dubbo-sample-provider-v1-5d9496c8bc-zdhdk/10.42.0.51
+Hello Aeraki, response from dubbo-sample-provider-v2-59c8778bb-8hbmk/10.42.0.54
+</code></pre></td></tr></table>
+</div>
+</div><h1 id="dubbo-demo-代码解读">dubbo-demo 代码解读</h1>
+<p>上面示例的代码都是来自 <a href="https://github.com/aeraki-mesh/dubbo-demo.git">aeraki-dubbo-demo</a>，因为之前不了解 java 和 dubbo，这里整理下最近学习到一些知识。</p>
+<h2 id="maven-和-pom-说明">Maven 和 POM 说明</h2>
+<p>Maven 是专门为 Java 项目打造的管理和构建工具，它的主要功能有：</p>
+<ul>
+<li>提供了一套标准化的项目结构</li>
+<li>提供了一套标准化的构建流程（编译，测试，打包，发布……）</li>
+<li>提供了一套依赖管理机制</li>
+</ul>
+<p>项目目录结构中 pom.xml 是 Maven 的配置文件，POM 是项目对象模型（Project Object Model），用于管理项目的依赖关系、构建设置、插件配置等。执行任务或目标时，Maven 会在当前目录中查找 POM。它读取 POM，获取所需的配置信息，然后执行目标。POM 中可以指定以下配置：</p>
+<ul>
+<li>项目依赖</li>
+<li>插件</li>
+<li>执行目标</li>
+<li>项目构建 profile</li>
+<li>项目版本</li>
+<li>项目开发者列表</li>
+<li>相关邮件列表信息</li>
+</ul>
+<p>以下是一个简单的 pom.xml：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-xml" data-lang="xml"><span class="nt">&lt;project</span> <span class="na">xmlns=</span><span class="s">&#34;http://maven.apache.org/POM/4.0.0&#34;</span>
+         <span class="na">xmlns:xsi=</span><span class="s">&#34;http://www.w3.org/2001/XMLSchema-instance&#34;</span>
+         <span class="na">xsi:schemaLocation=</span><span class="s">&#34;http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd&#34;</span><span class="nt">&gt;</span>
+    <span class="c">&lt;!-- 项目分组，公司或者组织的唯一标志 --&gt;</span>
+    <span class="nt">&lt;groupId&gt;</span>org.apache.dubbo<span class="nt">&lt;/groupId&gt;</span>
+    <span class="c">&lt;!-- 版本号 --&gt;</span>
+    <span class="nt">&lt;version&gt;</span>1.0-SNAPSHOT<span class="nt">&lt;/version&gt;</span>
+    <span class="c">&lt;!-- 模型版本 --&gt;</span>
+    <span class="nt">&lt;modelVersion&gt;</span>4.0.0<span class="nt">&lt;/modelVersion&gt;</span>
+    <span class="c">&lt;!-- 项目的唯一 ID --&gt;</span>
+    <span class="nt">&lt;artifactId&gt;</span>dubbo-samples-basic<span class="nt">&lt;/artifactId&gt;</span>
+
+    <span class="c">&lt;!-- 属性，其他地方使用${属性名}的方式引用该属性 --&gt;</span>
+    <span class="nt">&lt;properties&gt;</span>
+        <span class="nt">&lt;source.level&gt;</span>1.8<span class="nt">&lt;/source.level&gt;</span>
+        <span class="nt">&lt;target.level&gt;</span>1.8<span class="nt">&lt;/target.level&gt;</span>
+        <span class="nt">&lt;main-class&gt;</span>org.apache.dubbo.samples.basic.BasicProvider<span class="nt">&lt;/main-class&gt;</span>
+    <span class="nt">&lt;/properties&gt;</span>
+
+    <span class="c">&lt;!-- 依赖 --&gt;</span>
+    <span class="nt">&lt;dependencies&gt;</span>
+        <span class="nt">&lt;dependency&gt;</span>
+            <span class="nt">&lt;groupId&gt;</span>javax.servlet<span class="nt">&lt;/groupId&gt;</span>
+            <span class="nt">&lt;artifactId&gt;</span>javax.servlet-api<span class="nt">&lt;/artifactId&gt;</span>
+            <span class="nt">&lt;version&gt;</span>3.1.0<span class="nt">&lt;/version&gt;</span>
+        <span class="nt">&lt;/dependency&gt;</span>
+    <span class="nt">&lt;/dependencies&gt;</span>
+<span class="nt">&lt;/project&gt;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>Maven 主要会使用到以下命令：</p>
+<ul>
+<li>mvn package：用于创建项目的可执行 JAR 或 WAR 包，通常情况下，生成的文件名遵循格式“<artifactId>-<version>.<extension>”，比如上面例子中生成的名称是 dubbo-samples-basic-1.0-SNAPSHOT.jar</li>
+<li>mvn install： 把打好的包放入本地仓库 (~/.m2/repository)</li>
+<li>mvn clean: 清除各个模块 target 目录及里面的内容</li>
+<li>mvn deploy: 部署，把包发布到远程仓库</li>
+</ul>
+<p>“mvn package”生成的包可以用“jar -xf xx.jar”解压，在运行的时候，直接执行以下类似的命令即可：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">java -cp ./dubbo-samples-basic-1.0-SNAPSHOT.jar org.apache.dubbo.samples.basic.BasicProvider
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="代码解读">代码解读</h2>
+<p>provider 的代码主要为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-java" data-lang="java"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">BasicProvider</span> <span class="o">{</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+        <span class="c1">//new EmbeddedZooKeeper(2181, false).start();
+</span><span class="c1"></span>        <span class="c1">// wait for embedded zookeeper start completely.
+</span><span class="c1"></span>        <span class="c1">//Thread.sleep(1000);
+</span><span class="c1"></span>        <span class="c1">// 使用到 xml 文件来描述 Spring 中 Bean，在后面可获取到相应的 Bean
+</span><span class="c1"></span>        <span class="n">ClassPathXmlApplicationContext</span> <span class="n">context</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ClassPathXmlApplicationContext</span><span class="o">(</span><span class="s">&#34;spring/dubbo-demo-provider.xml&#34;</span><span class="o">);</span>
+        <span class="n">context</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&#34;dubbo service started&#34;</span><span class="o">);</span>
+        <span class="k">new</span> <span class="n">CountDownLatch</span><span class="o">(</span><span class="n">1</span><span class="o">).</span><span class="na">await</span><span class="o">();</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>查看 dubbo-demo-provider.xml 配置如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-xml" data-lang="xml"><span class="cp">&lt;?xml version=&#34;1.0&#34; encoding=&#34;UTF-8&#34;?&gt;</span>
+
+<span class="nt">&lt;beans</span> <span class="na">xmlns:xsi=</span><span class="s">&#34;http://www.w3.org/2001/XMLSchema-instance&#34;</span>
+       <span class="na">xmlns:dubbo=</span><span class="s">&#34;http://dubbo.apache.org/schema/dubbo&#34;</span>
+       <span class="na">xmlns=</span><span class="s">&#34;http://www.springframework.org/schema/beans&#34;</span> <span class="na">xmlns:context=</span><span class="s">&#34;http://www.springframework.org/schema/context&#34;</span>
+       <span class="na">xsi:schemaLocation=</span><span class="s">&#34;http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+</span><span class="s">       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd&#34;</span><span class="nt">&gt;</span>
+    <span class="c">&lt;!-- 激活${...}占位符的替换，根据指定的属性文件解析 --&gt;</span>
+    <span class="nt">&lt;context:property-placeholder/&gt;</span>
+
+    <span class="c">&lt;!-- 当前应用名 --&gt;</span>
+    <span class="nt">&lt;dubbo:application</span> <span class="na">name=</span><span class="s">&#34;dubbo-sample-provider&#34;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;dubbo:parameter</span> <span class="na">key=</span><span class="s">&#34;aeraki_meta_app_namespace&#34;</span> <span class="na">value=</span><span class="s">&#34;${AERAKI_META_APP_NAMESPACE}&#34;</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;dubbo:parameter</span> <span class="na">key=</span><span class="s">&#34;aeraki_meta_app_service_account&#34;</span> <span class="na">value=</span><span class="s">&#34;${AERAKI_META_APP_SERVICE_ACCOUNT}&#34;</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;dubbo:parameter</span> <span class="na">key=</span><span class="s">&#34;aeraki_meta_app_version&#34;</span> <span class="na">value=</span><span class="s">&#34;${AERAKI_META_APP_VERSION}&#34;</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;dubbo:parameter</span> <span class="na">key=</span><span class="s">&#34;aeraki_meta_workload_selector&#34;</span> <span class="na">value=</span><span class="s">&#34;${AERAKI_META_WORKLOAD_SELECTOR}&#34;</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;dubbo:parameter</span> <span class="na">key=</span><span class="s">&#34;aeraki_meta_locality&#34;</span> <span class="na">value=</span><span class="s">&#34;${AERAKI_META_LOCALITY}&#34;</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;dubbo:parameter</span> <span class="na">key=</span><span class="s">&#34;service_group&#34;</span> <span class="na">value=</span><span class="s">&#34;${SERVICE_GROUP}&#34;</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/dubbo:application&gt;</span>
+
+    <span class="c">&lt;!-- 注册中心配置，address：地址 --&gt;</span>
+    <span class="c">&lt;!-- register：是否向此注册中心注册服务，如果设为 false，将只订阅，不注册 --&gt;</span>
+    <span class="c">&lt;!-- subscribe：是否向此注册中心订阅服务，如果设为 false，将只注册，不订阅 --&gt;</span>
+    <span class="nt">&lt;dubbo:registry</span> <span class="na">address=</span><span class="s">&#34;${REGISTRY_ADDR}&#34;</span> <span class="na">register=</span><span class="s">&#34;${REGISTER}&#34;</span> <span class="na">subscribe=</span><span class="s">&#34;false&#34;</span> <span class="na">timeout=</span><span class="s">&#34;60000&#34;</span><span class="nt">&gt;</span>
+        <span class="c">&lt;!--
+</span><span class="c">        &lt;dubbo:parameter key=&#34;group&#34; value=&#34;test&#34; /&gt;
+</span><span class="c">        &lt;dubbo:parameter key=&#34;namespace&#34; value=&#34;test&#34; /&gt;
+</span><span class="c">        --&gt;</span>
+    <span class="nt">&lt;/dubbo:registry&gt;</span>
+
+    <span class="c">&lt;!-- bean id 和类的全限定名 --&gt;</span>
+    <span class="nt">&lt;bean</span> <span class="na">id=</span><span class="s">&#34;demoProvider&#34;</span> <span class="na">class=</span><span class="s">&#34;org.apache.dubbo.samples.basic.impl.DemoProviderImpl&#34;</span><span class="nt">/&gt;</span>
+
+    <span class="c">&lt;!-- 服务提供者暴露服务配置，interface：服务接口名，ref：服务对象实现引用 --&gt;</span>
+    <span class="nt">&lt;dubbo:service</span> <span class="na">interface=</span><span class="s">&#34;org.apache.dubbo.samples.basic.api.DemoService&#34;</span> <span class="na">ref=</span><span class="s">&#34;demoProvider&#34;</span><span class="nt">/&gt;</span>
+    <span class="c">&lt;!-- ... --&gt;</span>
+<span class="nt">&lt;/beans&gt;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>consumer 的代码主要为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-java" data-lang="java"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">BasicConsumer</span> <span class="o">{</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+        <span class="n">ClassPathXmlApplicationContext</span> <span class="n">context</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ClassPathXmlApplicationContext</span><span class="o">(</span><span class="s">&#34;spring/dubbo-demo-consumer.xml&#34;</span><span class="o">);</span>
+        <span class="n">context</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+
+        <span class="k">if</span><span class="o">(</span><span class="n">args</span><span class="o">.</span><span class="na">length</span><span class="o">&gt;</span><span class="n">0</span> <span class="o">&amp;&amp;</span> <span class="n">args</span><span class="o">[</span><span class="n">0</span><span class="o">].</span><span class="na">equals</span><span class="o">(</span><span class="s">&#34;demo&#34;</span><span class="o">))</span> <span class="o">{</span>
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&#34;Periodically call dubbo server&#34;</span><span class="o">);</span>
+            <span class="n">RpcContext</span><span class="o">.</span><span class="na">getContext</span><span class="o">().</span><span class="na">setAttachment</span><span class="o">(</span><span class="s">&#34;batchJob&#34;</span><span class="o">,</span> <span class="n">args</span><span class="o">[</span><span class="n">1</span><span class="o">]);</span>
+            <span class="n">RpcContext</span><span class="o">.</span><span class="na">getContext</span><span class="o">().</span><span class="na">setAttachment</span><span class="o">(</span><span class="s">&#34;foo&#34;</span><span class="o">,</span> <span class="s">&#34;bar&#34;</span><span class="o">);</span>
+            <span class="k">while</span> <span class="o">(</span><span class="kc">true</span><span class="o">)</span> <span class="o">{</span>
+                <span class="k">try</span> <span class="o">{</span>
+                    <span class="n">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="n">5000</span><span class="o">);</span>
+                    <span class="n">DemoService</span> <span class="n">demoService</span> <span class="o">=</span> <span class="o">(</span><span class="n">DemoService</span><span class="o">)</span> <span class="n">context</span><span class="o">.</span><span class="na">getBean</span><span class="o">(</span><span class="s">&#34;demoService&#34;</span><span class="o">);</span>
+                    <span class="n">String</span> <span class="n">hello</span> <span class="o">=</span> <span class="n">demoService</span><span class="o">.</span><span class="na">sayHello</span><span class="o">(</span><span class="s">&#34;Aeraki&#34;</span><span class="o">);</span>
+                    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">hello</span><span class="o">);</span>
+                <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="n">ex</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>查看 dubbo-demo-consumer.xml 配置为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-xml" data-lang="xml"><span class="nt">&lt;beans</span> <span class="na">xmlns:xsi=</span><span class="s">&#34;http://www.w3.org/2001/XMLSchema-instance&#34;</span>
+       <span class="na">xmlns:dubbo=</span><span class="s">&#34;http://dubbo.apache.org/schema/dubbo&#34;</span>
+       <span class="na">xmlns=</span><span class="s">&#34;http://www.springframework.org/schema/beans&#34;</span> <span class="na">xmlns:context=</span><span class="s">&#34;http://www.springframework.org/schema/context&#34;</span>
+       <span class="na">xsi:schemaLocation=</span><span class="s">&#34;http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+</span><span class="s">       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd&#34;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;context:property-placeholder/&gt;</span>
+
+    <span class="nt">&lt;dubbo:application</span> <span class="na">name=</span><span class="s">&#34;dubbo-sample-consumer&#34;</span><span class="nt">/&gt;</span>
+    <span class="c">&lt;!-- 不需要指定注册中心 --&gt;</span>
+    <span class="nt">&lt;dubbo:registry</span> <span class="na">address=</span><span class="s">&#34;none&#34;</span> <span class="na">register=</span><span class="s">&#34;false&#34;</span> <span class="na">subscribe=</span><span class="s">&#34;false&#34;</span> <span class="na">check=</span><span class="s">&#34;false&#34;</span> <span class="nt">/&gt;</span>
+
+    <span class="nt">&lt;dubbo:reference</span> <span class="na">id=</span><span class="s">&#34;demoService&#34;</span> <span class="na">check=</span><span class="s">&#34;true&#34;</span> <span class="na">interface=</span><span class="s">&#34;org.apache.dubbo.samples.basic.api.DemoService&#34;</span> <span class="na">url=</span><span class="s">&#34;dubbo://org.apache.dubbo.samples.basic.api.demoservice:20880&#34;</span> <span class="na">timeout=</span><span class="s">&#34;3000&#34;</span><span class="nt">/&gt;</span>
+    <span class="c">&lt;!-- ... --&gt;</span>
+<span class="nt">&lt;/beans&gt;</span>
+</code></pre></td></tr></table>
+</div>
+</div><h1 id="aeraki-mesh-逻辑分析">Aeraki mesh 逻辑分析</h1>
+<p>以使用 zookeeper 注册中心为例，这里先查看 dubbo2istio 的日志：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">2023-02-27T11:57:25.254890Z	info	dubbo2istio runs in Zookeeper mode: registry: default, addr: zookeeper:2181
+2023-02-27T11:57:25.257483Z	info	connected to 10.43.194.10:2181
+2023-02-27T11:57:33.374613Z	info	service entry aeraki-org-apache-dubbo-samples-basic-api-demoservice has been updated: <span class="o">{</span><span class="s2">&#34;metadata&#34;</span>:<span class="o">{</span><span class="s2">&#34;name&#34;</span>:<span class="s2">&#34;aeraki-org-apache-dubbo-samples-basic-api-demoservice&#34;</span>,<span class="s2">&#34;namespace&#34;</span>:<span class="s2">&#34;meta-dubbo&#34;</span>,<span class="s2">&#34;resourceVersion&#34;</span>:<span class="s2">&#34;421514&#34;</span>,<span class="s2">&#34;creationTimestamp&#34;</span>:null,<span class="s2">&#34;labels&#34;</span>:<span class="o">{</span><span class="s2">&#34;manager&#34;</span>:<span class="s2">&#34;aeraki&#34;</span>,<span class="s2">&#34;registry&#34;</span>:<span class="s2">&#34;dubbo2istio&#34;</span><span class="o">}</span>,<span class="s2">&#34;annotations&#34;</span>:<span class="o">{</span><span class="s2">&#34;interface&#34;</span>:<span class="s2">&#34;org.apache.dubbo.samples.basic.api.DemoService&#34;</span>,<span class="s2">&#34;workloadSelector&#34;</span>:<span class="s2">&#34;dubbo-sample-provider&#34;</span><span class="o">}}</span>,<span class="s2">&#34;spec&#34;</span>:<span class="o">{</span><span class="s2">&#34;hosts&#34;</span>:<span class="o">[</span><span class="s2">&#34;org.apache.dubbo.samples.basic.api.demoservice&#34;</span><span class="o">]</span>,<span class="s2">&#34;ports&#34;</span>:<span class="o">[{</span><span class="s2">&#34;number&#34;</span>:20880,<span class="s2">&#34;protocol&#34;</span>:<span class="s2">&#34;tcp&#34;</span>,<span class="s2">&#34;name&#34;</span>:<span class="s2">&#34;tcp-metaprotocol-dubbo&#34;</span>,<span class="s2">&#34;targetPort&#34;</span>:20880<span class="o">}]</span>,<span class="s2">&#34;location&#34;</span>:<span class="s2">&#34;MESH_INTERNAL&#34;</span>,<span class="s2">&#34;resolution&#34;</span>:<span class="s2">&#34;STATIC&#34;</span>,<span class="s2">&#34;endpoints&#34;</span>:<span class="o">[{</span><span class="s2">&#34;address&#34;</span>:<span class="s2">&#34;10.42.0.64&#34;</span>,<span class="s2">&#34;ports&#34;</span>:<span class="o">{</span><span class="s2">&#34;tcp-metaprotocol-dubbo&#34;</span>:20880<span class="o">}</span>,<span class="s2">&#34;labels&#34;</span>:<span class="o">{</span><span class="s2">&#34;anyhost&#34;</span>:<span class="s2">&#34;true&#34;</span>,<span class="s2">&#34;application&#34;</span>:<span class="s2">&#34;dubbo-sample-provider&#34;</span>,<span class="s2">&#34;default&#34;</span>:<span class="s2">&#34;true&#34;</span>,<span class="s2">&#34;deprecated&#34;</span>:<span class="s2">&#34;false&#34;</span>,<span class="s2">&#34;dubbo&#34;</span>:<span class="s2">&#34;2.0.2&#34;</span>,<span class="s2">&#34;dynamic&#34;</span>:<span class="s2">&#34;true&#34;</span>,<span class="s2">&#34;generic&#34;</span>:<span class="s2">&#34;false&#34;</span>,<span class="s2">&#34;interface&#34;</span>:<span class="s2">&#34;org.apache.dubbo.samples.basic.api.DemoService&#34;</span>,<span class="s2">&#34;metadata-type&#34;</span>:<span class="s2">&#34;remote&#34;</span>,<span class="s2">&#34;methods&#34;</span>:<span class="s2">&#34;testVoid-sayHello&#34;</span>,<span class="s2">&#34;pid&#34;</span>:<span class="s2">&#34;8&#34;</span>,<span class="s2">&#34;registryName&#34;</span>:<span class="s2">&#34;default&#34;</span>,<span class="s2">&#34;release&#34;</span>:<span class="s2">&#34;1.0-SNAPSHOT&#34;</span>,<span class="s2">&#34;revision&#34;</span>:<span class="s2">&#34;1.0-SNAPSHOT&#34;</span>,<span class="s2">&#34;service_group&#34;</span>:<span class="s2">&#34;batchjob&#34;</span>,<span class="s2">&#34;side&#34;</span>:<span class="s2">&#34;provider&#34;</span>,<span class="s2">&#34;timestamp&#34;</span>:<span class="s2">&#34;1677499051587&#34;</span>,<span class="s2">&#34;version&#34;</span>:<span class="s2">&#34;v2&#34;</span><span class="o">}</span>,<span class="s2">&#34;locality&#34;</span>:<span class="s2">&#34;bj/800005&#34;</span>,<span class="s2">&#34;serviceAccount&#34;</span>:<span class="s2">&#34;default&#34;</span><span class="o">}</span>,<span class="o">{</span><span class="s2">&#34;address&#34;</span>:<span class="s2">&#34;10.42.0.63&#34;</span>,<span class="s2">&#34;ports&#34;</span>:<span class="o">{</span><span class="s2">&#34;tcp-metaprotocol-dubbo&#34;</span>:20880<span class="o">}</span>,<span class="s2">&#34;labels&#34;</span>:<span class="o">{</span><span class="s2">&#34;anyhost&#34;</span>:<span class="s2">&#34;true&#34;</span>,<span class="s2">&#34;application&#34;</span>:<span class="s2">&#34;dubbo-sample-provider&#34;</span>,<span class="s2">&#34;default&#34;</span>:<span class="s2">&#34;true&#34;</span>,<span class="s2">&#34;deprecated&#34;</span>:<span class="s2">&#34;false&#34;</span>,<span class="s2">&#34;dubbo&#34;</span>:<span class="s2">&#34;2.0.2&#34;</span>,<span class="s2">&#34;dynamic&#34;</span>:<span class="s2">&#34;true&#34;</span>,<span class="s2">&#34;generic&#34;</span>:<span class="s2">&#34;false&#34;</span>,<span class="s2">&#34;interface&#34;</span>:<span class="s2">&#34;org.apache.dubbo.samples.basic.api.DemoService&#34;</span>,<span class="s2">&#34;metadata-type&#34;</span>:<span class="s2">&#34;remote&#34;</span>,<span class="s2">&#34;methods&#34;</span>:<span class="s2">&#34;testVoid-sayHello&#34;</span>,<span class="s2">&#34;pid&#34;</span>:<span class="s2">&#34;7&#34;</span>,<span class="s2">&#34;registryName&#34;</span>:<span class="s2">&#34;default&#34;</span>,<span class="s2">&#34;release&#34;</span>:<span class="s2">&#34;1.0-SNAPSHOT&#34;</span>,<span class="s2">&#34;revision&#34;</span>:<span class="s2">&#34;1.0-SNAPSHOT&#34;</span>,<span class="s2">&#34;service_group&#34;</span>:<span class="s2">&#34;user&#34;</span>,<span class="s2">&#34;side&#34;</span>:<span class="s2">&#34;provider&#34;</span>,<span class="s2">&#34;timestamp&#34;</span>:<span class="s2">&#34;1677499051569&#34;</span>,<span class="s2">&#34;version&#34;</span>:<span class="s2">&#34;v1&#34;</span><span class="o">}</span>,<span class="s2">&#34;locality&#34;</span>:<span class="s2">&#34;bj/800002&#34;</span>,<span class="s2">&#34;serviceAccount&#34;</span>:<span class="s2">&#34;default&#34;</span><span class="o">}]}</span>,<span class="s2">&#34;status&#34;</span>:<span class="o">{}}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>针对 demoservice 生成了一个名为 aeraki-org-apache-dubbo-samples-basic-api-demoservice 的 ServiceEntry，用命令获取其描述如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">networking.istio.io/v1beta1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">ServiceEntry</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">annotations</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">interface</span><span class="p">:</span><span class="w"> </span><span class="l">org.apache.dubbo.samples.basic.api.DemoService</span><span class="w">
+</span><span class="w">    </span><span class="nt">workloadSelector</span><span class="p">:</span><span class="w"> </span><span class="l">dubbo-sample-provider</span><span class="w">
+</span><span class="w">  </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">manager</span><span class="p">:</span><span class="w"> </span><span class="l">aeraki</span><span class="w">
+</span><span class="w">    </span><span class="nt">registry</span><span class="p">:</span><span class="w"> </span><span class="l">dubbo2istio</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">aeraki-org-apache-dubbo-samples-basic-api-demoservice</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">meta-dubbo</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">addresses</span><span class="p">:</span><span class="w">    </span><span class="c"># 此服务关联的虚拟 ip 地址</span><span class="w">
+</span><span class="w">  </span>- <span class="m">240.240.0.46</span><span class="w">
+</span><span class="w">  </span><span class="nt">hosts</span><span class="p">:</span><span class="w">    </span><span class="c"># 此服务关联的 hosts，可以是带通配符的 DNS 名称</span><span class="w">
+</span><span class="w">  </span>- <span class="l">org.apache.dubbo.samples.basic.api.demoservice</span><span class="w">
+</span><span class="w">  </span><span class="nt">location</span><span class="p">:</span><span class="w"> </span><span class="l">MESH_INTERNAL  </span><span class="w"> </span><span class="c"># 指定服务是在网格外部还是网格内部</span><span class="w">
+</span><span class="w">  </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tcp-metaprotocol-dubbo</span><span class="w">
+</span><span class="w">    </span><span class="nt">number</span><span class="p">:</span><span class="w"> </span><span class="m">20880</span><span class="w">
+</span><span class="w">    </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l">tcp</span><span class="w">
+</span><span class="w">    </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="m">20880</span><span class="w">
+</span><span class="w">  </span><span class="nt">resolution</span><span class="p">:</span><span class="w"> </span><span class="l">STATIC</span><span class="w">
+</span><span class="w">  </span><span class="nt">endpoints</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="m">10.42.0.64</span><span class="w"> </span><span class="c"># dubbo-sample-provider-v2 的 pod ip</span><span class="w">
+</span><span class="w">    </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">anyhost</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;true&#34;</span><span class="w">
+</span><span class="w">      </span><span class="nt">application</span><span class="p">:</span><span class="w"> </span><span class="l">dubbo-sample-provider</span><span class="w">
+</span><span class="w">      </span><span class="nt">default</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;true&#34;</span><span class="w">
+</span><span class="w">      </span><span class="nt">deprecated</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;false&#34;</span><span class="w">
+</span><span class="w">      </span><span class="nt">dubbo</span><span class="p">:</span><span class="w"> </span><span class="m">2.0.2</span><span class="w">
+</span><span class="w">      </span><span class="nt">dynamic</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;true&#34;</span><span class="w">
+</span><span class="w">      </span><span class="nt">generic</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;false&#34;</span><span class="w">
+</span><span class="w">      </span><span class="nt">interface</span><span class="p">:</span><span class="w"> </span><span class="l">org.apache.dubbo.samples.basic.api.DemoService</span><span class="w">
+</span><span class="w">      </span><span class="nt">metadata-type</span><span class="p">:</span><span class="w"> </span><span class="l">remote</span><span class="w">
+</span><span class="w">      </span><span class="nt">methods</span><span class="p">:</span><span class="w"> </span><span class="l">testVoid-sayHello</span><span class="w">
+</span><span class="w">      </span><span class="nt">pid</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;8&#34;</span><span class="w">
+</span><span class="w">      </span><span class="nt">registryName</span><span class="p">:</span><span class="w"> </span><span class="l">default</span><span class="w">
+</span><span class="w">      </span><span class="nt">release</span><span class="p">:</span><span class="w"> </span><span class="m">1.0</span>-<span class="l">SNAPSHOT</span><span class="w">
+</span><span class="w">      </span><span class="nt">revision</span><span class="p">:</span><span class="w"> </span><span class="m">1.0</span>-<span class="l">SNAPSHOT</span><span class="w">
+</span><span class="w">      </span><span class="nt">service_group</span><span class="p">:</span><span class="w"> </span><span class="l">batchjob</span><span class="w">
+</span><span class="w">      </span><span class="nt">side</span><span class="p">:</span><span class="w"> </span><span class="l">provider</span><span class="w">
+</span><span class="w">      </span><span class="nt">timestamp</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;1677499051587&#34;</span><span class="w">
+</span><span class="w">      </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l">v2</span><span class="w">
+</span><span class="w">    </span><span class="nt">locality</span><span class="p">:</span><span class="w"> </span><span class="l">bj/800005</span><span class="w">
+</span><span class="w">    </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">tcp-metaprotocol-dubbo</span><span class="p">:</span><span class="w"> </span><span class="m">20880</span><span class="w">
+</span><span class="w">    </span><span class="nt">serviceAccount</span><span class="p">:</span><span class="w"> </span><span class="l">default</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="m">10.42.0.63</span><span class="w">     </span><span class="c"># # dubbo-sample-provider-v1 的 pod ip</span><span class="w">
+</span><span class="w">    </span><span class="c"># ...</span><span class="w">
+</span><span class="w">    </span><span class="nt">serviceAccount</span><span class="p">:</span><span class="w"> </span><span class="l">default</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>ServiceEntry 是可以添加额外的服务项到 istio 内部的服务注册中心，这样网格可以将请求转发到这些指定的服务，这些服务的 endpoints 可以是 VM 负载或者 kubernetes 的 pods。 继续看下 consumer 中的代理配置，可以看到配置的 cluster 名称为 ServiceEntry 中的 hosts，并配置了其 endpoints 为两个 provider pods 的 ip：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@dev:~/zt/istio/dubbo2istio/demo/k8s/zk# istioctl proxy-config cluster dubbo-sample-consumer-67fc956cc8-c8ltf <span class="p">|</span> grep demo
+org.apache.dubbo.samples.basic.api.demoservice                      <span class="m">20880</span>     -          outbound      EDS
+root@dev:~/zt/istio/dubbo2istio/demo/k8s/zk# istioctl proxy-config endpoints dubbo-sample-consumer-67fc956cc8-c8ltf --cluster <span class="s2">&#34;outbound|20880||org.apache.dubbo.samples.basic.api.demoservice&#34;</span>
+ENDPOINT              STATUS      OUTLIER CHECK     CLUSTER
+10.42.0.159:20880     HEALTHY     OK                outbound<span class="p">|</span>20880<span class="o">||</span>org.apache.dubbo.samples.basic.api.demoservice
+10.42.0.160:20880     HEALTHY     OK                outbound<span class="p">|</span>20880<span class="o">||</span>org.apache.dubbo.samples.basic.api.demoservice
+</code></pre></td></tr></table>
+</div>
+</div><h1 id="dubbo2istio-源码分析">dubbo2istio 源码分析</h1>
+<p>这里通过查看 dubbo2istio 源码，来了解具体的工作逻辑，其 main 函数中根据注册中心不同来生成不同的 Controller，目前支持 zookeeper、nacos、etcd：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// cmd/dubbo2istio/main.go
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="kd">var</span> <span class="nx">registryType</span><span class="p">,</span> <span class="nx">registryName</span><span class="p">,</span> <span class="nx">registryAddr</span> <span class="kt">string</span>
+	<span class="nx">flag</span><span class="p">.</span><span class="nf">StringVar</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">registryType</span><span class="p">,</span> <span class="s">&#34;type&#34;</span><span class="p">,</span> <span class="nx">defaultRegistryType</span><span class="p">,</span> <span class="s">&#34;Type of the registry: zookeeper or nacos&#34;</span><span class="p">)</span>
+	<span class="nx">flag</span><span class="p">.</span><span class="nf">StringVar</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">registryName</span><span class="p">,</span> <span class="s">&#34;name&#34;</span><span class="p">,</span> <span class="nx">defaultRegistryName</span><span class="p">,</span> <span class="s">&#34;Name is the globally unique name for a dubbo registry&#34;</span><span class="p">)</span>
+	<span class="nx">flag</span><span class="p">.</span><span class="nf">StringVar</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">registryAddr</span><span class="p">,</span> <span class="s">&#34;addr&#34;</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">,</span> <span class="s">&#34;Registry address in the form of ip:port or dns:port&#34;</span><span class="p">)</span>
+	<span class="nx">flag</span><span class="p">.</span><span class="nf">Parse</span><span class="p">()</span>
+
+	<span class="nx">stopChan</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{},</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="c1">// 获取跟 istio api 交互的客户端
+</span><span class="c1"></span>	<span class="nx">ic</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">getIstioClient</span><span class="p">()</span>
+
+	<span class="k">if</span> <span class="nx">registryType</span> <span class="o">==</span> <span class="s">&#34;zookeeper&#34;</span> <span class="p">{</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;dubbo2istio runs in Zookeeper mode: registry: %s, addr: %s&#34;</span><span class="p">,</span> <span class="nx">registryName</span><span class="p">,</span> <span class="nx">registryAddr</span><span class="p">)</span>
+		<span class="nx">zk</span><span class="p">.</span><span class="nf">NewController</span><span class="p">(</span><span class="nx">registryName</span><span class="p">,</span> <span class="nx">registryAddr</span><span class="p">,</span> <span class="nx">ic</span><span class="p">).</span><span class="nf">Run</span><span class="p">(</span><span class="nx">stopChan</span><span class="p">)</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="nx">registryType</span> <span class="o">==</span> <span class="s">&#34;nacos&#34;</span> <span class="p">{</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;dubbo2istio runs in Nacos mode: registry: %s, addr: %s&#34;</span><span class="p">,</span> <span class="nx">registryName</span><span class="p">,</span> <span class="nx">registryAddr</span><span class="p">)</span>
+		<span class="nx">nacosController</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">nacos</span><span class="p">.</span><span class="nf">NewController</span><span class="p">(</span><span class="nx">registryName</span><span class="p">,</span> <span class="nx">registryAddr</span><span class="p">,</span> <span class="nx">ic</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="nx">log</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to create nacos controller :%v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+		<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+			<span class="nx">nacosController</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="nx">stopChan</span><span class="p">)</span>
+		<span class="p">}</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="nx">registryType</span> <span class="o">==</span> <span class="s">&#34;etcd&#34;</span> <span class="p">{</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;dubbo2istio runs in Etcd mode: registry: %s, addr: %s&#34;</span><span class="p">,</span> <span class="nx">registryName</span><span class="p">,</span> <span class="nx">registryAddr</span><span class="p">)</span>
+		<span class="nx">etcd</span><span class="p">.</span><span class="nf">NewController</span><span class="p">(</span><span class="nx">registryName</span><span class="p">,</span> <span class="nx">registryAddr</span><span class="p">,</span> <span class="nx">ic</span><span class="p">).</span><span class="nf">Run</span><span class="p">(</span><span class="nx">stopChan</span><span class="p">)</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;unrecognized registry type: %s , dubbo2istio only supports zookeeper or nacos&#34;</span><span class="p">,</span> <span class="nx">registryType</span><span class="p">)</span>
+	<span class="p">}</span>
+    <span class="c1">// ...
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>其中 zookeeper controller 逻辑为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// pkg/dubbo/zk/controller.go
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewController</span><span class="p">(</span><span class="nx">registryName</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">zkAddr</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">client</span> <span class="o">*</span><span class="nx">istioclient</span><span class="p">.</span><span class="nx">Clientset</span><span class="p">)</span> <span class="o">*</span><span class="nx">Controller</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">Controller</span><span class="p">{</span>
+		<span class="nx">registryName</span><span class="p">:</span> <span class="nx">registryName</span><span class="p">,</span>
+		<span class="nx">zkAddr</span><span class="p">:</span>       <span class="nx">zkAddr</span><span class="p">,</span>
+		<span class="nx">isClient</span><span class="p">:</span>     <span class="nx">client</span><span class="p">,</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// 获取连接，并创建 serviceWatcher
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Controller</span><span class="p">)</span> <span class="nf">Run</span><span class="p">(</span><span class="nx">stop</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{})</span> <span class="p">{</span>
+	<span class="nx">hosts</span> <span class="o">:=</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">Split</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">zkAddr</span><span class="p">,</span> <span class="s">&#34;,&#34;</span><span class="p">)</span>
+	<span class="nx">conn</span> <span class="o">:=</span> <span class="nf">connectZKUntilSuccess</span><span class="p">(</span><span class="nx">hosts</span><span class="p">)</span>
+	<span class="nx">serviceWatcher</span> <span class="o">:=</span> <span class="nx">watcher</span><span class="p">.</span><span class="nf">NewServiceWatcher</span><span class="p">(</span><span class="nx">conn</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">isClient</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">registryName</span><span class="p">)</span>
+	<span class="k">go</span> <span class="nx">serviceWatcher</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="nx">stop</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>ServiceWatcher 用来监测新创建的 dubbo 服务，并为每个服务创建 providerWatcher：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// pkg/dubbo/zk/watcher/service.go
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewServiceWatcher</span><span class="p">(</span><span class="nx">conn</span> <span class="o">*</span><span class="nx">zk</span><span class="p">.</span><span class="nx">Conn</span><span class="p">,</span> <span class="nx">clientset</span> <span class="o">*</span><span class="nx">istioclient</span><span class="p">.</span><span class="nx">Clientset</span><span class="p">,</span> <span class="nx">registryName</span> <span class="kt">string</span><span class="p">)</span> <span class="o">*</span><span class="nx">ServiceWatcher</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">ServiceWatcher</span><span class="p">{</span>
+		<span class="nx">ic</span><span class="p">:</span>               <span class="nx">clientset</span><span class="p">,</span>
+		<span class="nx">path</span><span class="p">:</span>             <span class="nx">dubboRegistryPath</span><span class="p">,</span>
+		<span class="nx">conn</span><span class="p">:</span>             <span class="nx">conn</span><span class="p">,</span>
+		<span class="nx">providerWatchers</span><span class="p">:</span> <span class="nb">make</span><span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="o">*</span><span class="nx">ProviderWatcher</span><span class="p">),</span>
+		<span class="nx">registryName</span><span class="p">:</span>     <span class="nx">registryName</span><span class="p">,</span> <span class="c1">// 注册中心名称
+</span><span class="c1"></span>	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// 循环等待事件
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">w</span> <span class="o">*</span><span class="nx">ServiceWatcher</span><span class="p">)</span> <span class="nf">Run</span><span class="p">(</span><span class="nx">stop</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{})</span> <span class="p">{</span>
+	<span class="nx">w</span><span class="p">.</span><span class="nf">waitFroDubboRootPath</span><span class="p">()</span>
+	<span class="nx">eventChan</span> <span class="o">:=</span> <span class="nx">w</span><span class="p">.</span><span class="nf">watchProviders</span><span class="p">(</span><span class="nx">stop</span><span class="p">)</span>
+	<span class="k">for</span> <span class="p">{</span>
+		<span class="k">select</span> <span class="p">{</span>
+		<span class="k">case</span> <span class="nx">event</span> <span class="o">:=</span> <span class="o">&lt;-</span><span class="nx">eventChan</span><span class="p">:</span>
+			<span class="nx">log</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;received event :  %s, %v&#34;</span><span class="p">,</span> <span class="nx">event</span><span class="p">.</span><span class="nx">Type</span><span class="p">.</span><span class="nf">String</span><span class="p">(),</span> <span class="nx">event</span><span class="p">)</span>
+			<span class="nx">eventChan</span> <span class="p">=</span> <span class="nx">w</span><span class="p">.</span><span class="nf">watchProviders</span><span class="p">(</span><span class="nx">stop</span><span class="p">)</span>
+		<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">stop</span><span class="p">:</span>
+			<span class="k">return</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">w</span> <span class="o">*</span><span class="nx">ServiceWatcher</span><span class="p">)</span> <span class="nf">watchProviders</span><span class="p">(</span><span class="nx">stop</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{})</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="nx">zk</span><span class="p">.</span><span class="nx">Event</span> <span class="p">{</span>
+	<span class="nx">children</span><span class="p">,</span> <span class="nx">newChan</span> <span class="o">:=</span> <span class="nf">watchUntilSuccess</span><span class="p">(</span><span class="nx">w</span><span class="p">.</span><span class="nx">path</span><span class="p">,</span> <span class="nx">w</span><span class="p">.</span><span class="nx">conn</span><span class="p">)</span>
+	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">node</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">children</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">node</span> <span class="o">==</span> <span class="s">&#34;config&#34;</span> <span class="o">||</span> <span class="nx">node</span> <span class="o">==</span> <span class="s">&#34;metadata&#34;</span> <span class="p">{</span>
+			<span class="k">continue</span>
+		<span class="p">}</span>
+		<span class="k">if</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">exists</span> <span class="o">:=</span> <span class="nx">w</span><span class="p">.</span><span class="nx">providerWatchers</span><span class="p">[</span><span class="nx">node</span><span class="p">];</span> <span class="p">!</span><span class="nx">exists</span> <span class="p">{</span>
+			<span class="nx">providerWatcher</span> <span class="o">:=</span> <span class="nf">NewProviderWatcher</span><span class="p">(</span><span class="nx">w</span><span class="p">.</span><span class="nx">ic</span><span class="p">,</span> <span class="nx">w</span><span class="p">.</span><span class="nx">conn</span><span class="p">,</span> <span class="nx">node</span><span class="p">,</span> <span class="nx">w</span><span class="p">.</span><span class="nx">registryName</span><span class="p">)</span>
+			<span class="nx">w</span><span class="p">.</span><span class="nx">providerWatchers</span><span class="p">[</span><span class="nx">node</span><span class="p">]</span> <span class="p">=</span> <span class="nx">providerWatcher</span>
+            <span class="c1">// 日志示例：“start to watch service org.apache.dubbo.samples.basic.api.DemoService on zookeeper”
+</span><span class="c1"></span>			<span class="nx">log</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;start to watch service %s on zookeeper&#34;</span><span class="p">,</span> <span class="nx">node</span><span class="p">)</span>
+			<span class="k">go</span> <span class="nx">providerWatcher</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="nx">stop</span><span class="p">)</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">newChan</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>对每个服务都创建了 ProviderWatcher 来管理，syncServices2Istio 函数中先将信息转化为 ServiceEntry，然后通过 SyncServices2IstioUntilMaxRetries 函数写到 istio CR 中：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// pkg/dubbo/zk/watcher/provider.go
+</span><span class="c1">// 一直等到有改变事件
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">watchUntilSuccess</span><span class="p">(</span><span class="nx">path</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">conn</span> <span class="o">*</span><span class="nx">zk</span><span class="p">.</span><span class="nx">Conn</span><span class="p">)</span> <span class="p">([]</span><span class="kt">string</span><span class="p">,</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="nx">zk</span><span class="p">.</span><span class="nx">Event</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// 子节点改变事件，当 path 下面增删子节点时触发
+</span><span class="c1"></span>	<span class="nx">providers</span><span class="p">,</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">eventChan</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">conn</span><span class="p">.</span><span class="nf">ChildrenW</span><span class="p">(</span><span class="nx">path</span><span class="p">)</span>
+	<span class="k">for</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to watch zookeeper path %s, %v&#34;</span><span class="p">,</span> <span class="nx">path</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+		<span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="mi">1</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+		<span class="nx">providers</span><span class="p">,</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">eventChan</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">conn</span><span class="p">.</span><span class="nf">ChildrenW</span><span class="p">(</span><span class="nx">path</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">providers</span><span class="p">,</span> <span class="nx">eventChan</span>
+<span class="p">}</span>
+
+<span class="c1">// 为单个服务创建 ProviderWatcher
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewProviderWatcher</span><span class="p">(</span><span class="nx">ic</span> <span class="o">*</span><span class="nx">istioclient</span><span class="p">.</span><span class="nx">Clientset</span><span class="p">,</span> <span class="nx">conn</span> <span class="o">*</span><span class="nx">zk</span><span class="p">.</span><span class="nx">Conn</span><span class="p">,</span> <span class="nx">service</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">registryName</span> <span class="kt">string</span><span class="p">)</span> <span class="o">*</span><span class="nx">ProviderWatcher</span> <span class="p">{</span>
+	<span class="nx">path</span> <span class="o">:=</span> <span class="s">&#34;/dubbo/&#34;</span> <span class="o">+</span> <span class="nx">service</span> <span class="o">+</span> <span class="s">&#34;/providers&#34;</span>
+	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">ProviderWatcher</span><span class="p">{</span>
+		<span class="nx">service</span><span class="p">:</span>        <span class="nx">service</span><span class="p">,</span>
+		<span class="nx">path</span><span class="p">:</span>           <span class="nx">path</span><span class="p">,</span>
+		<span class="nx">conn</span><span class="p">:</span>           <span class="nx">conn</span><span class="p">,</span>
+		<span class="nx">ic</span><span class="p">:</span>             <span class="nx">ic</span><span class="p">,</span>
+		<span class="nx">serviceEntryNS</span><span class="p">:</span> <span class="nb">make</span><span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">),</span>
+		<span class="nx">registryName</span><span class="p">:</span>   <span class="nx">registryName</span><span class="p">,</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">//
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">w</span> <span class="o">*</span><span class="nx">ProviderWatcher</span><span class="p">)</span> <span class="nf">Run</span><span class="p">(</span><span class="nx">stop</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{})</span> <span class="p">{</span>
+	<span class="nx">providers</span><span class="p">,</span> <span class="nx">eventChan</span> <span class="o">:=</span> <span class="nf">watchUntilSuccess</span><span class="p">(</span><span class="nx">w</span><span class="p">.</span><span class="nx">path</span><span class="p">,</span> <span class="nx">w</span><span class="p">.</span><span class="nx">conn</span><span class="p">)</span>
+	<span class="nx">w</span><span class="p">.</span><span class="nf">syncServices2Istio</span><span class="p">(</span><span class="nx">w</span><span class="p">.</span><span class="nx">service</span><span class="p">,</span> <span class="nx">providers</span><span class="p">)</span>
+
+	<span class="nx">callback</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="nx">w</span><span class="p">.</span><span class="nx">mutex</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+		<span class="k">defer</span> <span class="nx">w</span><span class="p">.</span><span class="nx">mutex</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+		<span class="nx">w</span><span class="p">.</span><span class="nf">syncServices2Istio</span><span class="p">(</span><span class="nx">w</span><span class="p">.</span><span class="nx">service</span><span class="p">,</span> <span class="nx">providers</span><span class="p">)</span>
+	<span class="p">}</span>
+    <span class="c1">// 去抖动减少请求
+</span><span class="c1"></span>	<span class="nx">debouncer</span> <span class="o">:=</span> <span class="nx">debounce</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="nx">debounceAfter</span><span class="p">,</span> <span class="nx">debounceMax</span><span class="p">,</span> <span class="nx">callback</span><span class="p">,</span> <span class="nx">stop</span><span class="p">)</span>
+	<span class="k">for</span> <span class="p">{</span>
+		<span class="k">select</span> <span class="p">{</span>
+		<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">eventChan</span><span class="p">:</span>
+			<span class="nx">w</span><span class="p">.</span><span class="nx">mutex</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+			<span class="nx">providers</span><span class="p">,</span> <span class="nx">eventChan</span> <span class="p">=</span> <span class="nf">watchUntilSuccess</span><span class="p">(</span><span class="nx">w</span><span class="p">.</span><span class="nx">path</span><span class="p">,</span> <span class="nx">w</span><span class="p">.</span><span class="nx">conn</span><span class="p">)</span>
+			<span class="nx">w</span><span class="p">.</span><span class="nx">mutex</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+			<span class="nx">debouncer</span><span class="p">.</span><span class="nf">Bounce</span><span class="p">()</span>
+		<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">stop</span><span class="p">:</span>
+			<span class="k">return</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// 同步服务信息到 istio，先将信息转化为 ServiceEntry，然后通过
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">w</span> <span class="o">*</span><span class="nx">ProviderWatcher</span><span class="p">)</span> <span class="nf">syncServices2Istio</span><span class="p">(</span><span class="nx">service</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">providers</span> <span class="p">[]</span><span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">providers</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Warnf</span><span class="p">(</span><span class="s">&#34;Service %s has no providers, ignore synchronize job&#34;</span><span class="p">,</span> <span class="nx">service</span><span class="p">)</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+	<span class="nx">serviceEntries</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">model</span><span class="p">.</span><span class="nf">ConvertServiceEntry</span><span class="p">(</span><span class="nx">w</span><span class="p">.</span><span class="nx">registryName</span><span class="p">,</span> <span class="nx">providers</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;Failed to synchronize dubbo services to Istio: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+
+	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">new</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">serviceEntries</span> <span class="p">{</span>
+		<span class="nx">common</span><span class="p">.</span><span class="nf">SyncServices2IstioUntilMaxRetries</span><span class="p">(</span><span class="nx">new</span><span class="p">,</span> <span class="nx">w</span><span class="p">.</span><span class="nx">registryName</span><span class="p">,</span> <span class="nx">w</span><span class="p">.</span><span class="nx">ic</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>SyncServices2IstioUntilMaxRetries 函数调用了 syncService2Istio，主要是负责写入数据到 ServiceEntry 中：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// pkg/dubbo/common/serviceentry.go
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">SyncServices2IstioUntilMaxRetries</span><span class="p">(</span><span class="nx">new</span> <span class="o">*</span><span class="nx">v1alpha3</span><span class="p">.</span><span class="nx">ServiceEntry</span><span class="p">,</span> <span class="nx">registryName</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">ic</span> <span class="o">*</span><span class="nx">istioclient</span><span class="p">.</span><span class="nx">Clientset</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">err</span> <span class="o">:=</span> <span class="nf">syncService2Istio</span><span class="p">(</span><span class="nx">new</span><span class="p">,</span> <span class="nx">registryName</span><span class="p">,</span> <span class="nx">ic</span><span class="p">)</span>
+    <span class="c1">// ...
+</span><span class="c1"></span><span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">syncService2Istio</span><span class="p">(</span><span class="nx">new</span> <span class="o">*</span><span class="nx">v1alpha3</span><span class="p">.</span><span class="nx">ServiceEntry</span><span class="p">,</span> <span class="nx">registryName</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">ic</span> <span class="o">*</span><span class="nx">istioclient</span><span class="p">.</span><span class="nx">Clientset</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+    <span class="c1">// 获取原来的 ServiceEntry
+</span><span class="c1"></span>	<span class="nx">existingServiceEntry</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">ic</span><span class="p">.</span><span class="nf">NetworkingV1alpha3</span><span class="p">().</span><span class="nf">ServiceEntries</span><span class="p">(</span><span class="nx">new</span><span class="p">.</span><span class="nx">Namespace</span><span class="p">).</span><span class="nf">Get</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">TODO</span><span class="p">(),</span> <span class="nx">new</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span>
+		<span class="nx">metav1</span><span class="p">.</span><span class="nx">GetOptions</span><span class="p">{},</span>
+	<span class="p">)</span>
+    <span class="c1">// 创建或者更新
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nf">isRealError</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="nf">isNotFound</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nf">createServiceEntry</span><span class="p">(</span><span class="nx">new</span><span class="p">,</span> <span class="nx">ic</span><span class="p">)</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+		<span class="nf">mergeServiceEntryEndpoints</span><span class="p">(</span><span class="nx">registryName</span><span class="p">,</span> <span class="nx">new</span><span class="p">,</span> <span class="nx">existingServiceEntry</span><span class="p">)</span>
+		<span class="k">return</span> <span class="nf">updateServiceEntry</span><span class="p">(</span><span class="nx">new</span><span class="p">,</span> <span class="nx">existingServiceEntry</span><span class="p">,</span> <span class="nx">ic</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h1 id="参考">参考</h1>
+<ul>
+<li><a href="https://www.aeraki.net/zh/docs/v1.x/tutorials/dubbo/">如何将 Dubbo 服务接入到 Aeraki Mesh</a></li>
+<li><a href="https://penglei.github.io/post/dubbo-integrate-with-istio/">Dubbo 集成 Istio 的方案</a></li>
+<li><a href="https://docs.spring.io/spring-framework/docs/4.2.x/spring-framework-reference/html/xsd-configuration.html">XML Schema-based configuration</a></li>
+<li><a href="https://cn.dubbo.apache.org/zh-cn/docs3-v2/java-sdk/reference-manual/config/properties/">dubbo 配置项参考</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/371085990">Istio 1.9 如何对接第三方注册中心</a></li>
+<li><a href="https://blog.csdn.net/u014087707/article/details/120416146">Istio 集成 Nacos 作为注册中心</a></li>
+</ul>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">yefengzhichen</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2023-02-28
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="../../tags/kubernetes/">kubernetes</a>
+          <a href="../../tags/dubbo/">dubbo</a>
+          <a href="../../tags/registry/">registry</a>
+          <a href="../../tags/istio/">istio</a>
+          </div>
+      <nav class="post-nav">
+        
+        <a class="next" href="../../post/dubbo_demo/">
+            <span class="next-text nav-default">dubbo 多种部署场景测试</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="yefengzhichen/yefengzhichen.github.io"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="zhutao_hust@foxmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/yefengzhichen" class="iconfont icon-github" title="github"></a>
+  <a href="https://yefengzhichen.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  <div class="busuanzi-footer">
+    <span id="busuanzi_container_site_pv"> 本站总访问量 <span id="busuanzi_value_site_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次 </span>
+      <span class="division">|</span>
+    <span id="busuanzi_container_site_uv"> 本站总访客数 <span id="busuanzi_value_site_uv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 人 </span>
+  </div>
+
+  <span class="copyright-year">
+    &copy; 
+    2022 - 
+    2023<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="../../js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

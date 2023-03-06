@@ -49,7 +49,7 @@
 <meta itemprop="name" content="dubbo 多种部署场景测试">
 <meta itemprop="description" content="测试准备 介绍 以下介绍是摘自 Dubbo 官网，Dubbo 是一款 RPC 服务开发框架，用于解决微服务架构下的服务治理与通信问题，官方提供了 Java、Golang"><meta itemprop="datePublished" content="2023-02-21T17:47:45+08:00" />
 <meta itemprop="dateModified" content="2023-02-21T17:47:45+08:00" />
-<meta itemprop="wordCount" content="5091">
+<meta itemprop="wordCount" content="5333">
 <meta itemprop="keywords" content="kubernetes,dubbo,registry,service mesh," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="dubbo 多种部署场景测试"/>
 <meta name="twitter:description" content="测试准备 介绍 以下介绍是摘自 Dubbo 官网，Dubbo 是一款 RPC 服务开发框架，用于解决微服务架构下的服务治理与通信问题，官方提供了 Java、Golang"/>
@@ -132,7 +132,7 @@
         <div class="post-category">
             <a href="../../categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
             </div>
-          <span class="more-meta"> 约 5091 字 </span>
+          <span class="more-meta"> 约 5333 字 </span>
           <span class="more-meta"> 预计阅读 11 分钟 </span>
         <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
       </div>
@@ -189,7 +189,8 @@
       <h1 id="测试准备">测试准备</h1>
 <h2 id="介绍">介绍</h2>
 <p>以下介绍是摘自 Dubbo 官网，Dubbo 是一款 RPC 服务开发框架，用于解决微服务架构下的服务治理与通信问题，官方提供了 Java、Golang 等多语言 SDK 实现。使用 Dubbo 开发的微服务原生具备相互之间的远程地址发现与通信能力， 利用 Dubbo 提供的丰富服务治理特性，可以实现诸如服务发现、负载均衡、流量调度等服务治理诉求。在云原生时代，Dubbo 相继衍生出了 Dubbo3、Proxyless Mesh 等架构与解决方案，在易用性、超大规模微服务实践、云原生基础设施适配、安全性等几大方向上进行了全面升级。</p>
-<p>至于更详细的概念与架构介绍，可参考 <a href="https://cn.dubbo.apache.org/zh-cn/overview/what/overview/">dubbo 概念与架构</a>。</p>
+<p>Dubbo 框架支持多种通信协议：基于 HTTP/2 的 Triple 协议 和 基于 TCP 的 Dubbo2 协议。除此之外，Dubbo 框架支持任意第三方通信协议，如官方支持的 gRPC、Thrift、REST、JsonRPC、Hessian2 等，更多协议可以通过自定义扩展实现。Dubbo2 的用户一般使用 dubbo 协议，单一长连接，进行的是 NIO 异步通信，基于 hessian 作为序列化协议。Dubbo3 默认使用 Triple 协议，默认仅支持 Protobuf 序列化，对于 Java 语言中的多参数以及方法重载无法支持，但 Triple 有具备跨语言交互的能力、更完善的请求模型、完全兼容 grpc 等优点。</p>
+<p>关于详细的概念与架构介绍，可参考 <a href="https://cn.dubbo.apache.org/zh-cn/overview/what/overview/">dubbo 概念与架构</a>。</p>
 <p>这里基于官网文档和 github 示例，测试了 dubbo 多种部署场景，分别是原始 dubo 接入不同的注册中心、dubbo 结合 spring boot、dubbo 接入服务网格。</p>
 <h2 id="前置准备">前置准备</h2>
 <p>本地是用的 k3s 单节点集群，安装 istio 过程在之前博客 <a href="https://yefengzhichen.github.io/post/istio_demo/">Istio 安装和示例实践</a>，下面是创建测试用的命名空间。
@@ -995,7 +996,7 @@ tree -L <span class="m">12</span>
 </code></pre></td></tr></table>
 </div>
 </div><h1 id="dubbo-接入服务网格">Dubbo 接入服务网格</h1>
-<p>Dubbo 应用实例作为数据面组件，支持两种部署模式：</p>
+<p>Dubbo3 原生支持 mesh 部署，dubbo 应用实例作为数据面组件，支持两种部署模式：</p>
 <ul>
 <li>Proxy 模式。Dubbo 进程与 Envoy 部署在同一 pod，进出 Dubbo 的流量都经 Envoy 代理拦截，由 Envoy 执行流量管控。</li>
 <li>Proxyless 模式。Dubbo 进程独立部署，进程间直接通信，通过 xDS 协议与控制面直接交互。</li>
@@ -1003,8 +1004,7 @@ tree -L <span class="m">12</span>
 <h2 id="dubbo-proxy-部署">Dubbo proxy 部署</h2>
 <p>Dubbo 提供了 ThinSDK 的部署模式，在此模式下，Dubbo ThinSDK 将只提供面向业务应用的编程 API、RPC 传输通信能力，其余服务治理 包括地址发现、负载均衡、路由寻址等都统一下沉到 Sidecar，Sidecar 负责与控制面直接通信并接收各种流量管控规则。</p>
 <h3 id="服务发现配置说明-1">服务发现配置说明</h3>
-<p>provider 的配置文件 dubbo-provider.properties 内容如下，具体字段说明可以在 <a href="https://cn.dubbo.apache.org/zh-cn/docs3-v2/java-sdk/reference-manual/config/properties/">配置项参考手册
-</a> 中找到。</p>
+<p>provider 的配置文件 dubbo-provider.properties 内容如下，具体字段说明可以在 <a href="https://cn.dubbo.apache.org/zh-cn/docs3-v2/java-sdk/reference-manual/config/properties/">配置项参考手册</a> 中找到。</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
@@ -1313,9 +1313,13 @@ mvn clean compile
           <a href="../../tags/service-mesh/">service mesh</a>
           </div>
       <nav class="post-nav">
-        
-        <a class="next" href="../../post/istio_multicluster/">
-            <span class="next-text nav-default">Istio 多集群模型和部署示例</span>
+        <a class="prev" href="../../post/istio_dubbo_registry/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">Istio 接入第三方注册中心调研</span>
+            <span class="prev-text nav-mobile">上一篇</span>
+          </a>
+        <a class="next" href="../../post/istio_pilot_agent_src/">
+            <span class="next-text nav-default">Istio pilot-agent 源码解析</span>
             <span class="next-text nav-mobile">下一篇</span>
             <i class="iconfont icon-right"></i>
           </a>

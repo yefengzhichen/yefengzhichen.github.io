@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>pilot-agent on yefengzhichen&#39;s blog</title>
+    <link>https://yefengzhichen.github.io/tags/pilot-agent/</link>
+    <description>Recent content in pilot-agent on yefengzhichen&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Fri, 03 Feb 2023 18:46:11 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/pilot-agent/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Istio pilot-agent 源码解析</title>
+      <link>https://yefengzhichen.github.io/post/istio_pilot_agent_src/</link>
+      <pubDate>Fri, 03 Feb 2023 18:46:11 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/post/istio_pilot_agent_src/</guid>
+      <description>pilot-agent 源码 整体流程 整体逻辑如下图，简单来说分为以下几步： pilot-agent 启动后，生成私钥和 CSR（证书签名请求），用 CSR 请求 istiod 获取工作负载证书，ROOTCA 根证</description>
+    </item>
+    
+  </channel>
+</rss>

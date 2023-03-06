@@ -6,7 +6,16 @@
     <description>Recent content on yefengzhichen&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Tue, 21 Feb 2023 17:47:45 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Tue, 28 Feb 2023 11:34:07 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Istio 接入第三方注册中心调研</title>
+      <link>https://yefengzhichen.github.io/post/istio_dubbo_registry/</link>
+      <pubDate>Tue, 28 Feb 2023 11:34:07 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/post/istio_dubbo_registry/</guid>
+      <description>背景 这里调研的场景是，将使用 dubbo2 框架的应用迁移到 istio 网格中，原有 dubbo 协议使用的注册中心可能有 zookeeper、nacos、etcd。 dubbo 接入 mesh 方案</description>
+    </item>
+    
     <item>
       <title>dubbo 多种部署场景测试</title>
       <link>https://yefengzhichen.github.io/post/dubbo_demo/</link>
@@ -14,6 +23,15 @@
       
       <guid>https://yefengzhichen.github.io/post/dubbo_demo/</guid>
       <description>测试准备 介绍 以下介绍是摘自 Dubbo 官网，Dubbo 是一款 RPC 服务开发框架，用于解决微服务架构下的服务治理与通信问题，官方提供了 Java、Golang</description>
+    </item>
+    
+    <item>
+      <title>Istio pilot-agent 源码解析</title>
+      <link>https://yefengzhichen.github.io/post/istio_pilot_agent_src/</link>
+      <pubDate>Fri, 03 Feb 2023 18:46:11 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/post/istio_pilot_agent_src/</guid>
+      <description>pilot-agent 源码 整体流程 整体逻辑如下图，简单来说分为以下几步： pilot-agent 启动后，生成私钥和 CSR（证书签名请求），用 CSR 请求 istiod 获取工作负载证书，ROOTCA 根证</description>
     </item>
     
     <item>

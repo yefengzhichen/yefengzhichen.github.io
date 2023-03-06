@@ -6,7 +6,16 @@
     <description>Recent content in registry on yefengzhichen&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Tue, 21 Feb 2023 17:47:45 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/registry/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Tue, 28 Feb 2023 11:34:07 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/registry/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Istio 接入第三方注册中心调研</title>
+      <link>https://yefengzhichen.github.io/post/istio_dubbo_registry/</link>
+      <pubDate>Tue, 28 Feb 2023 11:34:07 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/post/istio_dubbo_registry/</guid>
+      <description>背景 这里调研的场景是，将使用 dubbo2 框架的应用迁移到 istio 网格中，原有 dubbo 协议使用的注册中心可能有 zookeeper、nacos、etcd。 dubbo 接入 mesh 方案</description>
+    </item>
+    
     <item>
       <title>dubbo 多种部署场景测试</title>
       <link>https://yefengzhichen.github.io/post/dubbo_demo/</link>

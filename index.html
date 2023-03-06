@@ -122,13 +122,36 @@
           <section id="posts" class="posts">
     <article class="post">
   <header class="post-header">
+    <h1 class="post-title"><a class="post-link" href="./post/istio_dubbo_registry/">Istio 接入第三方注册中心调研</a></h1>
+    <div class="post-meta">
+      <span class="post-time"> 2023-02-28 </span>
+      <div class="post-category">
+          <a href="./categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
+          </div>
+        <span class="more-meta"> 约 4846 字 </span>
+        <span class="more-meta"> 预计阅读 10 分钟 </span>
+    </div>
+  </header>
+  
+  <div class="post-content">
+    <div class="post-summary">
+      背景 这里调研的场景是，将使用 dubbo2 框架的应用迁移到 istio 网格中，原有 dubbo 协议使用的注册中心可能有 zookeeper、nacos、etcd。 dubbo 接入 mesh 方案
+    </div>
+    <div class="read-more">
+      <a href="./post/istio_dubbo_registry/" class="read-more-link">阅读更多</a>
+    </div>
+  </div>
+</article>
+
+    <article class="post">
+  <header class="post-header">
     <h1 class="post-title"><a class="post-link" href="./post/dubbo_demo/">dubbo 多种部署场景测试</a></h1>
     <div class="post-meta">
       <span class="post-time"> 2023-02-21 </span>
       <div class="post-category">
           <a href="./categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
           </div>
-        <span class="more-meta"> 约 5091 字 </span>
+        <span class="more-meta"> 约 5333 字 </span>
         <span class="more-meta"> 预计阅读 11 分钟 </span>
     </div>
   </header>
@@ -139,6 +162,29 @@
     </div>
     <div class="read-more">
       <a href="./post/dubbo_demo/" class="read-more-link">阅读更多</a>
+    </div>
+  </div>
+</article>
+
+    <article class="post">
+  <header class="post-header">
+    <h1 class="post-title"><a class="post-link" href="./post/istio_pilot_agent_src/">Istio pilot-agent 源码解析</a></h1>
+    <div class="post-meta">
+      <span class="post-time"> 2023-02-03 </span>
+      <div class="post-category">
+          <a href="./categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
+          </div>
+        <span class="more-meta"> 约 10559 字 </span>
+        <span class="more-meta"> 预计阅读 22 分钟 </span>
+    </div>
+  </header>
+  
+  <div class="post-content">
+    <div class="post-summary">
+      pilot-agent 源码 整体流程 整体逻辑如下图，简单来说分为以下几步： pilot-agent 启动后，生成私钥和 CSR（证书签名请求），用 CSR 请求 istiod 获取工作负载证书，ROOTCA 根证
+    </div>
+    <div class="read-more">
+      <a href="./post/istio_pilot_agent_src/" class="read-more-link">阅读更多</a>
     </div>
   </div>
 </article>
@@ -419,57 +465,14 @@
   </div>
 </article>
 
-    <article class="post">
-  <header class="post-header">
-    <h1 class="post-title"><a class="post-link" href="./post/kt_connect/">使用 kt-connect 本地调试 k8s 集群内服务</a></h1>
-    <div class="post-meta">
-      <span class="post-time"> 2022-09-03 </span>
-      <div class="post-category">
-          <a href="./categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
-          </div>
-        <span class="more-meta"> 约 1729 字 </span>
-        <span class="more-meta"> 预计阅读 4 分钟 </span>
-    </div>
-  </header>
-  
-  <div class="post-content">
-    <div class="post-summary">
-      一、kt-connect 介绍 背景 影响软件开发效率最大的问题依然是集成的问题，DevOps 通过持续交付流水线的方式不断的对软件进行集成，但是 DevOps
-    </div>
-    <div class="read-more">
-      <a href="./post/kt_connect/" class="read-more-link">阅读更多</a>
-    </div>
-  </div>
-</article>
-
-    <article class="post">
-  <header class="post-header">
-    <h1 class="post-title"><a class="post-link" href="./post/hugo_blog/">GitHub&#43;Hugo搭建个人博客</a></h1>
-    <div class="post-meta">
-      <span class="post-time"> 2022-09-02 </span>
-      <div class="post-category">
-          <a href="./categories/%E5%90%8E%E7%AB%AF/"> 后端 </a>
-          </div>
-        <span class="more-meta"> 约 2468 字 </span>
-        <span class="more-meta"> 预计阅读 5 分钟 </span>
-    </div>
-  </header>
-  
-  <div class="post-content">
-    <div class="post-summary">
-      GitHub仓库创建 GitHub Pages 是通过 GitHub 托管和发布的公共网页，首先需要创建一个名为username.github.io的仓库， username是Gi
-    </div>
-    <div class="read-more">
-      <a href="./post/hugo_blog/" class="read-more-link">阅读更多</a>
-    </div>
-  </div>
-</article>
-
     </section>
   
   <nav class="pagination">
     
-    
+    <a class="next" href="./page/2/">
+        <span class="next-text">下一页</span>
+        <i class="iconfont icon-right"></i>
+      </a>
   </nav>
         </div>
         
