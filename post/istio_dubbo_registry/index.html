@@ -49,7 +49,7 @@
 <meta itemprop="name" content="Istio 使用 Aeraki 接入第三方注册中心">
 <meta itemprop="description" content="背景 需求场景是，将 dubbo2 框架的应用迁移到 istio 网格中，dubbo2 使用的注册中心可能有 zookeeper、nacos、etcd，这里对dubbo接入"><meta itemprop="datePublished" content="2023-02-28T11:34:07+08:00" />
 <meta itemprop="dateModified" content="2023-02-28T11:34:07+08:00" />
-<meta itemprop="wordCount" content="4864">
+<meta itemprop="wordCount" content="5558">
 <meta itemprop="keywords" content="kubernetes,dubbo,registry,istio," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Istio 使用 Aeraki 接入第三方注册中心"/>
 <meta name="twitter:description" content="背景 需求场景是，将 dubbo2 框架的应用迁移到 istio 网格中，dubbo2 使用的注册中心可能有 zookeeper、nacos、etcd，这里对dubbo接入"/>
@@ -132,8 +132,8 @@
         <div class="post-category">
             <a href="../../categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
             </div>
-          <span class="more-meta"> 约 4864 字 </span>
-          <span class="more-meta"> 预计阅读 10 分钟 </span>
+          <span class="more-meta"> 约 5558 字 </span>
+          <span class="more-meta"> 预计阅读 12 分钟 </span>
         <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
       </div>
     </header>
@@ -960,6 +960,143 @@ ENDPOINT              STATUS      OUTLIER CHECK     CLUSTER
 10.42.0.160:20880     HEALTHY     OK                outbound<span class="p">|</span>20880<span class="o">||</span>org.apache.dubbo.samples.basic.api.demoservice
 </code></pre></td></tr></table>
 </div>
+</div><p>上面的逻辑解决了如何找到 provider 地址的问题，但是因为 consumer 中使用的是 dubbo 协议，而 istio 中目前不支持 dubbo 协议，因此 envoy 无法进行出向流量的劫持。</p>
+<p>在 Aeraki 中通过 <a href="https://github.com/aeraki-mesh/meta-protocol-proxy.git">meta-protocol-proxy</a> 代理来解决的，这个代理目前支持 dubbo 和 thrift 协议。 Aeraki 服务会监测上面的 ServiceEntry，生成对应的 EnvoyFilter，将 tcp 网络过滤器替换为自定义的 meta_protocol_proxy 协议，由 istiod 下发到代理中。下面示例项目中生成的 EnvoyFilter：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">networking.istio.io/v1alpha3</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">EnvoyFilter</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">manager</span><span class="p">:</span><span class="w"> </span><span class="l">Aeraki</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">aeraki-outbound-org.apache.dubbo.samples.basic.api.demoservice-240.240.0.6-20880</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">istio-system</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">configPatches</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">applyTo</span><span class="p">:</span><span class="w"> </span><span class="l">NETWORK_FILTER</span><span class="w">
+</span><span class="w">    </span><span class="nt">match</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">listener</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">filterChain</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">filter</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">envoy.filters.network.tcp_proxy</span><span class="w"> </span><span class="c"># 上面设置的是 tcp 协议，因此会生成 tcp 的 filter</span><span class="w">
+</span><span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="m">240.240.0</span><span class="l">.6_20880</span><span class="w">
+</span><span class="w">    </span><span class="nt">patch</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">operation</span><span class="p">:</span><span class="w"> </span><span class="l">REPLACE </span><span class="w"> </span><span class="c"># 替换上面的网络过滤器</span><span class="w">
+</span><span class="w">      </span><span class="nt">value</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">envoy.filters.network.meta_protocol_proxy</span><span class="w"> </span><span class="c"># 替换 Aeraki 的自定义协议 meta_protocol_proxy</span><span class="w">
+</span><span class="w">        </span><span class="nt">typed_config</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">&#39;@type&#39;</span><span class="p">:</span><span class="w"> </span><span class="l">type.googleapis.com/udpa.type.v1.TypedStruct</span><span class="w">
+</span><span class="w">          </span><span class="nt">type_url</span><span class="p">:</span><span class="w"> </span><span class="l">type.googleapis.com/aeraki.meta_protocol_proxy.v1alpha.MetaProtocolProxy</span><span class="w">
+</span><span class="w">          </span><span class="nt">value</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span><span class="nt">accessLog</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">envoy.access_loggers.file</span><span class="w">
+</span><span class="w">              </span><span class="nt">typedConfig</span><span class="p">:</span><span class="w">
+</span><span class="w">                </span><span class="nt">&#39;@type&#39;</span><span class="p">:</span><span class="w"> </span><span class="l">type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog</span><span class="w">
+</span><span class="w">                </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l">/dev/stdout</span><span class="w">
+</span><span class="w">            </span><span class="nt">applicationProtocol</span><span class="p">:</span><span class="w"> </span><span class="l">dubbo </span><span class="w"> </span><span class="c"># 应用层协议为 dubbo</span><span class="w">
+</span><span class="w">            </span><span class="nt">codec</span><span class="p">:</span><span class="w">
+</span><span class="w">              </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">aeraki.meta_protocol.codec.dubbo </span><span class="w"> </span><span class="c"># 应用层编码和解码协议</span><span class="w">
+</span><span class="w">            </span><span class="nt">metaProtocolFilters</span><span class="p">:</span><span class="w">  </span><span class="c"># 一个单独的七层协议过滤器列表，默认为 router 即直接路由</span><span class="w">
+</span><span class="w">            </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">aeraki.meta_protocol.filters.router</span><span class="w">
+</span><span class="w">            </span><span class="nt">rds</span><span class="p">:</span><span class="w">  </span><span class="c"># 设置路由由 rDS 动态获取</span><span class="w">
+</span><span class="w">              </span><span class="nt">configSource</span><span class="p">:</span><span class="w">
+</span><span class="w">                </span><span class="nt">apiConfigSource</span><span class="p">:</span><span class="w">
+</span><span class="w">                  </span><span class="nt">apiType</span><span class="p">:</span><span class="w"> </span><span class="l">GRPC</span><span class="w">
+</span><span class="w">                  </span><span class="nt">grpcServices</span><span class="p">:</span><span class="w">
+</span><span class="w">                  </span>- <span class="nt">envoyGrpc</span><span class="p">:</span><span class="w">
+</span><span class="w">                      </span><span class="nt">clusterName</span><span class="p">:</span><span class="w"> </span><span class="l">aeraki-xds</span><span class="w">
+</span><span class="w">                  </span><span class="nt">transportApiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">V3</span><span class="w">
+</span><span class="w">                </span><span class="nt">resourceApiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">V3</span><span class="w">
+</span><span class="w">              </span><span class="c"># routeConfigName 路由配置的名称</span><span class="w">
+</span><span class="w">              </span><span class="nt">routeConfigName</span><span class="p">:</span><span class="w"> </span><span class="l">org.apache.dubbo.samples.basic.api.demoservice_20880</span><span class="w">
+</span><span class="w">            </span><span class="nt">statPrefix</span><span class="p">:</span><span class="w"> </span><span class="l">outbound|20880||org.apache.dubbo.samples.basic.api.demoservice</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>在 EnvoyFilter 中设置了 routeConfigName，将会通过 xDS 下发给代理，代理中的路由配置如下，其中设置了路由到上面所示的 cluster 中。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="p">{</span>
+  <span class="nt">&#34;version_info&#34;</span><span class="p">:</span> <span class="s2">&#34;1678172533&#34;</span><span class="p">,</span>
+  <span class="nt">&#34;route_config&#34;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="nt">&#34;@type&#34;</span><span class="p">:</span> <span class="s2">&#34;type.googleapis.com/aeraki.meta_protocol_proxy.config.route.v1alpha.RouteConfiguration&#34;</span><span class="p">,</span>
+  <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;org.apache.dubbo.samples.basic.api.demoservice_20880&#34;</span><span class="p">,</span>
+  <span class="nt">&#34;routes&#34;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+    <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;default&#34;</span><span class="p">,</span>
+    <span class="nt">&#34;route&#34;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="nt">&#34;cluster&#34;</span><span class="p">:</span> <span class="s2">&#34;outbound|20880||org.apache.dubbo.samples.basic.api.demoservice&#34;</span>
+    <span class="p">}</span>
+  <span class="err">]</span>
+  <span class="p">},</span>
+  <span class="s2">&#34;last_updated&#34;</span><span class="err">:</span> <span class="s2">&#34;2023-03-07T07:02:13.705Z&#34;</span>
+<span class="err">}</span>
+</code></pre></td></tr></table>
+</div>
 </div><h1 id="dubbo2istio-源码分析">dubbo2istio 源码分析</h1>
 <p>这里通过查看 dubbo2istio 源码，来了解具体的工作逻辑，其 main 函数中根据注册中心不同来生成不同的 Controller，目前支持 zookeeper、nacos、etcd：</p>
 <div class="highlight"><div class="chroma">
@@ -1228,7 +1365,6 @@ ENDPOINT              STATUS      OUTLIER CHECK     CLUSTER
 </span><span class="lnt">63
 </span><span class="lnt">64
 </span><span class="lnt">65
-</span><span class="lnt">66
 </span></code></pre></td>
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// pkg/dubbo/zk/watcher/provider.go
@@ -1257,8 +1393,7 @@ ENDPOINT              STATUS      OUTLIER CHECK     CLUSTER
 	<span class="p">}</span>
 <span class="p">}</span>
 
-<span class="c1">//
-</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">w</span> <span class="o">*</span><span class="nx">ProviderWatcher</span><span class="p">)</span> <span class="nf">Run</span><span class="p">(</span><span class="nx">stop</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{})</span> <span class="p">{</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">w</span> <span class="o">*</span><span class="nx">ProviderWatcher</span><span class="p">)</span> <span class="nf">Run</span><span class="p">(</span><span class="nx">stop</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{})</span> <span class="p">{</span>
 	<span class="nx">providers</span><span class="p">,</span> <span class="nx">eventChan</span> <span class="o">:=</span> <span class="nf">watchUntilSuccess</span><span class="p">(</span><span class="nx">w</span><span class="p">.</span><span class="nx">path</span><span class="p">,</span> <span class="nx">w</span><span class="p">.</span><span class="nx">conn</span><span class="p">)</span>
 	<span class="nx">w</span><span class="p">.</span><span class="nf">syncServices2Istio</span><span class="p">(</span><span class="nx">w</span><span class="p">.</span><span class="nx">service</span><span class="p">,</span> <span class="nx">providers</span><span class="p">)</span>
 
