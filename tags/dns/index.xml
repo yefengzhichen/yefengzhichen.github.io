@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>dns on yefengzhichen&#39;s blog</title>
+    <link>https://yefengzhichen.github.io/tags/dns/</link>
+    <description>Recent content in dns on yefengzhichen&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Wed, 29 Mar 2023 09:55:25 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/dns/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Istio dns 原理详解</title>
+      <link>https://yefengzhichen.github.io/post/istio_dns/</link>
+      <pubDate>Wed, 29 Mar 2023 09:55:25 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/post/istio_dns/</guid>
+      <description>问题背景 在之前使用 ServiceEntry 和 EnvoyFilter 来接入 dubbo 服务到 istio 中时，最开始一直疑惑，当 consumer 端使用 ServiceEntry 中的 host 去访问，但 EnvoyFilter 中直接使用的是 addresses 和端口来进行过滤器匹配的，下发的</description>
+    </item>
+    
+  </channel>
+</rss>
