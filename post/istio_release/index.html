@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Istio 灰度发布 - yefengzhichen&#39;s blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="yefengzhichen" /><meta name="description" content="灰度发布介绍 灰度发布，又名金丝雀发布（canary release、canary launch 或 canary deployment ），是指在黑与白之间，能够平滑过渡的一种发布方式。是指" /><meta name="keywords" content="Hugo, theme, even" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.92.1 with theme even" />
+
+
+<link rel="canonical" href="https://yefengzhichen.github.io/post/istio_release/" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../favicon-16x16.png">
+<link rel="manifest" href="../../manifest.json">
+<link rel="mask-icon" href="../../safari-pinned-tab.svg" color="#5bbad5">
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<link href="../../sass/main.min.f92fd13721ddf72129410fd8250e73152cc6f2438082b6c0208dc24ee7c13fc4.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="Istio 灰度发布" />
+<meta property="og:description" content="灰度发布介绍 灰度发布，又名金丝雀发布（canary release、canary launch 或 canary deployment ），是指在黑与白之间，能够平滑过渡的一种发布方式。是指" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yefengzhichen.github.io/post/istio_release/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2023-05-08T18:46:11+08:00" />
+<meta property="article:modified_time" content="2023-05-08T18:46:11+08:00" />
+
+<meta itemprop="name" content="Istio 灰度发布">
+<meta itemprop="description" content="灰度发布介绍 灰度发布，又名金丝雀发布（canary release、canary launch 或 canary deployment ），是指在黑与白之间，能够平滑过渡的一种发布方式。是指"><meta itemprop="datePublished" content="2023-05-08T18:46:11+08:00" />
+<meta itemprop="dateModified" content="2023-05-08T18:46:11+08:00" />
+<meta itemprop="wordCount" content="1543">
+<meta itemprop="keywords" content="kubernetes,istio,canary release," /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Istio 灰度发布"/>
+<meta name="twitter:description" content="灰度发布介绍 灰度发布，又名金丝雀发布（canary release、canary launch 或 canary deployment ），是指在黑与白之间，能够平滑过渡的一种发布方式。是指"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="../../">
+        <li class="mobile-menu-item">首页</li>
+      </a><a href="../../post/">
+        <li class="mobile-menu-item">列表</li>
+      </a><a href="../../tags/">
+        <li class="mobile-menu-item">标签</li>
+      </a><a href="../../categories/">
+        <li class="mobile-menu-item">分类</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="../../">首页</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../post/">列表</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../tags/">标签</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../categories/">分类</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">Istio 灰度发布</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2023-05-08 </span>
+        <div class="post-category">
+            <a href="../../categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
+            </div>
+          <span class="more-meta"> 约 1543 字 </span>
+          <span class="more-meta"> 预计阅读 4 分钟 </span>
+        <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#灰度发布介绍">灰度发布介绍</a>
+          <ul>
+            <li><a href="#部署测试应用">部署测试应用</a></li>
+            <li><a href="#路由到版本-1">路由到版本 1</a></li>
+            <li><a href="#基于用户身份的路由">基于用户身份的路由</a></li>
+            <li><a href="#流量转移">流量转移</a></li>
+            <li><a href="#灰度发布配置说明">灰度发布配置说明</a></li>
+          </ul>
+        </li>
+        <li><a href="#参考">参考</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h2 id="灰度发布介绍">灰度发布介绍</h2>
+<p>灰度发布，又名金丝雀发布（canary release、canary launch 或 canary deployment ），是指在黑与白之间，能够平滑过渡的一种发布方式。是指在发布新版本的服务时，将部分流量引入新版本，如果新版本没有问题，再逐步将流量引入新版本，直至全部流量引入新版本。A/B 测试：灰度发布方法中的一种，将用户分为 AB 两组，然后收集他们的反馈效果，在 istio 中可以很方便的实现 A/B 测试。</p>
+<h3 id="部署测试应用">部署测试应用</h3>
+<p>本地使用的 k3s 安装的 kubernetes 集群，使用 istioctl 安装的 istio：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@dev:~/istio-1.17.2# istioctl install --set <span class="nv">profile</span><span class="o">=</span>demo -y
+root@dev:~/istio-1.17.2# kubectl label namespace default istio-injection<span class="o">=</span>enabled
+root@dev:~/istio-1.17.2# kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml
+// reviews 服务有三个版本
+root@dev:~/istio-1.17.2# kubectl get pods
+NAME                             READY   STATUS    RESTARTS   AGE
+ratings-v1-b8f8fcf49-wkkx8       2/2     Running   <span class="m">0</span>          96s
+productpage-v1-d4f8dfd97-k5798   2/2     Running   <span class="m">0</span>          96s
+details-v1-6997d94bb9-5w7ns      2/2     Running   <span class="m">0</span>          96s
+reviews-v1-5896f547f5-ngqr4      2/2     Running   <span class="m">0</span>          96s
+reviews-v2-5d99885bc9-ncw2j      2/2     Running   <span class="m">0</span>          96s
+reviews-v3-589cb4d56c-59v4h      2/2     Running   <span class="m">0</span>          96s
+root@dev:~/istio-1.17.2# kubectl apply -f samples/bookinfo/networking/bookinfo-gateway.yaml
+root@dev:~/istio-1.17.2# kubectl get gateway
+NAME               AGE
+bookinfo-gateway   4m8s
+
+// 获取 host
+root@dev:~# kubectl get po -l <span class="nv">istio</span><span class="o">=</span>ingressgateway -n istio-system  -o <span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.items[0].status.hostIP}&#39;</span>
+172.19.52.61
+// 获取 nodeport
+root@dev:~# kubectl -n istio-system get service istio-ingressgateway -o <span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.spec.ports[?(@.name==&#34;http2&#34;)].nodePort}&#39;</span>
+<span class="m">30871</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>通过测试访问“http://172.19.52.61:30871/productpage”可以看到服务正常运行了，并且多次刷新时，可以看到“Book Reviews”下面有不同的显示：</p>
+<ul>
+<li>v1 版本不会调用 ratings 服务。</li>
+<li>v2 版本会调用 ratings 服务，并使用 1 到 5 个黑色星形图标来显示评分信息。</li>
+<li>v3 版本会调用 ratings 服务，并使用 1 到 5 个红色星形图标来显示评分信息。</li>
+</ul>
+<p>为 reviews 服务定义不同的版本：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">networking.istio.io/v1alpha3</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">DestinationRule</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">reviews</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l">reviews</span><span class="w">
+</span><span class="w">  </span><span class="nt">subsets</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w">    </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">v2</span><span class="w">
+</span><span class="w">    </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l">v2</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">v3</span><span class="w">
+</span><span class="w">    </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l">v3</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><h3 id="路由到版本-1">路由到版本 1</h3>
+<p>要仅路由到 v1 版本的 review 服务，需要设置如下的 VirtualService：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">networking.istio.io/v1alpha3</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">VirtualService</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">reviews</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">hosts</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="l">reviews</span><span class="w">
+</span><span class="w">  </span><span class="nt">http</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">route</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">destination</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l">reviews</span><span class="w">
+</span><span class="w">        </span><span class="nt">subset</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>此时访问页面，多次刷新可以看到“Book Reviews”只有 v1 版本的显示，查看 envoy 相关配置如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">// gateway svc 中将 <span class="m">80</span> 端口请求转发到 gateway pod 的 <span class="m">8080</span> 端口，然后会转发到 productpage 服务 <span class="m">9080</span> 端口
+root@dev:~# istioctl pc route istio-ingressgateway-85c59bdcd9-wfb68.istio-system
+NAME          DOMAINS     MATCH                  VIRTUAL SERVICE
+http.8080     *           /productpage           bookinfo.default
+
+// productpage 监听 <span class="m">9080</span>
+root@dev:~# istioctl pc listener productpage-v1-d4f8dfd97-k5798  --port <span class="m">9080</span>
+ADDRESS PORT MATCH                                DESTINATION
+0.0.0.0 <span class="m">9080</span> Trans: raw_buffer<span class="p">;</span> App: http/1.1,h2c Route: <span class="m">9080</span>
+
+// productpage 路由到 <span class="s2">&#34;outbound|9080|v1|reviews.default.svc.cluster.local&#34;</span>
+root@dev:~# istioctl pc route productpage-v1-d4f8dfd97-k5798 --name <span class="m">9080</span>
+NAME     DOMAINS                                          MATCH     VIRTUAL SERVICE
+<span class="m">9080</span>     reviews, reviews.default + <span class="m">1</span> more...             /*        reviews.default
+
+// cluster 对应的 endpoints <span class="s2">&#34;10.42.0.14&#34;</span>即为 v1 版本的 review 服务的 pods
+root@dev:~# istioctl pc endpoints productpage-v1-d4f8dfd97-k5798 --cluster <span class="s2">&#34;outbound|9080|v1|reviews.default.svc.cluster.local&#34;</span>
+ENDPOINT            STATUS      OUTLIER CHECK     CLUSTER
+10.42.0.14:9080     HEALTHY     OK                outbound<span class="p">|</span>9080<span class="p">|</span>v1<span class="p">|</span>reviews.default.svc.cluster.local
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="基于用户身份的路由">基于用户身份的路由</h3>
+<p>路由配置中，可以将特定用户的所有流量路由到特定服务版本。下面的例子，将来自名为 Jason 的用户的流量将被路由到服务 reviews:v2。
+因为 productpage 在到 reviews 服务的 HTTP 请求中都增加了一个 end-user 请求头，因此以用户 Jason 登录时，将会展示黑色星形图标的评分信息：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">networking.istio.io/v1alpha3</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">VirtualService</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">reviews</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">hosts</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="l">reviews</span><span class="w">
+</span><span class="w">  </span><span class="nt">http</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">match</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">headers</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">end-user</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">exact</span><span class="p">:</span><span class="w"> </span><span class="l">jason</span><span class="w">
+</span><span class="w">    </span><span class="nt">route</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">destination</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l">reviews</span><span class="w">
+</span><span class="w">        </span><span class="nt">subset</span><span class="p">:</span><span class="w"> </span><span class="l">v2</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">route</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">destination</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l">reviews</span><span class="w">
+</span><span class="w">        </span><span class="nt">subset</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><h3 id="流量转移">流量转移</h3>
+<p>在 VirtualService 通过设置不同 subset 的权重大小，可以控制流量路由比例，实现流量从微服务的一个版本逐步迁移到另一个版本。下面例子中，会把 50％ 的流量发送到 reviews:v1，50％ 的流量发送到 reviews:v3：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">networking.istio.io/v1alpha3</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">VirtualService</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">reviews</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">hosts</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="l">reviews</span><span class="w">
+</span><span class="w">  </span><span class="nt">http</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">route</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">destination</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l">reviews</span><span class="w">
+</span><span class="w">        </span><span class="nt">subset</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w">      </span><span class="nt">weight</span><span class="p">:</span><span class="w"> </span><span class="m">50</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">destination</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l">reviews</span><span class="w">
+</span><span class="w">        </span><span class="nt">subset</span><span class="p">:</span><span class="w"> </span><span class="l">v3</span><span class="w">
+</span><span class="w">      </span><span class="nt">weight</span><span class="p">:</span><span class="w"> </span><span class="m">50</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><h3 id="灰度发布配置说明">灰度发布配置说明</h3>
+<p>主要涉及到 VirtualService 中的 HTTPRoute、HTTPMatchRequest、HTTPRouteDestination 字段，HTTPRoute 中重点字段说明：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>类型</th>
+<th>说明</th>
+<th>必填</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>string</td>
+<td>路由名称，用于调试</td>
+<td>否</td>
+</tr>
+<tr>
+<td>match</td>
+<td>HTTPMatchRequest[]</td>
+<td>匹配的条件，单个匹配块里面是与的关系，多个匹配块列表是或的关系</td>
+<td>否</td>
+</tr>
+<tr>
+<td>route</td>
+<td>HTTPRouteDestination[]</td>
+<td>要么返回直接响应，要么返回重定向。转发到服务的某个版本，权重决定了流量的比例</td>
+<td>否</td>
+</tr>
+</tbody>
+</table>
+<p>HTTPMatchRequest 重点字段说明如下，其中 uri、scheme、method、authority 都是大小写敏感，格式可以是全路径、前缀、正则方式：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>类型</th>
+<th>说明</th>
+<th>必填</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uri</td>
+<td>StringMatch</td>
+<td>匹配的 url，</td>
+<td>否</td>
+</tr>
+<tr>
+<td>scheme</td>
+<td>StringMatch</td>
+<td>匹配的 url scheme</td>
+<td>否</td>
+</tr>
+<tr>
+<td>method</td>
+<td>StringMatch</td>
+<td>匹配的 url method</td>
+<td>否</td>
+</tr>
+<tr>
+<td>authority</td>
+<td>StringMatch</td>
+<td>匹配的 url，说明见 <a href="https://zhuanlan.zhihu.com/p/216488873">彻底了解 URL</a></td>
+<td>否</td>
+</tr>
+<tr>
+<td>headers</td>
+<td>map&lt;string, StringMatch&gt;</td>
+<td>必须小写，用连字符作为分隔符，如果只指定了头的名称，但值为空，那么将检查头是否存在</td>
+<td>否</td>
+</tr>
+<tr>
+<td>port</td>
+<td>uint32</td>
+<td>指定被寻址的主机上的端口</td>
+<td>否</td>
+</tr>
+<tr>
+<td>queryParams</td>
+<td>map&lt;string, StringMatch&gt;</td>
+<td>匹配的查询参数</td>
+<td>否</td>
+</tr>
+<tr>
+<td>withoutHeaders</td>
+<td>map&lt;string, StringMatch&gt;</td>
+<td>跟 headers 相反，匹配没有某些 header</td>
+<td>否</td>
+</tr>
+</tbody>
+</table>
+<p>HTTPRouteDestination 字段说明如下：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>类型</th>
+<th>说明</th>
+<th>必填</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>destination</td>
+<td>Destination</td>
+<td>转发的目的服务</td>
+<td>是</td>
+</tr>
+<tr>
+<td>weight</td>
+<td>int32</td>
+<td>转发流量权重</td>
+<td>否</td>
+</tr>
+<tr>
+<td>headers</td>
+<td>StringMatch</td>
+<td>匹配的 url，</td>
+<td>否</td>
+</tr>
+<tr>
+<td>headers</td>
+<td>Headers</td>
+<td>header 处理规则，用于请求和响应时增加或者删除某个 header 字段</td>
+<td>否</td>
+</tr>
+</tbody>
+</table>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://istio.io/latest/docs/tasks/traffic-management/">Istio 流量管理</a></li>
+</ul>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">yefengzhichen</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2023-05-08
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="../../tags/kubernetes/">kubernetes</a>
+          <a href="../../tags/istio/">istio</a>
+          <a href="../../tags/canary-release/">canary release</a>
+          </div>
+      <nav class="post-nav">
+        
+        <a class="next" href="../../post/istio_dns/">
+            <span class="next-text nav-default">Istio dns 原理详解</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="yefengzhichen/yefengzhichen.github.io"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="zhutao_hust@foxmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/yefengzhichen" class="iconfont icon-github" title="github"></a>
+  <a href="https://yefengzhichen.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  <div class="busuanzi-footer">
+    <span id="busuanzi_container_site_pv"> 本站总访问量 <span id="busuanzi_value_site_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次 </span>
+      <span class="division">|</span>
+    <span id="busuanzi_container_site_uv"> 本站总访客数 <span id="busuanzi_value_site_uv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 人 </span>
+  </div>
+
+  <span class="copyright-year">
+    &copy; 
+    2022 - 
+    2023<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="../../js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

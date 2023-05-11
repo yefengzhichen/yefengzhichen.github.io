@@ -2,8 +2,64 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://yefengzhichen.github.io/tags/canary-release/</loc>
+    <lastmod>2023-05-08T18:46:11+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
     <loc>https://yefengzhichen.github.io/categories/</loc>
-    <lastmod>2023-03-29T09:55:25+08:00</lastmod>
+    <lastmod>2023-05-08T18:46:11+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/istio/</loc>
+    <lastmod>2023-05-08T18:46:11+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/post/istio_release/</loc>
+    <lastmod>2023-05-08T18:46:11+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/kubernetes/</loc>
+    <lastmod>2023-05-08T18:46:11+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/post/</loc>
+    <lastmod>2023-05-08T18:46:11+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/</loc>
+    <lastmod>2023-05-08T18:46:11+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/</loc>
+    <lastmod>2023-05-08T18:46:11+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/categories/%E4%BA%91%E5%8E%9F%E7%94%9F/</loc>
+    <lastmod>2023-05-08T18:46:11+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -16,49 +72,7 @@
   </url>
   
   <url>
-    <loc>https://yefengzhichen.github.io/tags/istio/</loc>
-    <lastmod>2023-03-29T09:55:25+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
     <loc>https://yefengzhichen.github.io/post/istio_dns/</loc>
-    <lastmod>2023-03-29T09:55:25+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
-    <loc>https://yefengzhichen.github.io/tags/kubernetes/</loc>
-    <lastmod>2023-03-29T09:55:25+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
-    <loc>https://yefengzhichen.github.io/post/</loc>
-    <lastmod>2023-03-29T09:55:25+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
-    <loc>https://yefengzhichen.github.io/tags/</loc>
-    <lastmod>2023-03-29T09:55:25+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
-    <loc>https://yefengzhichen.github.io/</loc>
-    <lastmod>2023-03-29T09:55:25+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
-    <loc>https://yefengzhichen.github.io/categories/%E4%BA%91%E5%8E%9F%E7%94%9F/</loc>
     <lastmod>2023-03-29T09:55:25+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>canary release on yefengzhichen&#39;s blog</title>
+    <link>https://yefengzhichen.github.io/tags/canary-release/</link>
+    <description>Recent content in canary release on yefengzhichen&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Mon, 08 May 2023 18:46:11 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/canary-release/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Istio 灰度发布</title>
+      <link>https://yefengzhichen.github.io/post/istio_release/</link>
+      <pubDate>Mon, 08 May 2023 18:46:11 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/post/istio_release/</guid>
+      <description>灰度发布介绍 灰度发布，又名金丝雀发布（canary release、canary launch 或 canary deployment ），是指在黑与白之间，能够平滑过渡的一种发布方式。是指</description>
+    </item>
+    
+  </channel>
+</rss>
