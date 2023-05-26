@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>gateway on yefengzhichen&#39;s blog</title>
+    <link>https://yefengzhichen.github.io/tags/gateway/</link>
+    <description>Recent content in gateway on yefengzhichen&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Fri, 05 May 2023 18:46:11 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/gateway/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Istio Ingress/Egress 详解</title>
+      <link>https://yefengzhichen.github.io/post/istio_gateway/</link>
+      <pubDate>Fri, 05 May 2023 18:46:11 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/post/istio_gateway/</guid>
+      <description>Gateway 介绍 Istio Gateway 描述在网格边缘运行的负载均衡器，用于接收传入或传出的 HTTP/TCP 连接。Istio Gateway 网关跟 sidecar 代理都是使用的 envoy 程序，其配置也可以用 istioctl 命令来查看。</description>
+    </item>
+    
+  </channel>
+</rss>

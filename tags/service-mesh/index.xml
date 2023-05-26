@@ -6,7 +6,16 @@
     <description>Recent content in service mesh on yefengzhichen&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Tue, 21 Feb 2023 17:47:45 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/service-mesh/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 22 May 2023 18:46:11 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/service-mesh/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Istio 服务可见性和命名空间隔离</title>
+      <link>https://yefengzhichen.github.io/post/istio_visibility/</link>
+      <pubDate>Mon, 22 May 2023 18:46:11 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/post/istio_visibility/</guid>
+      <description>服务可见性 istio 中每个服务默认可以访问网格中的任何服务，因此 istio 下发给每个 sidecar 的配置中会包含全量的服务数据，sidecar 可能会出现负载过高、内存过</description>
+    </item>
+    
     <item>
       <title>dubbo 多种部署场景测试</title>
       <link>https://yefengzhichen.github.io/post/dubbo_demo/</link>

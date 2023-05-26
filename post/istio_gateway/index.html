@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Istio Ingress/Egress 详解 - yefengzhichen&#39;s blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="yefengzhichen" /><meta name="description" content="Gateway 介绍 Istio Gateway 描述在网格边缘运行的负载均衡器，用于接收传入或传出的 HTTP/TCP 连接。Istio Gateway 网关跟 sidecar 代理都是使用的 envoy 程序，其配置也可以用 istioctl 命令来查看。" /><meta name="keywords" content="Hugo, theme, even" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.92.1 with theme even" />
+
+
+<link rel="canonical" href="https://yefengzhichen.github.io/post/istio_gateway/" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../favicon-16x16.png">
+<link rel="manifest" href="../../manifest.json">
+<link rel="mask-icon" href="../../safari-pinned-tab.svg" color="#5bbad5">
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<link href="../../sass/main.min.f92fd13721ddf72129410fd8250e73152cc6f2438082b6c0208dc24ee7c13fc4.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="Istio Ingress/Egress 详解" />
+<meta property="og:description" content="Gateway 介绍 Istio Gateway 描述在网格边缘运行的负载均衡器，用于接收传入或传出的 HTTP/TCP 连接。Istio Gateway 网关跟 sidecar 代理都是使用的 envoy 程序，其配置也可以用 istioctl 命令来查看。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yefengzhichen.github.io/post/istio_gateway/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2023-05-05T18:46:11+08:00" />
+<meta property="article:modified_time" content="2023-05-05T18:46:11+08:00" />
+
+<meta itemprop="name" content="Istio Ingress/Egress 详解">
+<meta itemprop="description" content="Gateway 介绍 Istio Gateway 描述在网格边缘运行的负载均衡器，用于接收传入或传出的 HTTP/TCP 连接。Istio Gateway 网关跟 sidecar 代理都是使用的 envoy 程序，其配置也可以用 istioctl 命令来查看。"><meta itemprop="datePublished" content="2023-05-05T18:46:11+08:00" />
+<meta itemprop="dateModified" content="2023-05-05T18:46:11+08:00" />
+<meta itemprop="wordCount" content="5104">
+<meta itemprop="keywords" content="kubernetes,istio,gateway," /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Istio Ingress/Egress 详解"/>
+<meta name="twitter:description" content="Gateway 介绍 Istio Gateway 描述在网格边缘运行的负载均衡器，用于接收传入或传出的 HTTP/TCP 连接。Istio Gateway 网关跟 sidecar 代理都是使用的 envoy 程序，其配置也可以用 istioctl 命令来查看。"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="../../">
+        <li class="mobile-menu-item">首页</li>
+      </a><a href="../../post/">
+        <li class="mobile-menu-item">列表</li>
+      </a><a href="../../tags/">
+        <li class="mobile-menu-item">标签</li>
+      </a><a href="../../categories/">
+        <li class="mobile-menu-item">分类</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="../../">首页</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../post/">列表</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../tags/">标签</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../categories/">分类</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">Istio Ingress/Egress 详解</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2023-05-05 </span>
+        <div class="post-category">
+            <a href="../../categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
+            </div>
+          <span class="more-meta"> 约 5104 字 </span>
+          <span class="more-meta"> 预计阅读 11 分钟 </span>
+        <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#gateway-介绍">Gateway 介绍</a></li>
+        <li><a href="#ingress-网关">Ingress 网关</a>
+          <ul>
+            <li><a href="#集群入口介绍">集群入口介绍</a></li>
+            <li><a href="#部署测试">部署测试</a></li>
+            <li><a href="#流量分析">流量分析</a></li>
+          </ul>
+        </li>
+        <li><a href="#egress-访问外部服务">Egress 访问外部服务</a>
+          <ul>
+            <li><a href="#直接访问">直接访问</a></li>
+            <li><a href="#通过-serviceentry-访问">通过 ServiceEntry 访问</a></li>
+            <li><a href="#绕过代理">绕过代理</a></li>
+          </ul>
+        </li>
+        <li><a href="#egress-出口网关">Egress 出口网关</a>
+          <ul>
+            <li><a href="#直接访问-1">直接访问</a></li>
+            <li><a href="#通过-gateway-访问">通过 gateway 访问</a></li>
+          </ul>
+        </li>
+        <li><a href="#gateway-字段说明">Gateway 字段说明</a></li>
+        <li><a href="#参考">参考</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h2 id="gateway-介绍">Gateway 介绍</h2>
+<p>Istio Gateway 描述在网格边缘运行的负载均衡器，用于接收传入或传出的 HTTP/TCP 连接。Istio Gateway 网关跟 sidecar 代理都是使用的 envoy 程序，其配置也可以用 istioctl 命令来查看。</p>
+<p>Istio Gateway 分为 Ingress 和 Egress 网关，分别描述集群的入口和出口。在安装 Istio 时，可以指定是否安装网关，比如指定安装出口网关：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">istioctl install &lt;flags-you-used-to-install-Istio&gt; <span class="se">\
+</span><span class="se"></span>                   --set components.egressGateways<span class="o">[</span>0<span class="o">]</span>.name<span class="o">=</span>istio-egressgateway <span class="se">\
+</span><span class="se"></span>                   --set components.egressGateways<span class="o">[</span>0<span class="o">]</span>.enabled<span class="o">=</span><span class="nb">true</span>
+
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="ingress-网关">Ingress 网关</h2>
+<h3 id="集群入口介绍">集群入口介绍</h3>
+<p>istio 支持三种方式暴露服务网格集群内的服务：</p>
+<ul>
+<li>Kubernetes Ingress：Kubernets 1.19 版本引入的，Ingress 仅支持 HTTP 协议路由。</li>
+<li>Istio Gateway：Gateway 提供了更广泛的自定义和灵活性，并允许将 Istio 功能应用于进入集群的流量。</li>
+<li>Kubernetes Gateway API：2022 年 7 月正式进入 beta 阶段，目前 Istio 提供了 Gateway API 的 beta 支持，Gateway API 是一种规范，并不提供实现。</li>
+</ul>
+<p>Istio 中推荐使用 Gateway 暴露服务，因 Gateway API 还没发布正式版，这里主要讨论 Istio Gateway 的使用和原理。</p>
+<h3 id="部署测试">部署测试</h3>
+<p>本地使用的 k3s 安装的 kubernetes 集群，使用 istioctl 安装的 istio：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">istioctl install --set <span class="nv">profile</span><span class="o">=</span>demo -y
+kubectl label namespace default istio-injection<span class="o">=</span>enabled
+</code></pre></td></tr></table>
+</div>
+</div><p>部署 httpbin：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">// 下载的 istio release 包
+<span class="nb">cd</span> istio-1.16.1
+kubectl apply -f samples/httpbin/httpbin.yaml
+</code></pre></td></tr></table>
+</div>
+</div><p>Ingress Gateway 描述在网格边缘运行的负载均衡器，用于接收传入的 HTTP/TCP 连接。它会配置暴露的端口、协议等，但与 Kubernetes Ingress 资源不同，不会包括任何流量路由配置。 转而使用路由规则来配置入口流量的流量路由，这与内部服务请求所用的方式相同。创建如下的 Istio Gateway：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubectl apply -f - <span class="s">&lt;&lt;EOF
+</span><span class="s">apiVersion: networking.istio.io/v1alpha3
+</span><span class="s">kind: Gateway
+</span><span class="s">metadata:
+</span><span class="s">  name: httpbin-gateway
+</span><span class="s">spec:
+</span><span class="s">  selector:
+</span><span class="s">    istio: ingressgateway # use Istio default gateway implementation
+</span><span class="s">  servers:
+</span><span class="s">  - port:
+</span><span class="s">      number: 80
+</span><span class="s">      name: http
+</span><span class="s">      protocol: HTTP
+</span><span class="s">    hosts:
+</span><span class="s">    - &#34;httpbin.example.com&#34;
+</span><span class="s">EOF</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>设置流量路由配置：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubectl apply -f - <span class="s">&lt;&lt;EOF
+</span><span class="s">apiVersion: networking.istio.io/v1alpha3
+</span><span class="s">kind: VirtualService
+</span><span class="s">metadata:
+</span><span class="s">  name: httpbin
+</span><span class="s">spec:
+</span><span class="s">  hosts:
+</span><span class="s">  - &#34;httpbin.example.com&#34;
+</span><span class="s">  gateways:
+</span><span class="s">  - httpbin-gateway
+</span><span class="s">  http:
+</span><span class="s">  - match:
+</span><span class="s">    - uri:
+</span><span class="s">        prefix: /status
+</span><span class="s">    - uri:
+</span><span class="s">        prefix: /delay
+</span><span class="s">    route:
+</span><span class="s">    - destination:
+</span><span class="s">        port:
+</span><span class="s">          number: 8000
+</span><span class="s">        host: httpbin
+</span><span class="s">EOF</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>每一个网关都由一个 LoadBalancer 类型的服务支持，该服务的外部负载均衡器 IP 和端口用于访问 Gateway，大多数云平台上运行的集群默认支持类型为 LoadBalancer 的 Kubernetes 服务。如果 k3s 的节点设置了 lb 标签，“svccontroller.k3s.cattle.io/enablelb: &ldquo;true&rdquo;”，则直接如下访问即可：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="nb">export</span> <span class="nv">INGRESS_HOST</span><span class="o">=</span><span class="k">$(</span>kubectl -n <span class="s2">&#34;</span><span class="nv">$INGRESS_NS</span><span class="s2">&#34;</span> get service <span class="s2">&#34;</span><span class="nv">$INGRESS_NAME</span><span class="s2">&#34;</span> -o <span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.status.loadBalancer.ingress[0].ip}&#39;</span><span class="k">)</span>
+<span class="nb">export</span> <span class="nv">INGRESS_PORT</span><span class="o">=</span><span class="k">$(</span>kubectl -n <span class="s2">&#34;</span><span class="nv">$INGRESS_NS</span><span class="s2">&#34;</span> get service <span class="s2">&#34;</span><span class="nv">$INGRESS_NAME</span><span class="s2">&#34;</span> -o <span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.spec.ports[?(@.name==&#34;http2&#34;)].port}&#39;</span><span class="k">)</span>
+// 示例：curl -vs -I -HHost:httpbin.example.com <span class="s2">&#34;http://172.19.52.50:80/status/200&#34;</span>
+curl -s -I -HHost:httpbin.example.com <span class="s2">&#34;http://</span><span class="nv">$INGRESS_HOST</span><span class="s2">:</span><span class="nv">$INGRESS_PORT</span><span class="s2">/status/200&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>如果 k3s 的节点没有设置 lb 标签，需要通过 nodePort 方式访问：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="nb">export</span> <span class="nv">INGRESS_HOST</span><span class="o">=</span><span class="k">$(</span>kubectl get po -l <span class="nv">istio</span><span class="o">=</span>ingressgateway -n <span class="s2">&#34;</span><span class="si">${</span><span class="nv">INGRESS_NS</span><span class="si">}</span><span class="s2">&#34;</span> -o <span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.items[0].status.hostIP}&#39;</span><span class="k">)</span>
+<span class="nb">export</span> <span class="nv">INGRESS_PORT</span><span class="o">=</span><span class="k">$(</span>kubectl -n <span class="s2">&#34;</span><span class="si">${</span><span class="nv">INGRESS_NS</span><span class="si">}</span><span class="s2">&#34;</span> get service <span class="s2">&#34;</span><span class="si">${</span><span class="nv">INGRESS_NAME</span><span class="si">}</span><span class="s2">&#34;</span> -o <span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.spec.ports[?(@.name==&#34;http2&#34;)].nodePort}&#39;</span><span class="k">)</span>
+// 示例：curl -s -I -HHost:httpbin.example.com <span class="s2">&#34;http://172.19.52.50:31532/status/200&#34;</span>
+curl -s -I -HHost:httpbin.example.com <span class="s2">&#34;http://</span><span class="nv">$INGRESS_HOST</span><span class="s2">:</span><span class="nv">$INGRESS_PORT</span><span class="s2">/status/200&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="流量分析">流量分析</h3>
+<p>上面通过LoadBalancer和nodePort方式暴露Gateway，来访问集群内部服务，其流量走向如下图所示：
+<img src="../../image/istio_gateway/istio_ingress_gateway.png" alt="istio_ingress_gateway" title="istio_ingress_gateway"></p>
+<p>即从集群外面通过 LoadBalancer 或者 nodePort 返回请求到 ingressgateway svc，然后根据 Gateway 的配置，将请求转发到对应的 VirtualService，再根据 VirtualService 的配置，将请求转发到对应的 DestinationRule，最后将请求转发到对应的服务：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@cluster1:~# kubectl get svc -nistio-system istio-ingressgateway
+NAME                   TYPE           CLUSTER-IP    EXTERNAL-IP      PORT<span class="o">(</span>S<span class="o">)</span>
+istio-ingressgateway   LoadBalancer   10.45.36.89   xxx  15021:31942/TCP,80:31532/TCP,443:31936/TCP,31400:32353/TCP,15443:31263/TCP
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看到，istio-ingressgateway 服务中 80 端口对应的是 http2 协议，其 targetPort 为 8080，即转发到 istio-ingressgateway pod 监听的端口：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@cluster1:~# kubectl get pods -nistio-system
+NAME                                    READY   STATUS    RESTARTS   AGE
+istiod-6cd994fc86-gf8jn                 1/1     Running   <span class="m">0</span>          5d23h
+istio-ingressgateway-85c59bdcd9-bbsj4   1/1     Running   <span class="m">0</span>          5d23h
+istio-egressgateway-5985746885-rscdw    1/1     Running   <span class="m">0</span>          5d23h
+
+// 查看 listener
+root@cluster1:~# istioctl pc listener istio-ingressgateway-85c59bdcd9-bbsj4.istio-system
+ADDRESS PORT  MATCH DESTINATION
+0.0.0.0 <span class="m">8080</span>  ALL   Route: http.8080
+0.0.0.0 <span class="m">15021</span> ALL   Inline Route: /healthz/ready*
+0.0.0.0 <span class="m">15090</span> ALL   Inline Route: /stats/prometheus*
+
+// 查看路由，设置了匹配的 host 和目的服务
+root@cluster1:~# istioctl pc route istio-ingressgateway-85c59bdcd9-bbsj4.istio-system
+NAME          DOMAINS                 MATCH                  VIRTUAL SERVICE
+http.8080     httpbin.example.com     /status*               httpbin.default
+http.8080     httpbin.example.com     /delay*                httpbin.default
+              *                       /healthz/ready*
+              *                       /stats/prometheus*
+
+// 查看 cluster
+root@cluster1:~# istioctl pc cluster istio-ingressgateway-85c59bdcd9-bbsj4.istio-system <span class="p">|</span> grep httpbin
+SERVICE FQDN                                            PORT      SUBSET     DIRECTION     TYPE           DESTINATION RULE
+httpbin.default.svc.cluster.local                       <span class="m">8000</span>      -          outbound      EDS
+
+// 查看 endpoints
+root@cluster1:~# istioctl pc endpoint istio-ingressgateway-85c59bdcd9-bbsj4.istio-system <span class="p">|</span> grep httpbin
+10.44.0.12:80                                           HEALTHY     OK                outbound<span class="p">|</span>8000<span class="o">||</span>httpbin.default.svc.cluster.local
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="egress-访问外部服务">Egress 访问外部服务</h2>
+<p>istio 中访问外部服务的流量都会到代理 sidecar 中，根据 istio 的安装选项“meshConfig.outboundTrafficPolicy.mode”值不同，sidecar 有不同的处理方式：</p>
+<ul>
+<li>ALLOW_ANY：允许访问所有未知服务</li>
+<li>REGISTRY_ONLY：只允许访问在 ServiceEntry 中注册的服务</li>
+</ul>
+<p>通过这种方式访问外部服务，其流量走向如下图所示：
+<img src="../../image/istio_gateway/istio_egress_direct.png" alt="istio_egress_direct" title="istio_egress_direct"></p>
+<h3 id="直接访问">直接访问</h3>
+<p>本地使用的 k3s 安装的 kubernetes 集群，使用 istioctl 安装的 istio：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">istioctl install --set <span class="nv">profile</span><span class="o">=</span>demo -y
+kubectl label namespace default istio-injection<span class="o">=</span>enabled
+</code></pre></td></tr></table>
+</div>
+</div><p>部署 sleep：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">// 下载的 istio release 包
+<span class="nb">cd</span> istio-1.16.1
+kubectl apply -f samples/sleep/sleep.yaml
+</code></pre></td></tr></table>
+</div>
+</div><p>istio 中配置“meshConfig.outboundTrafficPolicy.mode”设置 sidecar 对外部服务的处理方式，默认为 ALLOW_ANY，允许调用未知的服务。此时测试：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@cluster1:~# <span class="nb">export</span> <span class="nv">SOURCE_POD</span><span class="o">=</span><span class="k">$(</span>kubectl get pod -l <span class="nv">app</span><span class="o">=</span>sleep -o <span class="nv">jsonpath</span><span class="o">={</span>.items..metadata.name<span class="o">}</span><span class="k">)</span>
+root@cluster1:~# kubectl <span class="nb">exec</span> <span class="s2">&#34;</span><span class="nv">$SOURCE_POD</span><span class="s2">&#34;</span> -c sleep -- curl -sSI https://www.baidu.com <span class="p">|</span> grep  <span class="s2">&#34;HTTP/&#34;</span><span class="p">;</span> kubectl <span class="nb">exec</span> <span class="s2">&#34;</span><span class="nv">$SOURCE_POD</span><span class="s2">&#34;</span> -c sleep -- curl -sI https://edition.cnn.com <span class="p">|</span> grep <span class="s2">&#34;HTTP/&#34;</span>
+HTTP/1.1 <span class="m">200</span> OK
+HTTP/2 <span class="m">200</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="通过-serviceentry-访问">通过 ServiceEntry 访问</h3>
+<p>重新安装 istio，设置 “meshConfig.outboundTrafficPolicy.mode”选项为 REGISTRY_ONLY，只允许访问 ServiceEntry 中配置的服务：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@cluster1:~# istioctl install --set <span class="nv">profile</span><span class="o">=</span>demo -y --set meshConfig.outboundTrafficPolicy.mode<span class="o">=</span>REGISTRY_ONLY
+
+// 等待生效后
+root@cluster1:~# kubectl <span class="nb">exec</span> <span class="s2">&#34;</span><span class="nv">$SOURCE_POD</span><span class="s2">&#34;</span> -c sleep -- curl -sSI https://www.baidu.com <span class="p">|</span> grep  <span class="s2">&#34;HTTP/&#34;</span><span class="p">;</span> kubectl <span class="nb">exec</span> <span class="s2">&#34;</span><span class="nv">$SOURCE_POD</span><span class="s2">&#34;</span> -c sleep -- curl -sI https://edition.cnn.com <span class="p">|</span> grep <span class="s2">&#34;HTTP/&#34;</span>
+<span class="nb">command</span> terminated with <span class="nb">exit</span> code <span class="m">35</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>配置 ServiceEntry 来允许访问“httpbin.org”这个 host。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">networking.istio.io/v1alpha3</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">ServiceEntry</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">httpbin-ext</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">hosts</span><span class="p">:</span><span class="w"> </span><span class="c"># 匹配的 hosts</span><span class="w">
+</span><span class="w">  </span>- <span class="l">httpbin.org</span><span class="w">
+</span><span class="w">  </span><span class="nt">ports</span><span class="p">:</span><span class="w"> </span><span class="c"># 外部服务的端口</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">number</span><span class="p">:</span><span class="w"> </span><span class="m">80</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">http</span><span class="w">
+</span><span class="w">    </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l">HTTP</span><span class="w"> </span><span class="c"># 协议，可以为 HTTP|HTTPS|GRPC|HTTP2|MONGO|TCP|TLS</span><span class="w">
+</span><span class="w">  </span><span class="nt">resolution</span><span class="p">:</span><span class="w"> </span><span class="l">DNS</span><span class="w"> </span><span class="c"># 通过环境中的 dns 异步解析地址，可以为 NONE|STATIC|DNS|DNS_ROUND_ROBIN</span><span class="w">
+</span><span class="w">  </span><span class="nt">location</span><span class="p">:</span><span class="w"> </span><span class="l">MESH_EXTERNAL</span><span class="w"> </span><span class="c"># 标识服务位于网格内还是网格外，可以为，MESH_INTERNAL|MESH_EXTERNAL</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>查看 pods 的 sidecar 配置如下，显示 cluster 中的 httpbin.org 服务已经配置了 DNS 解析，并且 endpoints 配置中已经获取到了两个 ip 地址：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@cluster1:~# istioctl pc listener sleep-bc9998558-s6rcm <span class="p">|</span> grep <span class="s2">&#34;80&#34;</span>
+0.0.0.0       <span class="m">80</span>    Trans: raw_buffer<span class="p">;</span> App: http/1.1,h2c                                                          Route: <span class="m">80</span>
+root@cluster1:~# istioctl pc route sleep-bc9998558-s6rcm <span class="p">|</span> grep <span class="s2">&#34;httpbin.org&#34;</span>
+<span class="m">80</span>                                                            httpbin.org                                          /*
+root@cluster1:~# istioctl pc cluster sleep-bc9998558-s6rcm <span class="p">|</span> grep httpbin.org
+httpbin.org                                             <span class="m">80</span>        -          outbound      STRICT_DNS
+root@cluster1:~# istioctl pc endpoints sleep-bc9998558-s6rcm <span class="p">|</span> grep httpbin.org
+3.230.204.70:80                                         HEALTHY     OK                outbound<span class="p">|</span>80<span class="o">||</span>httpbin.org
+34.193.132.77:80                                        HEALTHY     OK                outbound<span class="p">|</span>80<span class="o">||</span>httpbin.org
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="绕过代理">绕过代理</h3>
+<p>如果想在 istio 集群中，针对特定的 IP 范围绕过 sidecar 直接访问，可以使用“global.proxy.includeIPRanges”或“global.proxy.excludeIPRanges”配置项。</p>
+<p>集群在创建时，都会设置 pods 和 service 的可用 ip 范围，因此推荐使用“global.proxy.includeIPRanges”。通过以下命令，查看 apiserver 配置的 service ip 范围：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="o">[</span>root@node-1 ~<span class="o">]</span><span class="c1"># kubectl describe pod kube-apiserver -n kube-system | grep &#39;service-cluster-ip-range&#39;</span>
+      --service-cluster-ip-range<span class="o">=</span>10.222.0.0/16
+</code></pre></td></tr></table>
+</div>
+</div><p>因为这里测试用的是 k3s，没有 kube-apiserver 这个 pod，但是 k3s 可以在安装时通过参数“INSTALL_K3S_EXEC=&quot;&ndash;cluster-cidr 10.44.0.0/16 &ndash;service-cidr 10.45.0.0/16&quot;”来设置，直接根据这个值重新安装 istio：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">istioctl install --set <span class="nv">profile</span><span class="o">=</span>demo -y --set values.global.proxy.includeIPRanges<span class="o">=</span><span class="s2">&#34;10.45.0.0/16&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="egress-出口网关">Egress 出口网关</h2>
+<p>上面的例子是通过 sidecar 直接调用的外部服务，而这里展示通过专用的 egress gateway 服务间接调用外部服务。有两种场景会使用出口网关：</p>
+<ul>
+<li>对安全有严格要求，要求网格所有出站流量必须经过专用节点。这些专用节点用于实施 egress 流量的策略，并且受到比其余节点更严密地监控。</li>
+<li>应用节点没有公网 IP，无法访问互联网，但是 egress gateway 节点分配了公有 IP ，可以用它引导所有的出站流量，访问外部服务。</li>
+</ul>
+<h3 id="直接访问-1">直接访问</h3>
+<p>同样的，先部署测试 pods：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubectl apply -f samples/sleep/sleep.yaml
+<span class="nb">export</span> <span class="nv">SOURCE_POD</span><span class="o">=</span><span class="k">$(</span>kubectl get pod -l <span class="nv">app</span><span class="o">=</span>sleep -o <span class="nv">jsonpath</span><span class="o">={</span>.items..metadata.name<span class="o">}</span><span class="k">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>为 edition.cnn.com 定义一个 ServiceEntry：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubectl apply -f - <span class="s">&lt;&lt;EOF
+</span><span class="s">apiVersion: networking.istio.io/v1alpha3
+</span><span class="s">kind: ServiceEntry
+</span><span class="s">metadata:
+</span><span class="s">  name: cnn
+</span><span class="s">spec:
+</span><span class="s">  hosts:
+</span><span class="s">  - edition.cnn.com
+</span><span class="s">  ports:
+</span><span class="s">  - number: 80
+</span><span class="s">    name: http-port
+</span><span class="s">    protocol: HTTP
+</span><span class="s">  - number: 443
+</span><span class="s">    name: https
+</span><span class="s">    protocol: HTTPS
+</span><span class="s">  resolution: DNS
+</span><span class="s">EOF</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>此时测试发送 http 请求，可以看到能返回成功，验证 ServiceEntry 是否已正确应用：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubectl <span class="nb">exec</span> <span class="s2">&#34;</span><span class="nv">$SOURCE_POD</span><span class="s2">&#34;</span> -c sleep -- curl -sSL -o /dev/null -D - http://edition.cnn.com/politics
+...
+HTTP/1.1 <span class="m">301</span> Moved Permanently
+...
+location: https://edition.cnn.com/politics
+...
+
+HTTP/2 <span class="m">200</span>
+Content-Type: text/html<span class="p">;</span> <span class="nv">charset</span><span class="o">=</span>utf-8
+...
+</code></pre></td></tr></table>
+</div>
+</div><p>通过查看 envoy 配置，可以看到 http 流量的走向如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">// 获取 http 的 listener，会路由到名称为 <span class="m">80</span> 的路由
+root@cluster1:~# istioctl pc listener sleep-bc9998558-xkzlp <span class="p">|</span> grep <span class="m">80</span>
+0.0.0.0       <span class="m">80</span>    Trans: raw_buffer<span class="p">;</span> App: http/1.1,h2c                                                          Route: <span class="m">80</span>
+// <span class="m">80</span> 路由中，根据 host 匹配到 edition.cnn.com，根据此路由的 json 输出，可以看到路由到 cluster <span class="s2">&#34;outbound|80||edition.cnn.com&#34;</span>
+root@cluster1:~# istioctl pc route sleep-bc9998558-xkzlp --name <span class="m">80</span>
+NAME     DOMAINS                                              MATCH     VIRTUAL SERVICE
+<span class="m">80</span>       edition.cnn.com                                      /*
+// cluster 中指定了 dns 解析方式
+root@cluster1:~# istioctl pc cluster sleep-bc9998558-xkzlp --fqdn <span class="s2">&#34;outbound|80||edition.cnn.com&#34;</span>
+SERVICE FQDN        PORT     SUBSET     DIRECTION     TYPE           DESTINATION RULE
+edition.cnn.com     <span class="m">80</span>       -          outbound      STRICT_DNS
+// 查看 endpoints
+root@cluster1:~# istioctl pc endpoints sleep-bc9998558-xkzlp --cluster <span class="s2">&#34;outbound|80||edition.cnn.com&#34;</span>
+ENDPOINT             STATUS      OUTLIER CHECK     CLUSTER
+151.101.131.5:80     HEALTHY     OK                outbound<span class="p">|</span>80<span class="o">||</span>edition.cnn.com
+151.101.195.5:80     HEALTHY     OK                outbound<span class="p">|</span>80<span class="o">||</span>edition.cnn.com
+</code></pre></td></tr></table>
+</div>
+</div><p>因为这个 host 会返回 301 重定向到 https 地址，继续查看 https 流量的走向如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">// listener 通过 SNI（服务名称指示）匹配 host
+root@cluster1:~# istioctl pc listener sleep-bc9998558-xkzlp <span class="p">|</span> grep <span class="m">443</span>
+0.0.0.0       <span class="m">443</span>   SNI: edition.cnn.com              Cluster: outbound<span class="p">|</span>443<span class="o">||</span>edition.cnn.com
+// cluster 中指定了 dns 解析方式
+root@cluster1:~# istioctl pc cluster sleep-bc9998558-xkzlp --fqdn <span class="s2">&#34;outbound|443||edition.cnn.com&#34;</span>
+SERVICE FQDN        PORT     SUBSET     DIRECTION     TYPE           DESTINATION RULE
+edition.cnn.com     <span class="m">443</span>      -          outbound      STRICT_DNS
+// 查看 endpoints
+root@cluster1:~# istioctl pc endpoints sleep-bc9998558-xkzlp --cluster <span class="s2">&#34;outbound|443||edition.cnn.com&#34;</span>
+ENDPOINT              STATUS      OUTLIER CHECK     CLUSTER
+151.101.131.5:443     HEALTHY     OK                outbound<span class="p">|</span>443<span class="o">||</span>edition.cnn.com
+151.101.195.5:443     HEALTHY     OK                outbound<span class="p">|</span>443<span class="o">||</span>edition.cnn.com
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="通过-gateway-访问">通过 gateway 访问</h3>
+<p>为 edition.cnn.com 端口 80 创建 egress Gateway。并为指向 egress gateway 的流量创建一个 destination rule。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">networking.istio.io/v1alpha3</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Gateway</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">istio-egressgateway</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">istio</span><span class="p">:</span><span class="w"> </span><span class="l">egressgateway</span><span class="w">
+</span><span class="w">  </span><span class="nt">servers</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">port</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">number</span><span class="p">:</span><span class="w"> </span><span class="m">80</span><span class="w">
+</span><span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">http</span><span class="w">
+</span><span class="w">      </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l">HTTP</span><span class="w">
+</span><span class="w">    </span><span class="nt">hosts</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="l">edition.cnn.com</span><span class="w">
+</span><span class="w"></span><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">networking.istio.io/v1alpha3</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">DestinationRule</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">egressgateway-for-cnn</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l">istio-egressgateway.istio-system.svc.cluster.local</span><span class="w">
+</span><span class="w">  </span><span class="nt">subsets</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">cnn</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>定义一个 VirtualService，将流量从 sidecar 引导至 Egress Gateway，再从 Egress Gateway 引导至外部服务：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">networking.istio.io/v1alpha3</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">VirtualService</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">direct-cnn-through-egress-gateway</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">hosts</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="l">edition.cnn.com</span><span class="w">
+</span><span class="w">  </span><span class="nt">gateways</span><span class="p">:</span><span class="w"> </span><span class="c"># 应用这些 route 的 gateway 和 sidecar 的名称，其他命名空间的网关可以用&lt;网关命名空间&gt;/&lt;网关名称&gt;来指代，“mesh”表示网格中的所有 sidecar</span><span class="w">
+</span><span class="w">  </span>- <span class="l">istio-egressgateway</span><span class="w">
+</span><span class="w">  </span>- <span class="l">mesh</span><span class="w">
+</span><span class="w">  </span><span class="nt">http</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">match</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">gateways</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span>- <span class="l">mesh</span><span class="w">
+</span><span class="w">      </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">80</span><span class="w">
+</span><span class="w">    </span><span class="nt">route</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">destination</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l">istio-egressgateway.istio-system.svc.cluster.local</span><span class="w">
+</span><span class="w">        </span><span class="nt">subset</span><span class="p">:</span><span class="w"> </span><span class="l">cnn</span><span class="w">
+</span><span class="w">        </span><span class="nt">port</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">number</span><span class="p">:</span><span class="w"> </span><span class="m">80</span><span class="w">
+</span><span class="w">      </span><span class="nt">weight</span><span class="p">:</span><span class="w"> </span><span class="m">100</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">match</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">gateways</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span>- <span class="l">istio-egressgateway</span><span class="w">
+</span><span class="w">      </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">80</span><span class="w">
+</span><span class="w">    </span><span class="nt">route</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">destination</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l">edition.cnn.com</span><span class="w">
+</span><span class="w">        </span><span class="nt">port</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">number</span><span class="p">:</span><span class="w"> </span><span class="m">80</span><span class="w">
+</span><span class="w">      </span><span class="nt">weight</span><span class="p">:</span><span class="w"> </span><span class="m">100</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>再次发送 HTTP 请求测试：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubectl <span class="nb">exec</span> <span class="s2">&#34;</span><span class="nv">$SOURCE_POD</span><span class="s2">&#34;</span> -c sleep -- curl -sSL -o /dev/null -D - http://edition.cnn.com/politics
+...
+HTTP/1.1 <span class="m">301</span> Moved Permanently
+...
+location: https://edition.cnn.com/politics
+...
+
+HTTP/2 <span class="m">200</span>
+Content-Type: text/html<span class="p">;</span> <span class="nv">charset</span><span class="o">=</span>utf-8
+...
+</code></pre></td></tr></table>
+</div>
+</div><p>通过这种方式访问外部服务，其流量走向如下图所示：
+<img src="../../image/istio_gateway/istio_egress_gateway.png" alt="istio_egress_gateway" title="istio_egress_gateway"></p>
+<p>查看此时流量走向如下，可以看到对外部域名的 dns 解析工作，由应用容器的 sidecar 中转移到了 egressgateway 的 pods 中：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">// 通过 json 输出看到流量转发到 cluster <span class="s2">&#34;outbound|80|cnn|istio-egressgateway.istio-system.svc.cluster.local&#34;</span>
+root@cluster1:~# istioctl pc route sleep-bc9998558-xkzlp --name <span class="m">80</span>
+NAME     DOMAINS                                              MATCH     VIRTUAL SERVICE
+<span class="m">80</span>       edition.cnn.com                                      /*        direct-cnn-through-egress-gateway.default
+
+// 查看 cluster 对应的 endpoint 地址和端口
+root@cluster1:~# istioctl pc endpoint sleep-bc9998558-xkzlp --cluster <span class="s2">&#34;outbound|80|cnn|istio-egressgateway.istio-system.svc.cluster.local&#34;</span>
+ENDPOINT            STATUS      OUTLIER CHECK     CLUSTER
+10.44.0.25:8080     HEALTHY     OK                outbound<span class="p">|</span>80<span class="p">|</span>cnn<span class="p">|</span>istio-egressgateway.istio-system.svc.cluster.local
+
+// 查看 egressgateway pods ip
+root@cluster1:~# kubectl get pods -nistio-system -owide
+NAME                                    READY   STATUS    RESTARTS   AGE     IP           NODE       NOMINATED NODE   READINESS GATES
+istio-egressgateway-5985746885-25rqt    1/1     Running   <span class="m">0</span>          2d4h    10.44.0.25   cluster1   &lt;none&gt;           &lt;none&gt;
+
+// 查看 egress 的 listener
+root@cluster1:~# istioctl pc listener istio-egressgateway-5985746885-25rqt.istio-system --port <span class="m">8080</span>
+ADDRESS PORT MATCH DESTINATION
+0.0.0.0 <span class="m">8080</span> ALL   Route: http.8080
+
+// 查看 egress 的 route，会转发到 cluster <span class="s2">&#34;outbound|80||edition.cnn.com&#34;</span>
+root@cluster1:~# istioctl pc route istio-egressgateway-5985746885-25rqt.istio-system
+NAME          DOMAINS             MATCH                  VIRTUAL SERVICE
+http.8080     edition.cnn.com     /*                     direct-cnn-through-egress-gateway.default
+
+// 查看 cluster
+root@cluster1:~# istioctl pc cluster istio-egressgateway-5985746885-25rqt.istio-system --fqdn <span class="s2">&#34;outbound|80||edition.cnn.com&#34;</span>
+SERVICE FQDN        PORT     SUBSET     DIRECTION     TYPE           DESTINATION RULE
+edition.cnn.com     <span class="m">80</span>       -          outbound      STRICT_DNS
+
+// 查看 endpoints
+root@cluster1:~# istioctl pc endpoint istio-egressgateway-5985746885-25rqt.istio-system --cluster <span class="s2">&#34;outbound|80||edition.cnn.com&#34;</span>
+ENDPOINT             STATUS      OUTLIER CHECK     CLUSTER
+151.101.131.5:80     HEALTHY     OK                outbound<span class="p">|</span>80<span class="o">||</span>edition.cnn.com
+151.101.195.5:80     HEALTHY     OK                outbound<span class="p">|</span>80<span class="o">||</span>edition.cnn.com
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="gateway-字段说明">Gateway 字段说明</h2>
+<p>Gateway 中字段为：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>类型</th>
+<th>说明</th>
+<th>必填</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>servers</td>
+<td>Server[]</td>
+<td>服务器列表</td>
+<td>是</td>
+</tr>
+<tr>
+<td>selector</td>
+<td>map&lt;string, string&gt;</td>
+<td>一个或多个标签，指示应在其上应用此网关配置的特定pod、vm集</td>
+<td>是</td>
+</tr>
+</tbody>
+</table>
+<p>Server 结构中字段为：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>类型</th>
+<th>说明</th>
+<th>必填</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>port</td>
+<td>Port</td>
+<td>监听入口流量的端口</td>
+<td>是</td>
+</tr>
+<tr>
+<td>bind</td>
+<td>string</td>
+<td>listener 应该被绑定到的 ip 或 Unix 域套接字。格式：x.x.x.x 或 unix://path/to/uds 或 unix://@foobar（Linux 抽象命名空间）。当使用 Unix 域套接字时，端口号应该是 0。 这可以用来限制该服务器的可达性，使其仅为网关内部访问。这通常是在网关需要与另一个网格服务通信时使用，例如发布度量指标。在这种情况下，用指定的绑定方式创建的服务器，将不能被外部网关客户端使用。</td>
+<td>否</td>
+</tr>
+<tr>
+<td>hosts</td>
+<td>string[]</td>
+<td>要通过此 gateway 暴露的 hosts，通常用于 http 服务，也可用于带 SNI 的 TCP 服务。一个主机被指定为一个 dnsName，并有一个可选的命名空间/前缀。dnsName 应该使用 FQDN 格式指定，可以在最左边包括一个通配符（例如 prod/<em>.example.com）。将 dnsName 设置为</em>，以选择指定命名空间中的所有 VirtualService 主机</td>
+<td>是</td>
+</tr>
+<tr>
+<td>tls</td>
+<td>ServerTLSSettings</td>
+<td>一组与 TLS 相关的选项，管理服务器的行为。使用这些选项来控制是否所有的 http 请求都应该被重定向到 https，以及使用何种 TLS 模式</td>
+<td>否</td>
+</tr>
+<tr>
+<td>name</td>
+<td>string</td>
+<td>一个可选的服务器名称，当设置时必须在所有的服务器中是唯一的。这将被用于各种目的，比如用这个名字生成的统计信息的前缀等。</td>
+<td>否</td>
+</tr>
+</tbody>
+</table>
+<p>Port 结构中字段为：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>类型</th>
+<th>说明</th>
+<th>必填</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>number</td>
+<td>uint32</td>
+<td>端口</td>
+<td>是</td>
+</tr>
+<tr>
+<td>protocol</td>
+<td>string</td>
+<td>协议，可以为 HTTP/HTTPS/GRPC/HTTP2/MONGO/TCP/TLS</td>
+<td>是</td>
+</tr>
+<tr>
+<td>name</td>
+<td>string</td>
+<td>名称</td>
+<td>是</td>
+</tr>
+</tbody>
+</table>
+<p>ServerTLSSettings 结构中字段为：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>类型</th>
+<th>说明</th>
+<th>必填</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>httpsRedirect</td>
+<td>bool</td>
+<td>如果为 true，负载均衡器将为 http 连接发送 301 重定向，要求客户使用 HTTPS</td>
+<td>否</td>
+</tr>
+<tr>
+<td>mode</td>
+<td>TLSmode</td>
+<td>表示该端口的连接是否使用 TLS 来保护，决定了 TLS 的执行方式</td>
+<td>否</td>
+</tr>
+<tr>
+<td>serverCertificate</td>
+<td>string</td>
+<td>如果 mode 为 SIMPLE 或者 MUTUAL 需要填写，持有的服务器端 TLS 证书文件路径</td>
+<td>否</td>
+</tr>
+<tr>
+<td>privateKey</td>
+<td>string</td>
+<td>如果 mode 为 SIMPLE 或者 MUTUAL 需要填写，持有的服务器端私钥文件路径</td>
+<td>是</td>
+</tr>
+<tr>
+<td>caCertificates</td>
+<td>string</td>
+<td>如果 mode 为 MUTUAL 需要填写，持有的 CA 证书文件路径，用来验证客户端证书</td>
+<td>否</td>
+</tr>
+<tr>
+<td>credentialName</td>
+<td>string</td>
+<td>凭据名称，对于运行在 Kubernetes 上的网关，表示持有 TLS 证书的 secret 的名称，仅适用于 Kubernetes 上。该 secret 应包含以下 key 和 value：key： <privateKey>和 cert： <serverCert>。对于双向 TLS，可以在此 secret 中提供 cacert： <CACertificate>，也可以是一个单独的 secret，命名为<secret>-cacert。只能指定 serverCertificate、caCertificates、credentialName 中的一个。</td>
+<td>否</td>
+</tr>
+<tr>
+<td>subjectAltNames</td>
+<td>string[]</td>
+<td>用于验证客户端证书中主体身份的备用名称列表</td>
+<td>否</td>
+</tr>
+<tr>
+<td>verifyCertificateSpki</td>
+<td>string[]</td>
+<td>认证客户端证书的基于 SPKI 的 base64 编码的 SHA-256 哈希列表，当 verifyCertificateSpki 和 verifyCertificateHash 都指定了，任意一个哈希匹配了将会导致证书被接受</td>
+<td>否</td>
+</tr>
+<tr>
+<td>verifyCertificateHash</td>
+<td>string[]</td>
+<td>认证客户端证书的 hex 编码的 SHA-25 哈希列表</td>
+<td>否</td>
+</tr>
+<tr>
+<td>minProtocolVersion</td>
+<td>TLSProtocol</td>
+<td>最低的 TLS 协议版本，默认为 TLSV1_2</td>
+<td>否</td>
+</tr>
+<tr>
+<td>maxProtocolVersion</td>
+<td>string[]</td>
+<td>最高的 TLS 协议版本</td>
+<td>否</td>
+</tr>
+<tr>
+<td>cipherSuites</td>
+<td>string[]</td>
+<td>指定后将只支持指定的密码列表</td>
+<td>否</td>
+</tr>
+</tbody>
+</table>
+<p>ServerTLSSettings.TLSmode 是由代理执行的，字段有以下这些值：</p>
+<ul>
+<li>PASSTHROUGH：直通，不进行 TLS 终止，即不将 https 解密为 http。客户端给定的 SNI 字符将被用作 VirtualService TLS 路由中的匹配标准，以确定服务注册表中的目标服务。</li>
+<li>SIMPLE：用标准的 TLS 语义进行安全连接，入口 gateway 会将 https 解密为 http 进行访问。</li>
+<li>MUTUAL：通过出示服务器证书进行验证，使用双向 TLS 与下游的安全连接。</li>
+<li>AUTO_PASSTHROUGH：与 PASSTHROUGH 类似，只是不需要相关的 VirtualService 来从 SNI 值映射到注册表中的服务。目的地的详细信息，如服务/子集/端口被编码在 SNI 值中。代理将转发到 SNI 值所指定的上游（Envoy）集群（一组端点）。这种 server 通常用于在不同的 L3 网络中的服务之间提供连接，否则它们各自的端点之间没有直接连接。使用这种模式的前提是，源和目的地都使用 Istio mTLS 来保证流量安全。</li>
+<li>ISTIO_MUTUAL：通过出示服务器证书进行认证，从 downstream 使用双向 TLS 进行安全连接。与 MUTUAL 模式相比，该模式使用证书代表网关工作负载身份，由 Istio 自动生成，用于 mTLS 认证。当使用这种模式时，TLSOptions 中的所有其他字段应该为空。</li>
+</ul>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://istio.io/latest/docs/tasks/traffic-management/">Istio 流量管理</a></li>
+</ul>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">yefengzhichen</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2023-05-05
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="../../tags/kubernetes/">kubernetes</a>
+          <a href="../../tags/istio/">istio</a>
+          <a href="../../tags/gateway/">gateway</a>
+          </div>
+      <nav class="post-nav">
+        <a class="prev" href="../../post/istio_release/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">Istio 灰度发布</span>
+            <span class="prev-text nav-mobile">上一篇</span>
+          </a>
+        <a class="next" href="../../post/istio_dns/">
+            <span class="next-text nav-default">Istio dns 原理详解</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="yefengzhichen/yefengzhichen.github.io"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="zhutao_hust@foxmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/yefengzhichen" class="iconfont icon-github" title="github"></a>
+  <a href="https://yefengzhichen.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  <div class="busuanzi-footer">
+    <span id="busuanzi_container_site_pv"> 本站总访问量 <span id="busuanzi_value_site_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次 </span>
+      <span class="division">|</span>
+    <span id="busuanzi_container_site_uv"> 本站总访客数 <span id="busuanzi_value_site_uv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 人 </span>
+  </div>
+
+  <span class="copyright-year">
+    &copy; 
+    2022 - 
+    2023<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="../../js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

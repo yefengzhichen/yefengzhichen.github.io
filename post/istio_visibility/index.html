@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Istio 服务可见性和命名空间隔离 - yefengzhichen&#39;s blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="yefengzhichen" /><meta name="description" content="服务可见性 istio 中每个服务默认可以访问网格中的任何服务，因此 istio 下发给每个 sidecar 的配置中会包含全量的服务数据，sidecar 可能会出现负载过高、内存过" /><meta name="keywords" content="Hugo, theme, even" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.92.1 with theme even" />
+
+
+<link rel="canonical" href="https://yefengzhichen.github.io/post/istio_visibility/" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../favicon-16x16.png">
+<link rel="manifest" href="../../manifest.json">
+<link rel="mask-icon" href="../../safari-pinned-tab.svg" color="#5bbad5">
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<link href="../../sass/main.min.f92fd13721ddf72129410fd8250e73152cc6f2438082b6c0208dc24ee7c13fc4.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="Istio 服务可见性和命名空间隔离" />
+<meta property="og:description" content="服务可见性 istio 中每个服务默认可以访问网格中的任何服务，因此 istio 下发给每个 sidecar 的配置中会包含全量的服务数据，sidecar 可能会出现负载过高、内存过" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yefengzhichen.github.io/post/istio_visibility/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2023-05-22T18:46:11+08:00" />
+<meta property="article:modified_time" content="2023-05-22T18:46:11+08:00" />
+
+<meta itemprop="name" content="Istio 服务可见性和命名空间隔离">
+<meta itemprop="description" content="服务可见性 istio 中每个服务默认可以访问网格中的任何服务，因此 istio 下发给每个 sidecar 的配置中会包含全量的服务数据，sidecar 可能会出现负载过高、内存过"><meta itemprop="datePublished" content="2023-05-22T18:46:11+08:00" />
+<meta itemprop="dateModified" content="2023-05-22T18:46:11+08:00" />
+<meta itemprop="wordCount" content="5354">
+<meta itemprop="keywords" content="kubernetes,istio,service mesh," /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Istio 服务可见性和命名空间隔离"/>
+<meta name="twitter:description" content="服务可见性 istio 中每个服务默认可以访问网格中的任何服务，因此 istio 下发给每个 sidecar 的配置中会包含全量的服务数据，sidecar 可能会出现负载过高、内存过"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="../../">
+        <li class="mobile-menu-item">首页</li>
+      </a><a href="../../post/">
+        <li class="mobile-menu-item">列表</li>
+      </a><a href="../../tags/">
+        <li class="mobile-menu-item">标签</li>
+      </a><a href="../../categories/">
+        <li class="mobile-menu-item">分类</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="../../">首页</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../post/">列表</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../tags/">标签</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../categories/">分类</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">Istio 服务可见性和命名空间隔离</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2023-05-22 </span>
+        <div class="post-category">
+            <a href="../../categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
+            </div>
+          <span class="more-meta"> 约 5354 字 </span>
+          <span class="more-meta"> 预计阅读 11 分钟 </span>
+        <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#服务可见性">服务可见性</a>
+          <ul>
+            <li><a href="#sidecar-资源">sidecar 资源</a></li>
+            <li><a href="#exportto-字段">exportTo 字段</a></li>
+            <li><a href="#部署示例">部署示例</a></li>
+            <li><a href="#场景一不配置-sidecar-和-exportto">场景一：不配置 sidecar 和 exportTo</a></li>
+            <li><a href="#场景二配置-exportto-字段不配置-sidecar">场景二：配置 exportTo 字段，不配置 sidecar</a></li>
+            <li><a href="#场景三配置-sidecar不配置-exportto">场景三：配置 sidecar，不配置 exportTo</a></li>
+          </ul>
+        </li>
+        <li><a href="#命名空间隔离">命名空间隔离</a>
+          <ul>
+            <li><a href="#单集群单控制面多命名空间">单集群单控制面多命名空间</a></li>
+            <li><a href="#单集群多控制面多命名空间">单集群多控制面多命名空间</a></li>
+            <li><a href="#多集群多控制面">多集群多控制面</a></li>
+            <li><a href="#总结">总结</a></li>
+          </ul>
+        </li>
+        <li><a href="#参考">参考</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h2 id="服务可见性">服务可见性</h2>
+<p>istio 中每个服务默认可以访问网格中的任何服务，因此 istio 下发给每个 sidecar 的配置中会包含全量的服务数据，sidecar 可能会出现负载过高、内存过大的问题，影响业务容器的正常运行。istio 中设置服务可见性，主要有两种方式：</p>
+<ul>
+<li>sidecar 资源：设置负载代理的出入口配置，此 crd 可以设置全局默认配置、命名空间默认配置、针对某个服务负载的特定配置。</li>
+<li>exportTo 字段：包含两个部分，一是 istio 启动时的 meshConfig.defaultXxxExportTo 配置，二是 ServiceEntry、DestinationRule、VirtualService 三个 crd 中的 exportTo 字段和 annotations 中的“networking.istio.io/exportTo”标签。</li>
+</ul>
+<h3 id="sidecar-资源">sidecar 资源</h3>
+<p>命名空间中的 Sidecar 配置将应用于同一命名空间中的一个或多个工作负载实例，使用 workloadSelector 字段进行选择。</p>
+<ul>
+<li>没有设置 workloadSelector，应用于同一名称空间中的所有工作负载实例，只能有一个，推荐使用 default 来命名此 Sidecar。</li>
+<li>设置了 workloadSelector，应用于同一名称空间中具有选择器匹配的工作负载实例。</li>
+<li>默认情况下，MeshConfig 根命名空间中的 Sidecar 配置将应用于所有没有 Sidecar 配置的命名空间。这个全局默认 Sidecar 配置不应该有任何 workloadSelector。</li>
+</ul>
+<h4 id="全局默认配置">全局默认配置</h4>
+<p>在根命名空间 istio-config 中的 Sidecar 配置，配置了所有命名空间下的负载只能访问当前命名空间和 istio-system 命名空间的所有服务。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">networking.istio.io/v1beta1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Sidecar</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">default</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">istio-config</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">egress</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">hosts</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="s2">&#34;./*&#34;</span><span class="w">
+</span><span class="w">    </span>- <span class="s2">&#34;istio-system/*&#34;</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><h4 id="命名空间下的默认配置">命名空间下的默认配置</h4>
+<p>在 prod-us1 命名空间下的默认配置，重写了上面的全局默认配置，配置了只能访问 prod-us1、prod-apis、istio-system 空间下的所有服务。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">networking.istio.io/v1beta1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Sidecar</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">default</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">prod-us1</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">egress</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">hosts</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="s2">&#34;prod-us1/*&#34;</span><span class="w">
+</span><span class="w">    </span>- <span class="s2">&#34;prod-apis/*&#34;</span><span class="w">
+</span><span class="w">    </span>- <span class="s2">&#34;istio-system/*&#34;</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><h4 id="某个服务的负载配置">某个服务的负载配置</h4>
+<p>下面针对 ratings 的所有负载，设置了入向和出向的访问配置：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">networking.istio.io/v1beta1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Sidecar</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">ratings</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">prod-us1</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">workloadSelector</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">ratings</span><span class="w">
+</span><span class="w">  </span><span class="nt">ingress</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">port</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">number</span><span class="p">:</span><span class="w"> </span><span class="m">9080</span><span class="w">
+</span><span class="w">      </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l">HTTP</span><span class="w">
+</span><span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">somename</span><span class="w">
+</span><span class="w">    </span><span class="nt">defaultEndpoint</span><span class="p">:</span><span class="w"> </span><span class="l">unix:///var/run/someuds.sock</span><span class="w">
+</span><span class="w">  </span><span class="nt">egress</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">port</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">number</span><span class="p">:</span><span class="w"> </span><span class="m">9080</span><span class="w">
+</span><span class="w">      </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l">HTTP</span><span class="w">
+</span><span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">egresshttp</span><span class="w">
+</span><span class="w">    </span><span class="nt">hosts</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="s2">&#34;prod-us1/*&#34;</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">hosts</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="s2">&#34;istio-system/*&#34;</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><h3 id="exportto-字段">exportTo 字段</h3>
+<p>istio 启动配置中，下面三个参数控制了其 CRD 的可见性，值可以为“.”、“*”、“~”：</p>
+<ul>
+<li>defaultServiceExportTo：控制所有 ServiceEntry 和 service 的可见性，默认所有命令空间可见。</li>
+<li>defaultVirtualServiceExportTo： 控制所有 VirtualService 的可见性，默认所有命令空间可见。</li>
+<li>defaultDestinationRuleExportTo：控制所有 DestinationRule 的可见性，默认所有命令空间可见。</li>
+</ul>
+<p>至于 crd 中 exportTo 字段和 annotations 的 exportTo 标签，效果和上面差不多，值可以为“.”、“*”：</p>
+<ul>
+<li>ServiceEntry：控制当前 ServiceEntry 的可见性，默认所有命令空间可见。</li>
+<li>DestinationRule：控制当前 DestinationRule 的可见性，默认所有命令空间可见。</li>
+<li>VirtualService：控制当前 VirtualService 的可见性，默认所有命令空间可见。</li>
+<li>networking.istio.io/exportTo：控制当前 k8s service 的可见性，默认所有命令空间可见。</li>
+</ul>
+<h3 id="部署示例">部署示例</h3>
+<p>使用下面的默认配置安装 istio，设置了“ISTIO_META_DNS_CAPTURE”是因为需要测试 ServiceEntry：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">install.istio.io/v1alpha1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">IstioOperator</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">hub</span><span class="p">:</span><span class="w"> </span><span class="l">docker.io/istio</span><span class="w">
+</span><span class="w">  </span><span class="nt">meshConfig</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">accessLogFile</span><span class="p">:</span><span class="w"> </span><span class="l">/dev/stdout</span><span class="w">
+</span><span class="w">    </span><span class="nt">defaultConfig</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">proxyMetadata</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">ISTIO_META_DNS_CAPTURE</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;true&#34;</span><span class="w">
+</span><span class="w">  </span><span class="nt">profile</span><span class="p">:</span><span class="w"> </span><span class="l">demo</span><span class="w">
+</span><span class="w">  </span><span class="nt">tag</span><span class="p">:</span><span class="w"> </span><span class="m">1.16.1</span><span class="w">
+</span><span class="w">  </span><span class="nt">values</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">global</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">logging</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">level</span><span class="p">:</span><span class="w"> </span><span class="l">default:debug</span><span class="w">
+</span><span class="w">      </span><span class="nt">configValidation</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">      </span><span class="nt">istioNamespace</span><span class="p">:</span><span class="w"> </span><span class="l">istio-system</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>在两个命名空间分布部署服务来进行测试，先在 foo 空间部署 helloworld 服务：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Namespace</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">foo</span><span class="w">
+</span><span class="w">  </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">istio-injection</span><span class="p">:</span><span class="w"> </span><span class="l">enabled</span><span class="w">
+</span><span class="w"></span><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Service</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">helloworld</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">foo</span><span class="w">
+</span><span class="w">  </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">helloworld</span><span class="w">
+</span><span class="w">    </span><span class="nt">service</span><span class="p">:</span><span class="w"> </span><span class="l">helloworld</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">5000</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">http</span><span class="w">
+</span><span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">helloworld</span><span class="w">
+</span><span class="w"></span><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">apps/v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Deployment</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">helloworld-v1</span><span class="w">
+</span><span class="w">  </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">helloworld</span><span class="w">
+</span><span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="m">1</span><span class="w">
+</span><span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">helloworld</span><span class="w">
+</span><span class="w">      </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w">  </span><span class="nt">template</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">helloworld</span><span class="w">
+</span><span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w">    </span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">containers</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">helloworld</span><span class="w">
+</span><span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l">docker.io/istio/examples-helloworld-v1</span><span class="w">
+</span><span class="w">        </span><span class="nt">resources</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">requests</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span><span class="nt">cpu</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;100m&#34;</span><span class="w">
+</span><span class="w">        </span><span class="nt">imagePullPolicy</span><span class="p">:</span><span class="w"> </span><span class="l">IfNotPresent</span><span class="w">
+</span><span class="w">        </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">containerPort</span><span class="p">:</span><span class="w"> </span><span class="m">5000</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>再在 bar 空间部署 sleep 服务：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Namespace</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">bar</span><span class="w">
+</span><span class="w">  </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">istio-injection</span><span class="p">:</span><span class="w"> </span><span class="l">enabled</span><span class="w">
+</span><span class="w"></span><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Service</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">sleep</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">bar</span><span class="w">
+</span><span class="w">  </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">sleep</span><span class="w">
+</span><span class="w">    </span><span class="nt">service</span><span class="p">:</span><span class="w"> </span><span class="l">sleep</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">80</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">http</span><span class="w">
+</span><span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">sleep</span><span class="w">
+</span><span class="w"></span><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">apps/v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Deployment</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">sleep</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">bar</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="m">1</span><span class="w">
+</span><span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">sleep</span><span class="w">
+</span><span class="w">  </span><span class="nt">template</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">sleep</span><span class="w">
+</span><span class="w">    </span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">containers</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">sleep</span><span class="w">
+</span><span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l">curlimages/curl</span><span class="w">
+</span><span class="w">        </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&#34;/bin/sleep&#34;</span><span class="p">,</span><span class="w"> </span><span class="s2">&#34;infinity&#34;</span><span class="p">]</span><span class="w">
+</span><span class="w">        </span><span class="nt">imagePullPolicy</span><span class="p">:</span><span class="w"> </span><span class="l">IfNotPresent</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><h3 id="场景一不配置-sidecar-和-exportto">场景一：不配置 sidecar 和 exportTo</h3>
+<p>部署 helloworld 和 sleep 服务后，查看 sleep 服务的 pod 的 sidecar 配置，可以看到除了当前命名空间 bar 的服务外，还包含了 istio-system、kube-system、foo 等其他命名空间的服务：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@dev:~# istioctl pc cluster sleep-5597f78777-5phkz.bar
+SERVICE FQDN                                            PORT      SUBSET     DIRECTION     TYPE             DESTINATION RULE
+helloworld.foo.svc.cluster.local                        <span class="m">5000</span>      -          outbound      EDS
+istio-egressgateway.istio-system.svc.cluster.local      <span class="m">80</span>        -          outbound      EDS
+kube-dns.kube-system.svc.cluster.local                  <span class="m">53</span>        -          outbound      EDS
+kubernetes.default.svc.cluster.local                    <span class="m">443</span>       -          outbound      EDS
+sleep.bar.svc.cluster.local                             <span class="m">80</span>        -          outbound      EDS
+...
+root@dev:~# istioctl pc ep sleep-5597f78777-5phkz.bar
+ENDPOINT                                                STATUS      OUTLIER CHECK     CLUSTER
+10.42.0.3:53                                            HEALTHY     OK                outbound<span class="p">|</span>53<span class="o">||</span>kube-dns.kube-system.svc.cluster.local
+10.42.0.41:8080                                         HEALTHY     OK                outbound<span class="p">|</span>80<span class="o">||</span>istio-ingressgateway.istio-system.svc.cluster.local
+10.42.0.43:80                                           HEALTHY     OK                outbound<span class="p">|</span>80<span class="o">||</span>sleep.bar.svc.cluster.local
+10.42.0.44:5000                                         HEALTHY     OK                outbound<span class="p">|</span>5000<span class="o">||</span>helloworld.foo.svc.cluster.local
+192.168.60.113:6443                                     HEALTHY     OK                outbound<span class="p">|</span>443<span class="o">||</span>kubernetes.default.svc.cluster.local
+...
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="场景二配置-exportto-字段不配置-sidecar">场景二：配置 exportTo 字段，不配置 sidecar</h3>
+<p>在 istio 的启动配置中增加以下字段，并重新安装：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="w">  </span><span class="nt">meshConfig</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">defaultServiceExportTo</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span>- <span class="s2">&#34;.&#34;</span><span class="w">
+</span><span class="w">    </span><span class="nt">defaultVirtualServiceExportTo</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span>- <span class="s2">&#34;.&#34;</span><span class="w">
+</span><span class="w">    </span><span class="nt">defaultDestinationRuleExportTo</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span>- <span class="s2">&#34;.&#34;</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>跟上面一样，部署 helloworld 和 sleep 服务后，查看 sleep 服务的 pod 的 sidecar 配置，可以看到只有当前命名空间下的服务了。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@dev:~# istioctl pc cluster sleep-5597f78777-ktwkm.bar
+SERVICE FQDN                      PORT     SUBSET     DIRECTION     TYPE             DESTINATION RULE
+                                  <span class="m">80</span>       -          inbound       ORIGINAL_DST
+BlackHoleCluster                  -        -          -             STATIC
+InboundPassthroughClusterIpv4     -        -          -             ORIGINAL_DST
+PassthroughCluster                -        -          -             ORIGINAL_DST
+agent                             -        -          -             STATIC
+prometheus_stats                  -        -          -             STATIC
+sds-grpc                          -        -          -             STATIC
+sleep.bar.svc.cluster.local       <span class="m">80</span>       -          outbound      EDS
+xds-grpc                          -        -          -             STATIC
+zipkin                            -        -          -             STRICT_DNS
+root@dev:~# istioctl pc ep sleep-5597f78777-ktwkm.bar
+ENDPOINT                                                STATUS      OUTLIER CHECK     CLUSTER
+10.42.0.39:80                                           HEALTHY     OK                outbound<span class="p">|</span>80<span class="o">||</span>sleep.bar.svc.cluster.local
+127.0.0.1:15000                                         HEALTHY     OK                prometheus_stats
+127.0.0.1:15020                                         HEALTHY     OK                agent
+unix://./etc/istio/proxy/XDS                            HEALTHY     OK                xds-grpc
+unix://./var/run/secrets/workload-spiffe-uds/socket     HEALTHY     OK                sds-grpc
+</code></pre></td></tr></table>
+</div>
+</div><p><em>需要注意的是：sidecar 配置不存在其他命名空间服务，不代表业务程序不能访问，比如在 sleep pods 中通过“curl &ldquo;<a href="http://helloworld.foo:5000/hello%22">http://helloworld.foo:5000/hello&quot;</a>”，仍然能获取到结果，只是这个访问不是通过 sidecar 到 endpoints 访问的，而是通过 istio-proxy 的 iptables 规则到 endpoint 访问的，比如下面的测试：</em></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">// 使用 k8s 原生方式访问的，没有通过 sidecar
+root@dev:~# kubectl <span class="nb">exec</span> -it -nbar sleep-5597f78777-ktwkm -- sh
+/ $ curl <span class="s2">&#34;http://helloworld.foo:5000/hello&#34;</span>
+Hello version: v1, instance: helloworld-v1-77489ccb5f-rgdl
+</code></pre></td></tr></table>
+</div>
+</div><p>如果要跨命名空间访问，则可以通过在具体的 crd 里面设置 exportTo 字段，比如设置如下的 ServiceEntry，来让所有命名空间可访问：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">networking.istio.io/v1beta1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">ServiceEntry</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">demo-helloworld</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">foo</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">addresses</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="m">240.240.0.20</span><span class="w">
+</span><span class="w">  </span><span class="nt">exportTo</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="s1">&#39;*&#39;</span><span class="w">
+</span><span class="w">  </span><span class="nt">hosts</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="l">demo.helloworld</span><span class="w">
+</span><span class="w">  </span><span class="nt">location</span><span class="p">:</span><span class="w"> </span><span class="l">MESH_INTERNAL</span><span class="w">
+</span><span class="w">  </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">http</span><span class="w">
+</span><span class="w">    </span><span class="nt">number</span><span class="p">:</span><span class="w"> </span><span class="m">5000</span><span class="w">
+</span><span class="w">    </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l">HTTP</span><span class="w">
+</span><span class="w">  </span><span class="nt">resolution</span><span class="p">:</span><span class="w"> </span><span class="l">STATIC</span><span class="w">
+</span><span class="w">  </span><span class="nt">workloadSelector</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">helloworld</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>而对应 k8s 的原生服务，可以通过设置 annotation 来让所有命名空间可见：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Service</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">helloworld</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">foo</span><span class="w">
+</span><span class="w">  </span><span class="nt">annotations</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">networking.istio.io/exportTo</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;*&#34;</span><span class="w">
+</span><span class="w">  </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">helloworld</span><span class="w">
+</span><span class="w">    </span><span class="nt">service</span><span class="p">:</span><span class="w"> </span><span class="l">helloworld</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">5000</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">http</span><span class="w">
+</span><span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">helloworld</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>此时查看 sleep pod 的 cluster 配置，可以看到两种方式的服务都存在了：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@dev:~# istioctl pc cluster sleep-5597f78777-ktwkm.bar --port <span class="m">5000</span>
+SERVICE FQDN                         PORT     SUBSET     DIRECTION     TYPE     DESTINATION RULE
+demo.helloworld                      <span class="m">5000</span>     -          outbound      EDS
+helloworld.foo.svc.cluster.local     <span class="m">5000</span>     -          outbound      EDS
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="场景三配置-sidecar不配置-exportto">场景三：配置 sidecar，不配置 exportTo</h3>
+<p>先在 istio-system 空间下设置全局默认的 sidecar 配置：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">networking.istio.io/v1beta1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Sidecar</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">default</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">istio-system</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">egress</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">hosts</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="s2">&#34;./*&#34;</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>跟上面一样，部署 helloworld 和 sleep 服务后，查看 sleep 服务的 pod 的 sidecar 配置，可以看到只有当前命名空间服务了。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@dev:~# istioctl pc cluster sleep-5597f78777-7vtj8.bar
+SERVICE FQDN                                            PORT      SUBSET     DIRECTION     TYPE             DESTINATION RULE
+                                                        <span class="m">80</span>        -          inbound       ORIGINAL_DST
+BlackHoleCluster                                        -         -          -             STATIC
+InboundPassthroughClusterIpv4                           -         -          -             ORIGINAL_DST
+PassthroughCluster                                      -         -          -             ORIGINAL_DST
+agent                                                   -         -          -             STATIC
+prometheus_stats                                        -         -          -             STATIC
+sds-grpc                                                -         -          -             STATIC
+sleep.bar.svc.cluster.local                             <span class="m">80</span>        -          outbound      EDS
+xds-grpc                                                -         -          -             STATIC
+zipkin                                                  -         -          -             STRICT_DNS
+root@dev:~# istioctl pc ep sleep-5597f78777-7vtj8.bar
+ENDPOINT                                                STATUS      OUTLIER CHECK     CLUSTER
+10.42.0.49:80                                           HEALTHY     OK                outbound<span class="p">|</span>80<span class="o">||</span>sleep.bar.svc.cluster.local
+127.0.0.1:15000                                         HEALTHY     OK                prometheus_stats
+127.0.0.1:15020                                         HEALTHY     OK                agent
+unix://./etc/istio/proxy/XDS                            HEALTHY     OK                xds-grpc
+unix://./var/run/secrets/workload-spiffe-uds/socket     HEALTHY     OK                sds-grpc
+</code></pre></td></tr></table>
+</div>
+</div><p>继续测试 VirtualService 效果是否一样，部署如下配置使请求延迟 2s 返回：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="c"># kubectl apply -f helloworld_delay.yaml</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">networking.istio.io/v1alpha3</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">VirtualService</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">helloworld</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">foo</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">hosts</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="l">helloworld</span><span class="w">
+</span><span class="w">  </span><span class="nt">http</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">fault</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">delay</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">percent</span><span class="p">:</span><span class="w"> </span><span class="m">100</span><span class="w">
+</span><span class="w">        </span><span class="nt">fixedDelay</span><span class="p">:</span><span class="w"> </span><span class="l">2s</span><span class="w">
+</span><span class="w">    </span><span class="nt">route</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">destination</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l">helloworld</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>查看当前空间的 helloworld 代理的 route 配置，设置了 fixedDelay 等于 2s，并且在 pods 中测试也是延迟 2s 返回的，而 bar 命名空间的 sleep 并没有看到对应的 route 配置。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@dev:~# kubectl <span class="nb">exec</span> -it -nfoo helloworld-v1-7dddc45478-lpmjq -- bash
+root@helloworld-v1-7dddc45478-lpmjq:/opt/microservices# curl -w <span class="s2">&#34;time:%{time_total}&#34;</span> <span class="s2">&#34;http://helloworld:5000/hello&#34;</span>
+Hello version: v1, instance: helloworld-v1-7dddc45478-lpmjq
+time:2.120
+</code></pre></td></tr></table>
+</div>
+</div><p>继续测试 DestinationRule 效果是否一样，部署如下配置设置 subset，查看当前空间的 helloworld 代理的 cluster 配置，有设置了 v1  subset，而 bar 命名空间的 sleep 并没有看到对应的 cluster 配置。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">networking.istio.io/v1alpha3</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">DestinationRule</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">helloworld</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">foo</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l">helloworld</span><span class="w">
+</span><span class="w">  </span><span class="nt">subsets</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w">    </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>继续测试 ServiceEntry 效果是否一样，部署如下配置，在当前空间 pods 测试访问此 host，可以成功返回，并且在 pod 的 envoy 中也能看到对应的 cluster 和 endpoints 配置。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">networking.istio.io/v1alpha3</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">ServiceEntry</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">demo-helloworld</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">foo</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">addresses</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="m">240.240.0.20</span><span class="w">
+</span><span class="w">  </span><span class="nt">hosts</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="l">demo.helloworld</span><span class="w">
+</span><span class="w">  </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">number</span><span class="p">:</span><span class="w"> </span><span class="m">5000</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">http</span><span class="w">
+</span><span class="w">    </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l">HTTP</span><span class="w">
+</span><span class="w">  </span><span class="nt">resolution</span><span class="p">:</span><span class="w"> </span><span class="l">STATIC</span><span class="w">
+</span><span class="w">  </span><span class="nt">location</span><span class="p">:</span><span class="w"> </span><span class="l">MESH_INTERNAL</span><span class="w">
+</span><span class="w">  </span><span class="nt">workloadSelector</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">helloworld</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>在 bar 命名空间的 sleep pods 的代理配置中，没有看到“demo.helloworld”配置，因此只设置 ServiceEntry 无法实现跨命名空间访问。因为在全局的 sidecar crd 中，只设置了当前命名空间和 istio-system 空间，那考虑在 bar 命名空间新增一个 sidecar crd 配置，增加 ServiceEntry 的 host 配置，来覆盖全局配置：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">networking.istio.io/v1beta1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Sidecar</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">default</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">bar</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">egress</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">hosts</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="s2">&#34;./*&#34;</span><span class="w">
+</span><span class="w">    </span>- <span class="s2">&#34;foo/demo.helloworld&#34;</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>此时查看代理的配置，有“demo.helloworld”的 cluster 和 endpoints 配置，并且在 pods 中访问也是正常的。ServiceEntry 有一项配置“exportTo”可以指明导出到哪些命名空间，默认是所有命名空间，因此在 bar 空间设置的 Sidecar 配置能够生效。如果某个 ServiceEntry 只想在当前命名空间生效，可以增加“exportTo:['.']”配置，这样在 sleep 的代理配置中就无法看到此 cluster 了。</p>
+<h2 id="命名空间隔离">命名空间隔离</h2>
+<p>在 kubernetes 集群规模较大的情况下，或者存在多租户的情况下，使用 istio 网格可能会出现一些问题，比如：</p>
+<ul>
+<li>性能问题：sidecar 会收到全量服务的数据，导致 cpu 过高和内存过大</li>
+<li>隔离问题：多个租户的服务需要隔离，不能互相访问，不能互相影响</li>
+</ul>
+<p>参考这篇文章 <a href="https://cloudnative.to/blog/istio-multi-tenancy-exploration/">多租户场景下 Istio 部署方案探索</a>，讨论了多租户场景下的一些解决方案，总结在此：</p>
+<ul>
+<li>每一个用户提供一套 istio 服务网格：istio 官方网站的文章 <a href="https://istio.io/latest/zh/blog/2018/soft-multitenancy/">Istio 的软性多租户支持</a> 给出了方案，为每个产品提供一套 istio 网格，每套 istio 的控制面可以安装到指定的 namespace 中，数据面可以设置为产品部署的 namespace。但存在资源消耗和跨命名空间访问复杂的问题，每套 istio 都是需要消耗一定的资源，namespace 之间互相访问，需要部署 Ingress Gateway 和 Egress Gateway 控制进入和流出命名空间的流量，这样增加了部署复杂度。</li>
+<li>单控制面多 Gateway 方案：部署一套 istio 控制面，管理多个产品数据面，每个产品以及 Istio 控制面的 namespace 部署一套 Ingress Gateway，相当于产品共用 Istio 控制面，但不共用 Ingress Gateway，一定程度上减少产品的耦合。</li>
+<li>腾讯云方案：参考文章 <a href="https://www.infoq.cn/article/id2w4pefjqbusjhmd8jt">腾讯云中间件团队在 Service Mesh 中的实践与探索</a>，腾讯云实现了单控制面多集群网格的多租户方案。在这种场景下，每个租户一个网格，集群管理员控制和监控整个 Istio 控制面以及所有网格，租户管理员只能控制特定的网格，这种场景与云环境下的多租户概念比较稳合。</li>
+</ul>
+<p>在官方文档 <a href="https://istio.io/latest/zh/docs/ops/deployment/deployment-models/">Istio 部署模型</a> 中，也提到了多租户，给出了几种部署方案，总结如下：</p>
+<ul>
+<li>命名空间租户：同一个集群中使用不同的命名空间隔离用户，默认情况下，多个命名空间的服务可以相互通信，但可以通过选择将哪些服务暴露给其他命名空间来提高隔离度。</li>
+<li>集群租户：支持使用集群作为租户单位，给每个租户一个专门的集群或一组集群来部署其工作负载。</li>
+<li>网格租户：在具有网格联邦的多网格部署中，每个网格可以作为隔离的单位。</li>
+</ul>
+<p>从以上内容总结来说，istio 的命名空间隔离或者多租户，常见的形式有：</p>
+<ul>
+<li>单集群单控制面多命名空间：通过 sidecar 或者 exportTo 字段隔离服务可见性。</li>
+<li>单集群多控制面多命名空间：istio 跟命名空间为一对一或者一对多关系。</li>
+<li>多集群多控制面：istio 跟集群为一对一或者一对多关系。</li>
+</ul>
+<h3 id="单集群单控制面多命名空间">单集群单控制面多命名空间</h3>
+<p>这篇文章 <a href="https://cloudnative.to/blog/istio-multi-tenancy-exploration/">多租户场景下 Istio 部署方案探索</a> 中提到的单控制面多 Gateway 方案，经过实际测试，只能做到集群入口的隔离，不能做到命名空间服务的隔离，因为这种方案本质上也是单集群单控制面多命名空间，必须通过 sidecar 或者 exportTo 字段才能实现。</p>
+<p>如何实现单集群单控制面多命名空间，可参考前面的服务可见性介绍，里面的场景二和场景三都是可行的方案。</p>
+<h3 id="单集群多控制面多命名空间">单集群多控制面多命名空间</h3>
+<p>参考官方文档 <a href="https://istio.io/latest/docs/setup/install/multiple-controlplanes/">单个集群中安装多个控制面</a>，是通过“meshConfig.discoverySelectors”和“revision”来实现的，“discoverySelectors”用于 istio 在计算 sidecar 配置时需要考虑的命名空间集合，“istio.io/rev”用于创建命名空间时指定使用的 istio 版本。首先在 usergroup-1 命名空间安装 istio，这里需要验证跨集群，与示例不同的是使用的 demo 配置：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubectl create ns usergroup-1
+kubectl label ns usergroup-1 <span class="nv">usergroup</span><span class="o">=</span>usergroup-1
+istioctl install -y -f - <span class="s">&lt;&lt;EOF
+</span><span class="s">apiVersion: install.istio.io/v1alpha1
+</span><span class="s">kind: IstioOperator
+</span><span class="s">metadata:
+</span><span class="s">  namespace: usergroup-1
+</span><span class="s">spec:
+</span><span class="s">  profile: demo
+</span><span class="s">  revision: usergroup-1
+</span><span class="s">  meshConfig:
+</span><span class="s">    discoverySelectors:
+</span><span class="s">      - matchLabels:
+</span><span class="s">          usergroup: usergroup-1
+</span><span class="s">  values:
+</span><span class="s">    global:
+</span><span class="s">      istioNamespace: usergroup-1
+</span><span class="s">    pilot:
+</span><span class="s">      env:
+</span><span class="s">        ENABLE_ENHANCED_RESOURCE_SCOPING: true
+</span><span class="s">EOF</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>接着在 usergroup-2 命名空间安装 istio：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubectl create ns usergroup-2
+kubectl label ns usergroup-2 <span class="nv">usergroup</span><span class="o">=</span>usergroup-2
+istioctl install -y -f - <span class="s">&lt;&lt;EOF
+</span><span class="s">apiVersion: install.istio.io/v1alpha1
+</span><span class="s">kind: IstioOperator
+</span><span class="s">metadata:
+</span><span class="s">  namespace: usergroup-2
+</span><span class="s">spec:
+</span><span class="s">  profile: demo
+</span><span class="s">  revision: usergroup-2
+</span><span class="s">  meshConfig:
+</span><span class="s">    discoverySelectors:
+</span><span class="s">      - matchLabels:
+</span><span class="s">          usergroup: usergroup-2
+</span><span class="s">  values:
+</span><span class="s">    global:
+</span><span class="s">      istioNamespace: usergroup-2
+</span><span class="s">    pilot:
+</span><span class="s">      env:
+</span><span class="s">        ENABLE_ENHANCED_RESOURCE_SCOPING: true
+</span><span class="s">EOF</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>查看安装结果，两个命名空间的 istiod、istio-ingressgateway、istio-egressgateway 都安装成功了：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">root@dev:~/tenancy/test# kubectl get pods -A
+NAMESPACE     NAME                                        READY   STATUS      RESTARTS   AGE
+usergroup-1   istiod-usergroup-1-65f5c94ff-spvqv          1/1     Running     0          7m27s
+usergroup-1   istio-egressgateway-5744b7bfc4-58pth        1/1     Running     0          7m23s
+usergroup-1   istio-ingressgateway-85cc6bd7cb-lxjwn       1/1     Running     0          7m23s
+usergroup-2   istiod-usergroup-2-557b7dffff-w65gz         1/1     Running     0          74s
+usergroup-2   istio-ingressgateway-79b4445f54-rlskr       1/1     Running     0          70s
+usergroup-2   istio-egressgateway-8584d76b68-dkw8x        1/1     Running     0          70s
+</code></pre></td></tr></table>
+</div>
+</div><p>创建两个应用进行测试：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubectl create ns app-ns-1
+kubectl create ns app-ns-2
+kubectl label ns app-ns-1 <span class="nv">usergroup</span><span class="o">=</span>usergroup-1 istio.io/rev<span class="o">=</span>usergroup-1
+kubectl label ns app-ns-2 <span class="nv">usergroup</span><span class="o">=</span>usergroup-2 istio.io/rev<span class="o">=</span>usergroup-2
+kubectl -n app-ns-1 apply -f samples/sleep/sleep.yaml
+kubectl -n app-ns-1 apply -f samples/httpbin/httpbin.yaml
+kubectl -n app-ns-2 apply -f samples/sleep/sleep.yaml
+kubectl -n app-ns-2 apply -f samples/httpbin/httpbin.yaml
+</code></pre></td></tr></table>
+</div>
+</div><p>安装完成查看 pods 的 envoy cluster 配置，只能看到本命名空间和对应的 istio 命名空间的服务：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@dev:~# istioctl pc cluster sleep-bc9998558-twkpb.app-ns-1
+SERVICE FQDN                                           PORT      SUBSET     DIRECTION     TYPE             DESTINATION RULE
+httpbin.app-ns-1.svc.cluster.local                     <span class="m">8000</span>      -          outbound      EDS
+sleep.app-ns-1.svc.cluster.local                       <span class="m">80</span>        -          outbound      EDS
+istiod-usergroup-1.usergroup-1.svc.cluster.local       <span class="m">443</span>       -          outbound      EDS
+...
+
+// 跨命名空间访问可以成功，没有经过代理，使用原生 k8s 访问的
+kubectl -n app-ns-1 <span class="nb">exec</span> <span class="s2">&#34;</span><span class="k">$(</span>kubectl -n app-ns-1 get pod -l <span class="nv">app</span><span class="o">=</span>sleep -o <span class="nv">jsonpath</span><span class="o">={</span>.items..metadata.name<span class="o">}</span><span class="k">)</span><span class="s2">&#34;</span> -c sleep -- curl -sIL http://httpbin.app-ns-2.svc.cluster.local:8000
+</code></pre></td></tr></table>
+</div>
+</div><p>加上负载策略，可以禁止跨命名空间访问，比如下面的配置执行后，跨命名空间访问将返回 503：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubectl apply -f - <span class="s">&lt;&lt;EOF
+</span><span class="s">apiVersion: security.istio.io/v1beta1
+</span><span class="s">kind: PeerAuthentication
+</span><span class="s">metadata:
+</span><span class="s">  name: &#34;usergroup-1-peerauth&#34;
+</span><span class="s">  namespace: &#34;usergroup-1&#34;
+</span><span class="s">spec:
+</span><span class="s">  mtls:
+</span><span class="s">    mode: STRICT
+</span><span class="s">EOF</span>
+
+kubectl apply -f - <span class="s">&lt;&lt;EOF
+</span><span class="s">apiVersion: security.istio.io/v1beta1
+</span><span class="s">kind: PeerAuthentication
+</span><span class="s">metadata:
+</span><span class="s">  name: &#34;usergroup-2-peerauth&#34;
+</span><span class="s">  namespace: &#34;usergroup-2&#34;
+</span><span class="s">spec:
+</span><span class="s">  mtls:
+</span><span class="s">    mode: STRICT
+</span><span class="s">EOF</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>可以在两个命名空间分别部署 gateway，隔离两个命名空间的对外入口，比如在 app-ns-1 空间部署 Gateway 和 VirtualService：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="l">kubectl apply -f - &lt;&lt;EOF</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">networking.istio.io/v1alpha3</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Gateway</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">httpbin-gateway</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">app-ns-1</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">istio</span><span class="p">:</span><span class="w"> </span><span class="l">ingressgateway</span><span class="w"> </span><span class="c"># use Istio default gateway implementation</span><span class="w">
+</span><span class="w">  </span><span class="nt">servers</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">port</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">number</span><span class="p">:</span><span class="w"> </span><span class="m">80</span><span class="w">
+</span><span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">http</span><span class="w">
+</span><span class="w">      </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l">HTTP</span><span class="w">
+</span><span class="w">    </span><span class="nt">hosts</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="s2">&#34;httpbin.example.com&#34;</span><span class="w">
+</span><span class="w"></span><span class="l">EOF</span><span class="w">
+</span><span class="w"></span><span class="l">kubectl apply -f - &lt;&lt;EOF</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">networking.istio.io/v1alpha3</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">VirtualService</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">httpbin</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">app-ns-1</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">hosts</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="s2">&#34;httpbin.example.com&#34;</span><span class="w">
+</span><span class="w">  </span><span class="nt">gateways</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="l">httpbin-gateway</span><span class="w">
+</span><span class="w">  </span><span class="nt">http</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">match</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">uri</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">prefix</span><span class="p">:</span><span class="w"> </span><span class="l">/status</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">uri</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">prefix</span><span class="p">:</span><span class="w"> </span><span class="l">/delay</span><span class="w">
+</span><span class="w">    </span><span class="nt">route</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">destination</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">port</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">number</span><span class="p">:</span><span class="w"> </span><span class="m">8000</span><span class="w">
+</span><span class="w">        </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l">httpbin</span><span class="w">
+</span><span class="w"></span><span class="l">EOF</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>在集群外部通过 nodeport 访问，可以正常返回：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="nb">export</span> <span class="nv">INGRESS_HOST</span><span class="o">=</span><span class="k">$(</span>kubectl get po -l <span class="nv">istio</span><span class="o">=</span>ingressgateway -n usergroup-1 -o <span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.items[0].status.hostIP}&#39;</span><span class="k">)</span>
+<span class="nb">export</span> <span class="nv">INGRESS_PORT</span><span class="o">=</span><span class="k">$(</span>kubectl -n usergroup-1 get service <span class="s2">&#34;</span><span class="si">${</span><span class="nv">INGRESS_NAME</span><span class="si">}</span><span class="s2">&#34;</span> -o <span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.spec.ports[?(@.name==&#34;http2&#34;)].nodePort}&#39;</span><span class="k">)</span>
+// 示例：curl -s -I -HHost:httpbin.example.com <span class="s2">&#34;http://172.19.52.61:32115/status/200&#34;</span>
+curl -s -I -HHost:httpbin.example.com <span class="s2">&#34;http://</span><span class="nv">$INGRESS_HOST</span><span class="s2">:</span><span class="nv">$INGRESS_PORT</span><span class="s2">/status/200&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>如果需要在 app-ns-2 空间进行访问 app-ns-1 空间的服务，也可通过访问 ingress gateway 的 service 实现：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@dev:~/tenancy/test# kubectl <span class="nb">exec</span> -it -napp-ns-2 sleep-bc9998558-9x7fn -- sh
+/ $ curl -s -I -HHost:httpbin.example.com <span class="s2">&#34;http://istio-ingressgateway.usergroup-1:80/status/200&#34;</span>
+HTTP/1.1 <span class="m">200</span> OK
+server: envoy
+date: Fri, <span class="m">26</span> May <span class="m">2023</span> 07:34:29 GMT
+content-type: text/html<span class="p">;</span> <span class="nv">charset</span><span class="o">=</span>utf-8
+access-control-allow-origin: *
+access-control-allow-credentials: <span class="nb">true</span>
+content-length: <span class="m">0</span>
+x-envoy-upstream-service-time: <span class="m">19</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="多集群多控制面">多集群多控制面</h3>
+<p>这种方式比较简单，因为集群本身有隔离性，在每个集群独立部署 istio 即可，集群之间通过 ingress gateway 进行访问，这里不再举例说明。</p>
+<h3 id="总结">总结</h3>
+<p>对三种方式命名空间隔离或者多租户方式，可以总结如下：</p>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>说明</th>
+<th>实现方式</th>
+<th>跨命名空间/跨集群</th>
+<th>优缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>单集群单控制面多命名空间</td>
+<td>istio 跟命名空间为一对多关系</td>
+<td>sidecar 或者 exportTo 字段</td>
+<td>可基于 sidecar 或者 exportTo，也可用 k8s service 方式</td>
+<td>实现了代理配置的空间隔离，跨命名空间的调用隔离较弱，需配合其他策略，适合私有云场景</td>
+</tr>
+<tr>
+<td>单集群多控制面多命名空间</td>
+<td>istio 跟命名空间为一对一或一对多关系</td>
+<td>meshConfig.discoverySelectors 和 revision</td>
+<td>可基于 ingress gateway，也可用 k8s service 方式</td>
+<td>实现了代理配置的空间隔离，跨命名空间的调用隔离较弱，需配合其他策略，适合私有云场景</td>
+</tr>
+<tr>
+<td>多集群多控制面</td>
+<td>istio 跟集群为一对一或者一对多关系</td>
+<td>k8s 集群隔离性</td>
+<td>ingress gateway</td>
+<td>隔离性强，适合公有云场景</td>
+</tr>
+</tbody>
+</table>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://istio.io/latest/docs/setup/install/multiple-controlplanes/">单个集群中安装多个控制面</a></li>
+<li><a href="https://istio.io/latest/docs/reference/config/networking/sidecar/">Istio sidecar</a></li>
+<li><a href="https://istio.io/latest/zh/docs/ops/deployment/deployment-models/">Istio 部署模型</a></li>
+<li><a href="https://cloudnative.to/blog/istio-multi-tenancy-exploration/">多租户场景下 Istio 部署方案探索</a></li>
+<li><a href="https://cloud.tencent.com/developer/news/1025293">双栈 Istio 方案落地经验</a></li>
+<li><a href="https://lib.jimmysong.io/blog/optimize-traffic-management-and-security-with-these-service-mesh-best-practices/">服务网格安全性优化最佳实践</a></li>
+<li><a href="https://cloudnative.to/blog/istio-service-visibility/">Istio 限制服务可见性</a></li>
+</ul>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">yefengzhichen</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2023-05-22
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="../../tags/kubernetes/">kubernetes</a>
+          <a href="../../tags/istio/">istio</a>
+          <a href="../../tags/service-mesh/">service mesh</a>
+          </div>
+      <nav class="post-nav">
+        
+        <a class="next" href="../../post/istio_release/">
+            <span class="next-text nav-default">Istio 灰度发布</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="yefengzhichen/yefengzhichen.github.io"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="zhutao_hust@foxmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/yefengzhichen" class="iconfont icon-github" title="github"></a>
+  <a href="https://yefengzhichen.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  <div class="busuanzi-footer">
+    <span id="busuanzi_container_site_pv"> 本站总访问量 <span id="busuanzi_value_site_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次 </span>
+      <span class="division">|</span>
+    <span id="busuanzi_container_site_uv"> 本站总访客数 <span id="busuanzi_value_site_uv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 人 </span>
+  </div>
+
+  <span class="copyright-year">
+    &copy; 
+    2022 - 
+    2023<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="../../js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>
