@@ -1,0 +1,2197 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>istio 集成 cert-manager 使用和源码分析 - yefengzhichen&#39;s blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="yefengzhichen" /><meta name="description" content="cert-manager 介绍 cert-manager 将证书和证书颁发者添加为 Kubernetes 集群中的资源类型，并简化了获取、更新和使用这些证书的过程。相比 istio 自带的 CA 管理，cert-manager 具有" /><meta name="keywords" content="Hugo, theme, even" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.92.1 with theme even" />
+
+
+<link rel="canonical" href="https://yefengzhichen.github.io/post/istio_cert_manager_src/" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../favicon-16x16.png">
+<link rel="manifest" href="../../manifest.json">
+<link rel="mask-icon" href="../../safari-pinned-tab.svg" color="#5bbad5">
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<link href="../../sass/main.min.f92fd13721ddf72129410fd8250e73152cc6f2438082b6c0208dc24ee7c13fc4.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="istio 集成 cert-manager 使用和源码分析" />
+<meta property="og:description" content="cert-manager 介绍 cert-manager 将证书和证书颁发者添加为 Kubernetes 集群中的资源类型，并简化了获取、更新和使用这些证书的过程。相比 istio 自带的 CA 管理，cert-manager 具有" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yefengzhichen.github.io/post/istio_cert_manager_src/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2023-10-26T14:11:10+08:00" />
+<meta property="article:modified_time" content="2023-10-26T14:11:10+08:00" />
+
+<meta itemprop="name" content="istio 集成 cert-manager 使用和源码分析">
+<meta itemprop="description" content="cert-manager 介绍 cert-manager 将证书和证书颁发者添加为 Kubernetes 集群中的资源类型，并简化了获取、更新和使用这些证书的过程。相比 istio 自带的 CA 管理，cert-manager 具有"><meta itemprop="datePublished" content="2023-10-26T14:11:10+08:00" />
+<meta itemprop="dateModified" content="2023-10-26T14:11:10+08:00" />
+<meta itemprop="wordCount" content="6192">
+<meta itemprop="keywords" content="kubernetes,istio,cert-manager," /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="istio 集成 cert-manager 使用和源码分析"/>
+<meta name="twitter:description" content="cert-manager 介绍 cert-manager 将证书和证书颁发者添加为 Kubernetes 集群中的资源类型，并简化了获取、更新和使用这些证书的过程。相比 istio 自带的 CA 管理，cert-manager 具有"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="../../">
+        <li class="mobile-menu-item">首页</li>
+      </a><a href="../../post/">
+        <li class="mobile-menu-item">列表</li>
+      </a><a href="../../tags/">
+        <li class="mobile-menu-item">标签</li>
+      </a><a href="../../categories/">
+        <li class="mobile-menu-item">分类</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="../../">首页</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../post/">列表</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../tags/">标签</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../categories/">分类</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">istio 集成 cert-manager 使用和源码分析</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2023-10-26 </span>
+        <div class="post-category">
+            <a href="../../categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
+            </div>
+          <span class="more-meta"> 约 6192 字 </span>
+          <span class="more-meta"> 预计阅读 13 分钟 </span>
+        <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#cert-manager-介绍">cert-manager 介绍</a></li>
+        <li><a href="#openssl-模拟证书流程">openssl 模拟证书流程</a>
+          <ul>
+            <li><a href="#创建-ca-端的私钥和证书">创建 CA 端的私钥和证书</a></li>
+            <li><a href="#模拟服务端证书签发">模拟服务端证书签发</a></li>
+          </ul>
+        </li>
+        <li><a href="#istio-集成-cert-manager">istio 集成 cert-manager</a>
+          <ul>
+            <li><a href="#安装和集成">安装和集成</a></li>
+            <li><a href="#查看-envoy-中获取的证书">查看 envoy 中获取的证书</a></li>
+          </ul>
+        </li>
+        <li><a href="#cert-manager-逻辑分析">cert-manager 逻辑分析</a>
+          <ul>
+            <li><a href="#总结">总结</a></li>
+            <li><a href="#创建-pods-时的日志">创建 pods 时的日志</a></li>
+            <li><a href="#istio-csr-源码">istio-csr 源码</a></li>
+            <li><a href="#cert-manager-相关源码">cert-manager 相关源码</a></li>
+          </ul>
+        </li>
+        <li><a href="#sidecar-逻辑分析">sidecar 逻辑分析</a></li>
+        <li><a href="#参考">参考</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h2 id="cert-manager-介绍">cert-manager 介绍</h2>
+<p>cert-manager 将证书和证书颁发者添加为 Kubernetes 集群中的资源类型，并简化了获取、更新和使用这些证书的过程。相比 istio 自带的 CA 管理，cert-manager 具有以下优势：支持多种证书颁发机构，方面实现中间 CA 证书的轮换等。</p>
+<p>istio 网格的一大特点，就是可实现自动 mTLS（Mutual Transport Layer Security），完成网格内的流量加密，有助于缩小云原生部署的攻击面。初始化配置中“enableAutoMtls”选项默认为 true，表示 pods 之间默认开启 mTLS，即是 pods 中应用使用 http 明文请求时，经过 sidecar 代理后，请求会被转换为 tls 加密请求，然后再转发到目标服务。</p>
+<h2 id="openssl-模拟证书流程">openssl 模拟证书流程</h2>
+<p>这里使用 openssl 模拟一个 CA 证书机构，生成 CA 端的私钥和证书，以及签发服务端证书。</p>
+<h3 id="创建-ca-端的私钥和证书">创建 CA 端的私钥和证书</h3>
+<p>创建证书需要时需要一个配置，包含证书的全局设置、主题信息、扩展字段等，示例配置 ca.conf：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">[ req ]
+default_bits = 2048 #公钥长度
+prompt = no # 不提示输入
+utf8 = yes  # 以 utf8 格式编码
+encrypt_key = no # 私钥不加密
+distinguished_name  = req_dn # 证书主题信息
+req_extensions = req_ext    # 证书扩展字段
+x509_extensions = req_ext   # x509 证书扩展字段
+
+[ req_dn ]
+O = Istio      # 组织
+CN = Root CA    # 通用名称
+
+[ req_ext ]
+subjectKeyIdentifier = hash # 证书标识符
+basicConstraints = critical, CA:true    # 基本约束，是否是 CA 证书
+keyUsage = critical, digitalSignature, nonRepudiation, keyEncipherment, keyCertSign # 密钥用法
+</code></pre></td></tr></table>
+</div>
+</div><p>执行命令：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 生成私钥</span>
+openssl genrsa -out ca.key
+<span class="c1"># 生成自签名证书</span>
+openssl req -x509 -new -nodes -key ca.key -days <span class="m">365</span> -out ca.pem -config ca.conf
+<span class="c1"># 查看证书内容， -noout 不用输出证书原内容</span>
+openssl x509 -noout -in ca.pem -text
+<span class="c1"># ca.pem</span>
+Certificate:
+    Data:
+        Version: <span class="m">3</span> <span class="o">(</span>0x2<span class="o">)</span>
+        Serial Number:
+            59:50:54:0d:75:87:7f:b0:fa:29:ff:56:6b:2d:ca:c7:97:b5:ef:a7
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: <span class="nv">O</span> <span class="o">=</span> Istio, <span class="nv">CN</span> <span class="o">=</span> Root CA
+        Validity
+            Not Before: Oct <span class="m">26</span> 06:22:02 <span class="m">2023</span> GMT
+            Not After : Oct <span class="m">25</span> 06:22:02 <span class="m">2024</span> GMT
+        Subject: <span class="nv">O</span> <span class="o">=</span> Istio, <span class="nv">CN</span> <span class="o">=</span> Root CA
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                RSA Public-Key: <span class="o">(</span><span class="m">2048</span> bit<span class="o">)</span>
+                Modulus:
+                    00:b2:62:ea:81:76:70:f8:6b:1b:b6:da:14:f3:df:
+                    0f:00:25:05:c3:b3:dd:07:de:86:01:0f:9a:32:ea:
+                    b0:8b:86:9c:20:d9:f5:cf:cb:91:ff:9c:0d:24:4b:
+                    5e:e1:a2:83:f0:f2:2a:95:f1:33:b9:be:d2:f0:08:
+                    4a:2b:76:33:af:d7:3c:4e:ef:00:9a:43:bf:51:44:
+                    e0:54:a1:6b:3f:bd:95:62:0c:95:fe:83:4a:51:62:
+                    5a:39:c9:70:3b:a1:5d:19:cd:f6:25:8f:d9:99:e2:
+                    8f:98:3d:99:ba:6b:92:1a:59:25:ea:7f:72:06:b7:
+                    11:fe:b2:0a:ee:a3:25:99:29:ba:91:3c:77:94:54:
+                    3b:6e:17:81:9d:e6:37:99:fd:f9:d6:7d:1f:a4:a6:
+                    39:f7:88:c0:63:d2:fb:0b:6a:cf:e9:6c:6b:1b:63:
+                    8e:8e:66:95:f5:ec:b7:28:b2:4e:76:e4:94:bb:57:
+                    ed:43:c2:52:4e:b3:07:0b:ba:7f:b9:8a:bf:08:02:
+                    97:f3:09:b6:9d:6a:ed:ca:42:70:f4:e2:dc:86:5c:
+                    9b:82:28:d7:8b:01:19:26:1b:82:58:cf:e4:00:1f:
+                    c8:5c:db:85:28:f5:ef:11:34:a1:58:53:48:be:f2:
+                    c9:c6:01:88:60:3d:e3:70:d0:29:ba:fb:e4:d2:e9:
+                    f5:3d
+                Exponent: <span class="m">65537</span> <span class="o">(</span>0x10001<span class="o">)</span>
+        X509v3 extensions:
+            X509v3 Subject Key Identifier:
+                57:B0:DA:BD:B4:4A:AB:F0:7E:82:80:04:16:EA:AF:BC:6A:A9:A2:7D
+            X509v3 Basic Constraints: critical
+                CA:TRUE
+            X509v3 Key Usage: critical
+                Digital Signature, Non Repudiation, Key Encipherment, Certificate Sign
+    Signature Algorithm: sha256WithRSAEncryption
+         37:f9:ba:09:40:80:6d:3c:35:d5:07:01:4c:b8:74:bf:80:16:
+         e6:0e:98:ee:28:36:0c:97:c6:74:99:25:07:a8:e3:f3:5e:51:
+         0b:e7:68:39:58:99:5c:24:be:2e:a7:b6:1f:d7:b6:95:99:0e:
+         70:1b:15💿ec:0e:c5:00:57:12:17:16:c0:85:16:97:05:f3:
+         3a:ad:fd:c1:83:d3:26:0e:a8:db:67:35:22:43:00:dc:64:e3:
+         50:e0:46:64:63:1b:0b:33:bd:79:36:0c:d0:e9:5a:36:1a:b4:
+         80:8f:fb:c7:11:2a:ff:be:67:45:f8:70:40:c8:5a:39:69:df:
+         8c:6b:11:f5:19:aa:a1:23:59:1c:5b:81:c0:f4:f9:18:aa:7b:
+         5e:01:3b:f7:41:32:83:63:37:eb:0b:e3:0d:c7:72:e3:4f:5a:
+         ff:66:ad:3a:eb:9f:58:2c:08:26:c4:84:ee:b0:7e:bd:0d🇩🇪
+         b0:21:d3:75:56:2d:f6:df:4d:64:67:50:de:1b:2c:b6:71:0e:
+         cd:cb:82:8d:2e:01:4e:30:ab:9c:3b:a6:24:76:96:cc:e7:ca:
+         94:05:bd:ea:ab:65:ad:9b:94:46:98:1c:70:f8:d7:78:16:8f:
+         67:7e:ba:bd:5f:0d:1f:46:62:8b:4c:b0:47:23:6e:f7:37:37:
+         c7:ac:80:2b
+</code></pre></td></tr></table>
+</div>
+</div><p>证书内容中包含了证书版本、序列号、签名算法和公钥等信息。</p>
+<h3 id="模拟服务端证书签发">模拟服务端证书签发</h3>
+<p>下面使用 CA 模拟 istio 中证书的签发过程，签发时 sidecar 中 istio-agent 中会生成私钥和证书签名请求，证书签名请求配置跟上面类似，示例配置 csr.conf：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">[ req ]
+default_bits = 2048
+prompt = no
+utf8 = yes
+encrypt_key = no
+distinguished_name  = req_dn
+req_extensions = req_ext
+x509_extensions = req_ext
+
+[ req_dn ]
+O = Istio
+CN = productpage
+
+[ req_ext ]
+subjectKeyIdentifier = hash
+basicConstraints = critical, CA:true
+keyUsage = critical, digitalSignature, nonRepudiation, keyEncipherment, keyCertSign
+</code></pre></td></tr></table>
+</div>
+</div><p>执行命令签发：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 生成私钥</span>
+openssl genrsa -out workload.key
+<span class="c1"># 生成证书签名请求</span>
+openssl req -new -key workload.key -out workload.csr -config csr.conf
+<span class="c1"># 查看证书签名请求内容</span>
+openssl req -noout -text -in workload.csr
+<span class="c1"># workload.csr</span>
+Certificate Request:
+    Data:
+        Version: <span class="m">1</span> <span class="o">(</span>0x0<span class="o">)</span>
+        Subject: <span class="nv">O</span> <span class="o">=</span> Istio, <span class="nv">CN</span> <span class="o">=</span> productpage
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                RSA Public-Key: <span class="o">(</span><span class="m">2048</span> bit<span class="o">)</span>
+                Modulus:
+                    00:a7:9d:ad:93:cc:ee:88:aa:f6:8a:c6:c5:c7:76:
+                    9b:43:2f:2c:d7:7c:f7:ac:ee:16:20:a4:8f:68:03:
+                    79:d4:f5🇩🇪f9:d7:ee:e2:c1:4d:91:88:8e:23:8a:
+                    fd:61:b6:0b:a8:51:69:14:af:14:df:17:b1:fd:e4:
+                    ba:56:4b:51:3e:10:6f:e3:1d:ea:c9:23:80:72:bd:
+                    80:1a:bc:06:76:1b:28:e1:72:2f:aa:bb:fa:41:fe:
+                    8f:33:65:1a:46:e0:b2:1d:6a:07:7e:6c:a6:3b:bc:
+                    ac:d1:b1:5c:8f:bd:a3:02:7c:78:f4:5d:19:80:1c:
+                    cc:15:13:43:bb:46:a8:f1:e8:74:e4:11:1c:6a:40:
+                    fb:8d:11:ea:3a:73:d9:0e:af:54:81:4d:b4:22:3f:
+                    45:7d:ee:1b:66:16:d0:e6:fd:15:55:79:d8:26:d4:
+                    54:fc:41:27:6c:7b:89:7d:51:f6:0b:ee:ff:7d:38:
+                    12:a6:3d:5e:f8:36:a3:bd:34:b0:2a:0c:31:62:f7:
+                    68:0b:fb:3d:96:7f:54💿92:75:18:c6:22:fb:22:
+                    d9:94:d6:27:1a:ac:cb:f4:4f:e6:8d:7d:2e:c9:9f:
+                    37:84:aa:19:40:1d:89:04:94:91:c5:b1:e8:d2:36:
+                    de:c5:81:c9:92:ac:f3:a9:37:22:99:93:cd:2d:be:
+                    8b:c1
+                Exponent: <span class="m">65537</span> <span class="o">(</span>0x10001<span class="o">)</span>
+        Attributes:
+        Requested Extensions:
+            X509v3 Subject Key Identifier:
+                8F:B8:8B:0F:B8:27:B0:25:CB:0B:D5:BF:21:CB:3E:E2:6A:B1:99:08
+            X509v3 Basic Constraints: critical
+                CA:TRUE
+            X509v3 Key Usage: critical
+                Digital Signature, Non Repudiation, Key Encipherment, Certificate Sign
+    Signature Algorithm: sha256WithRSAEncryption
+         55:3d:4f:5a:7b:4a:af:22:ec:c1:1d:0c:58:d1:76:8a:ae:c7:
+         2b:f7:42:0e:42:2a:47:f5:9e:e7:97:58:20:22:75:28:e9:0e:
+         8a💿74:3c:5e:3b:20:fd:c2:f6:f7:d9:34:7f:57:69:87:22:
+         d4:77:70:e6:70:e4:40:eb:88:72:3f:f7:cd:e0:71:19:be:f2:
+         d4:6a:89:8b:d9:e7:63:32:0c:1b:04:e2:65:6e:f2:cb:4a:25:
+         88:35:02:9b:aa:13:61:a4:45:bd:c6:62:13:26:56:89:7b:46:
+         31:33:53:47:df:63:dc:97:79:70:62:c1:59:66:e5:02:bc:98:
+         c7:43:12:c3:ad:04:45:ce:cd:79:0b:0e:d9:3f:e6:1a:00:5c:
+         67:f6:01:05:7a:c2:6b:58:03:ce:80:51:6d:0b:08:64:af:72:
+         e7:8b:a7:0a:18:21:f8:6f:5d:a2:c2:6d:de:1e:b0:39:a1:18:
+         16:80:e7:72:d8:2e:71:06:38:16:d9:b8:fa:fb:99:77:4a:f1:
+         b9:17:df:a0:39:9d:b8:53:19:34:8b:ac:60:27:a4:79:50:75:
+         f7:51:29:d1:d2:3b:87💿b3:08:2d:33:90:d6:a7:87:73:aa:
+         8f:09:3c:68:4a:09:3e:dd:a7:8f:98:b3:d3:b7:d7:61:5d:bc:
+         c5:55:b9:98
+
+<span class="c1"># 签发服务端证书</span>
+openssl x509 -req -in workload.csr -CA ca.pem -CAkey ca.key <span class="se">\
+</span><span class="se"></span>    -CAcreateserial -out workload.pem -days <span class="m">365</span> <span class="se">\
+</span><span class="se"></span>    -extensions req_ext -extfile csr.conf -sha256
+<span class="c1"># 查看证书内容，跟 ca.pem 的内容类似，证书中的公钥为 workload.csr 中的公钥</span>
+openssl x509 -noout -text -in workload.pem
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="istio-集成-cert-manager">istio 集成 cert-manager</h2>
+<h3 id="安装和集成">安装和集成</h3>
+<p>参考 <a href="https://cert-manager.io/docs/tutorials/istio-csr/istio-csr/">使用 cert-manager 加密服务网格</a> 即可，这里使用的 istio 示例 <a href="https://istio.io/latest/zh/docs/tasks/security/cert-management/plugin-ca-cert/">插入 CA 证书</a> 中生成的私钥和证书，然后创建 secret：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubectl create namespace istio-system 
+kubectl -nistio-system create secret tls ca-key-pair --cert<span class="o">=</span>certs/root-cert.pem --key<span class="o">=</span>certs/root-key.pem
+</code></pre></td></tr></table>
+</div>
+</div><p>这里使用的 root 根证书，如果需要多集群部署，则可以使用中间证书。接着创建 istio-csr 需要的 Issuer 和 Certificate：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="c"># issuer 会被 Certificate 的 issuerRef 引用</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">cert-manager.io/v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Issuer</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">istiod-tls</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">istio-system</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">ca</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">secretName</span><span class="p">:</span><span class="w"> </span><span class="l">ca-key-pair</span><span class="w"> </span><span class="c"># 提供的私钥和证书</span><span class="w">
+</span><span class="w"></span><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">cert-manager.io/v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Certificate</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">istiod-tls</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">istio-system</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">commonName</span><span class="p">:</span><span class="w"> </span><span class="l">istiod.istio-system.svc</span><span class="w">
+</span><span class="w">  </span><span class="nt">dnsNames</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="l">istiod</span><span class="w">
+</span><span class="w">  </span>- <span class="l">istiod.istio-system</span><span class="w">
+</span><span class="w">  </span>- <span class="l">istiod.istio-system.svc</span><span class="w">
+</span><span class="w">  </span>- <span class="l">istiod.istio-system.svc.cluster</span><span class="w">
+</span><span class="w">  </span>- <span class="l">istiod.istio-system.svc.cluster.local</span><span class="w">
+</span><span class="w">  </span><span class="nt">uris</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="l">spiffe://cluster.local/ns/istio-system/sa/istiod-service-account</span><span class="w">
+</span><span class="w">  </span><span class="nt">secretName</span><span class="p">:</span><span class="w"> </span><span class="l">istiod-tls</span><span class="w">
+</span><span class="w">  </span><span class="nt">duration</span><span class="p">:</span><span class="w"> </span><span class="l">43200h </span><span class="w"> </span><span class="c">#5y</span><span class="w">
+</span><span class="w">  </span><span class="nt">renewBefore</span><span class="p">:</span><span class="w"> </span><span class="l">12h</span><span class="w">
+</span><span class="w">  </span><span class="nt">privateKey</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">rotationPolicy</span><span class="p">:</span><span class="w"> </span><span class="l">Always</span><span class="w">
+</span><span class="w">    </span><span class="nt">algorithm</span><span class="p">:</span><span class="w"> </span><span class="l">RSA</span><span class="w">
+</span><span class="w">    </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="m">2048</span><span class="w">
+</span><span class="w">  </span><span class="nt">revisionHistoryLimit</span><span class="p">:</span><span class="w"> </span><span class="m">1</span><span class="w">
+</span><span class="w">  </span><span class="nt">issuerRef</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">istiod-tls</span><span class="w">
+</span><span class="w">    </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Issuer</span><span class="w">
+</span><span class="w">    </span><span class="nt">group</span><span class="p">:</span><span class="w"> </span><span class="l">cert-manager.io</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>这里名称没用 istio-ca 默认名称，需要在 istio-csr deployment 中修改设置为“&ndash;issuer-name=istiod-tls”。</p>
+<h3 id="查看-envoy-中获取的证书">查看 envoy 中获取的证书</h3>
+<p>sidecar 中 envoy 是通过 sds 协议从 istio-agent 中获取的证书，而 istio-agent 是从 cert-manager 中获取的，下面从 envoy 查看获取到证书信息：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubectl get pods -nsample
+NAME                             READY   STATUS    RESTARTS   AGE
+sleep-9454cc476-2qxzs            2/2     Running   <span class="m">0</span>          23h
+helloworld-v2-79d5467d55-9hdk7   2/2     Running   <span class="m">0</span>          22h
+<span class="c1"># 获取证书链</span>
+istioctl proxy-config secret helloworld-v2-79d5467d55-9hdk7.sample -o json <span class="p">|</span> jq -r <span class="se">\
+</span><span class="se"></span><span class="s1">&#39;.dynamicActiveSecrets[0].secret.tlsCertificate.certificateChain.inlineBytes&#39;</span> <span class="p">|</span> base64 --decode &gt; chain.pem
+<span class="c1"># 里面有两个证书，其中第二个是根证书，此命令只会输出第一个证书内容</span>
+openssl x509 -noout -text -in chain.pem
+<span class="c1"># 获取根证书，跟 chain.pem 中第二个证书一样</span>
+istioctl proxy-config secret helloworld-v2-79d5467d55-9hdk7.sample -o json <span class="p">|</span> jq -r <span class="se">\
+</span><span class="se"></span><span class="s1">&#39;.dynamicActiveSecrets[1].secret.validationContext.trustedCa.inlineBytes&#39;</span> <span class="p">|</span> base64 --decode &gt; root.pem
+<span class="c1"># 查看根证书内容</span>
+openssl x509 -noout -text -in root.pem
+</code></pre></td></tr></table>
+</div>
+</div><p>从这里可以看到 envoy 获取根证书内容，即是创建 ca-key-pair secret 时传入的 root-key.pem。</p>
+<h2 id="cert-manager-逻辑分析">cert-manager 逻辑分析</h2>
+<h3 id="总结">总结</h3>
+<ul>
+<li>pods 的 sidecar 中 istio-agent，调用 caAddress 配置的 istio-csr 的 grpc 服务，请求签名证书</li>
+<li>istio-csr 中的 grpc 服务，会调用 cert-manager 的提供的 client，创建一个 CertificateRequest cr，等待其被签名</li>
+<li>cert-manager 中的 controller 会监听 CertificateRequest，当其被签名后，会将签名后的证书写入到 CertificateRequest 的 status 中，即设置 status.ca 为 CA 的证书，status.certificate 为签发的证书。</li>
+<li>istio-csr 中的 grpc 服务中通过监听此 CertificateRequest，会将签名后的证书返回给 istio-agent。</li>
+<li>sidecar 中的服务 istio-agent 会提供一个 xds 协议的 grpc server，用来提供证书和 ca 证书给 envoy</li>
+<li>sidecar 中 envoy 通过 socket 地址“./var/run/secrets/workload-spiffe-uds/socket”连接 istio-agent，用 xds 协议获取 CA 证书和本地证书。</li>
+<li>pods中客户端调用服务器时，原始http请求经过envoy，会</li>
+</ul>
+<h3 id="创建-pods-时的日志">创建 pods 时的日志</h3>
+<p>cert-manager 有以下几个模块，这里主要分析 cert-manager 和 cert-manager-istio-csr 逻辑：</p>
+<ul>
+<li>cert-manager</li>
+<li>cert-manager-istio-csr</li>
+<li>cert-manager-webhook</li>
+<li>cert-manager-cainjector</li>
+</ul>
+<p>在新建一个 pods 时，查看 cert-manager-istio-csr 的日志：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">2023-10-23T06:58:52.327281Z	info	klog	cert-manager <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;created CertificateRequest&#34;</span> <span class="s2">&#34;identity&#34;</span><span class="o">=</span><span class="s2">&#34;spiffe://cluster.local/ns/sample/sa/sleep&#34;</span> <span class="s2">&#34;name&#34;</span><span class="o">=</span><span class="s2">&#34;istio-csr-mjvpt&#34;</span> <span class="s2">&#34;namespace&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system&#34;</span>
+2023-10-23T06:58:52.335491Z	info	klog	cert-manager <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;waiting for CertificateRequest to become ready&#34;</span> <span class="s2">&#34;identity&#34;</span><span class="o">=</span><span class="s2">&#34;spiffe://cluster.local/ns/sample/sa/sleep&#34;</span> <span class="s2">&#34;name&#34;</span><span class="o">=</span><span class="s2">&#34;istio-csr-mjvpt&#34;</span> <span class="s2">&#34;namespace&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system&#34;</span>
+2023-10-23T06:58:52.335529Z	info	klog	cert-manager <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;waiting for CertificateRequest to become ready&#34;</span> <span class="s2">&#34;identity&#34;</span><span class="o">=</span><span class="s2">&#34;spiffe://cluster.local/ns/sample/sa/sleep&#34;</span> <span class="s2">&#34;name&#34;</span><span class="o">=</span><span class="s2">&#34;istio-csr-mjvpt&#34;</span> <span class="s2">&#34;namespace&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system&#34;</span>
+2023-10-23T06:58:52.346034Z	info	klog	cert-manager <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;waiting for CertificateRequest to become ready&#34;</span> <span class="s2">&#34;identity&#34;</span><span class="o">=</span><span class="s2">&#34;spiffe://cluster.local/ns/sample/sa/sleep&#34;</span> <span class="s2">&#34;name&#34;</span><span class="o">=</span><span class="s2">&#34;istio-csr-mjvpt&#34;</span> <span class="s2">&#34;namespace&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system&#34;</span>
+2023-10-23T06:58:52.384642Z	info	klog	cert-manager <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;signed CertificateRequest&#34;</span> <span class="s2">&#34;identity&#34;</span><span class="o">=</span><span class="s2">&#34;spiffe://cluster.local/ns/sample/sa/sleep&#34;</span> <span class="s2">&#34;name&#34;</span><span class="o">=</span><span class="s2">&#34;istio-csr-mjvpt&#34;</span> <span class="s2">&#34;namespace&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system&#34;</span>
+2023-10-23T06:58:52.385999Z	info	klog	grpc-server <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;workload CertificateRequest signed&#34;</span> <span class="s2">&#34;identities&#34;</span><span class="o">=</span><span class="s2">&#34;spiffe://cluster.local/ns/sample/sa/sleep&#34;</span> <span class="s2">&#34;serving-addr&#34;</span><span class="o">=</span><span class="s2">&#34;0.0.0.0:6443&#34;</span>
+2023-10-23T06:58:52.393159Z	info	klog	cert-manager <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;deleted CertificateRequest&#34;</span> <span class="s2">&#34;identity&#34;</span><span class="o">=</span><span class="s2">&#34;spiffe://cluster.local/ns/sample/sa/sleep&#34;</span> <span class="s2">&#34;name&#34;</span><span class="o">=</span><span class="s2">&#34;istio-csr-mjvpt&#34;</span> <span class="s2">&#34;namespace&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>查看 cert-manager 的日志：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">I1023 06:58:52.346517       <span class="m">1</span> controller.go:154<span class="o">]</span> cert-manager/certificaterequests-issuer-ca <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;syncing item&#34;</span> <span class="s2">&#34;key&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system/istio-csr-mjvpt&#34;</span>
+I1023 06:58:52.346571       <span class="m">1</span> sync.go:83<span class="o">]</span> cert-manager/certificaterequests-issuer-ca <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;fetching issuer object referenced by CertificateRequest&#34;</span> <span class="s2">&#34;resource_kind&#34;</span><span class="o">=</span><span class="s2">&#34;CertificateRequest&#34;</span> <span class="s2">&#34;resource_name&#34;</span><span class="o">=</span><span class="s2">&#34;istio-csr-mjvpt&#34;</span> <span class="s2">&#34;resource_namespace&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system&#34;</span> <span class="s2">&#34;resource_version&#34;</span><span class="o">=</span><span class="s2">&#34;v1&#34;</span>
+I1023 06:58:52.346595       <span class="m">1</span> sync.go:98<span class="o">]</span> cert-manager/certificaterequests-issuer-ca <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;ensuring issuer type matches this controller&#34;</span> <span class="s2">&#34;resource_kind&#34;</span><span class="o">=</span><span class="s2">&#34;CertificateRequest&#34;</span> <span class="s2">&#34;resource_name&#34;</span><span class="o">=</span><span class="s2">&#34;istio-csr-mjvpt&#34;</span> <span class="s2">&#34;resource_namespace&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system&#34;</span> <span class="s2">&#34;resource_version&#34;</span><span class="o">=</span><span class="s2">&#34;v1&#34;</span>
+I1023 06:58:52.346615       <span class="m">1</span> sync.go:125<span class="o">]</span> cert-manager/certificaterequests-issuer-ca <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;validating CertificateRequest resource object&#34;</span> <span class="s2">&#34;resource_kind&#34;</span><span class="o">=</span><span class="s2">&#34;CertificateRequest&#34;</span> <span class="s2">&#34;resource_name&#34;</span><span class="o">=</span><span class="s2">&#34;istio-csr-mjvpt&#34;</span> <span class="s2">&#34;resource_namespace&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system&#34;</span> <span class="s2">&#34;resource_version&#34;</span><span class="o">=</span><span class="s2">&#34;v1&#34;</span>
+I1023 06:58:52.346634       <span class="m">1</span> sync.go:132<span class="o">]</span> cert-manager/certificaterequests-issuer-ca <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;invoking sign function as existing certificate does not exist&#34;</span> <span class="s2">&#34;resource_kind&#34;</span><span class="o">=</span><span class="s2">&#34;CertificateRequest&#34;</span> <span class="s2">&#34;resource_name&#34;</span><span class="o">=</span><span class="s2">&#34;istio-csr-mjvpt&#34;</span> <span class="s2">&#34;resource_namespace&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system&#34;</span> <span class="s2">&#34;resource_version&#34;</span><span class="o">=</span><span class="s2">&#34;v1&#34;</span>
+I1023 06:58:52.371870       <span class="m">1</span> ca.go:132<span class="o">]</span> cert-manager/certificaterequests-issuer-ca/sign <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;certificate issued&#34;</span> <span class="s2">&#34;resource_kind&#34;</span><span class="o">=</span><span class="s2">&#34;CertificateRequest&#34;</span> <span class="s2">&#34;resource_name&#34;</span><span class="o">=</span><span class="s2">&#34;istio-csr-mjvpt&#34;</span> <span class="s2">&#34;resource_namespace&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system&#34;</span> <span class="s2">&#34;resource_version&#34;</span><span class="o">=</span><span class="s2">&#34;v1&#34;</span>
+I1023 06:58:52.372022       <span class="m">1</span> sync.go:178<span class="o">]</span> cert-manager/certificaterequests-issuer-ca/updateStatus <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;updating resource due to change in status&#34;</span> <span class="s2">&#34;diff&#34;</span><span class="o">=[</span><span class="s2">&#34;Conditions: []v1.CertificateRequestCondition[1] != []v1.CertificateRequestCondition[2]&#34;</span>,<span class="s2">&#34;Certificate: []uint8[0] != []uint8[1533]&#34;</span>,<span class="s2">&#34;CA: []uint8[0] != []uint8[1805]&#34;</span><span class="o">]</span> <span class="s2">&#34;resource_kind&#34;</span><span class="o">=</span><span class="s2">&#34;CertificateRequest&#34;</span> <span class="s2">&#34;resource_name&#34;</span><span class="o">=</span><span class="s2">&#34;istio-csr-mjvpt&#34;</span> <span class="s2">&#34;resource_namespace&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system&#34;</span> <span class="s2">&#34;resource_version&#34;</span><span class="o">=</span><span class="s2">&#34;v1&#34;</span>
+I1023 06:58:52.383236       <span class="m">1</span> controller.go:174<span class="o">]</span> cert-manager/certificaterequests-issuer-ca <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;finished processing work item&#34;</span> <span class="s2">&#34;key&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system/istio-csr-mjvpt&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>在这个过程中，会创建名为“istio-csr-mjvpt”的 CertificateRequest cr，并且完成之后默认会删除此 cr：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">cert-manager.io/v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">CertificateRequest</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">duration</span><span class="p">:</span><span class="w"> </span><span class="l">24h0m0s</span><span class="w">
+</span><span class="w">  </span><span class="nt">extra</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">authentication.kubernetes.io/pod-name</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="l">cert-manager-istio-csr-75b7d4bd76-d6lvz</span><span class="w">
+</span><span class="w">    </span><span class="nt">authentication.kubernetes.io/pod-uid</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="l">3e93c68d-af2d-4c65-8509-972085974bd1</span><span class="w">
+</span><span class="w">  </span><span class="nt">issuerRef</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">group</span><span class="p">:</span><span class="w"> </span><span class="l">cert-manager.io</span><span class="w">
+</span><span class="w">    </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Issuer</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">istiod-tls</span><span class="w">
+</span><span class="w">  </span><span class="nt">request</span><span class="p">:</span><span class="w"> </span><span class="l">...</span><span class="w">
+</span><span class="w"></span><span class="nt">status</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">ca</span><span class="p">:</span><span class="w"> </span><span class="l">... </span><span class="w">
+</span><span class="w">  </span><span class="nt">certificate</span><span class="p">:</span><span class="w"> </span><span class="l">...</span><span class="w">
+</span><span class="w">  </span><span class="nt">conditions</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">lastTransitionTime</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;2023-10-28T19:08:57Z&#34;</span><span class="w">
+</span><span class="w">    </span><span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="l">Certificate request has been approved by cert-manager.io</span><span class="w">
+</span><span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l">cert-manager.io</span><span class="w">
+</span><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;True&#34;</span><span class="w">
+</span><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">Approved</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">lastTransitionTime</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;2023-10-28T19:08:57Z&#34;</span><span class="w">
+</span><span class="w">    </span><span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="l">Certificate fetched from issuer successfully</span><span class="w">
+</span><span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l">Issued</span><span class="w">
+</span><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;True&#34;</span><span class="w">
+</span><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">Ready</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><h3 id="istio-csr-源码">istio-csr 源码</h3>
+<p>istio-csr 有 3 个主要组件：TLS 证书获取器、gRPC 服务器和 CA 包分发器。</p>
+<ul>
+<li>TLS 证书获取器：负责获取 gRPC 服务器的 TLS 证书。它使用 cert-manager API 创建一个 csr，该资源将由 cert-manager 获取，并由配置的 issuer 签名。</li>
+<li>gRPC 服务器：负责接收来自 istiod 的证书签名请求，并将签名后的证书发送回。因此，它使用 cert-manager CertificateRequest API 来获取已签名的证书。</li>
+<li>CA 包分发器：负责在所有名称空间（使用 namespaceSelector 进行筛选）中创建和更新 istio-ca-root-cert ConfigMaps。</li>
+</ul>
+<p>istio-csr 中相关代码：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// pkg/certmanager/certmanager.go
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">manager</span><span class="p">)</span> <span class="nf">Sign</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">identities</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">csrPEM</span> <span class="p">[]</span><span class="kt">byte</span><span class="p">,</span> <span class="nx">duration</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span><span class="p">,</span> <span class="nx">usages</span> <span class="p">[]</span><span class="nx">cmapi</span><span class="p">.</span><span class="nx">KeyUsage</span><span class="p">)</span> <span class="p">(</span><span class="nx">Bundle</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">cr</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">cmapi</span><span class="p">.</span><span class="nx">CertificateRequest</span><span class="p">{</span>
+		<span class="nx">ObjectMeta</span><span class="p">:</span> <span class="nx">metav1</span><span class="p">.</span><span class="nx">ObjectMeta</span><span class="p">{</span>
+			<span class="nx">GenerateName</span><span class="p">:</span> <span class="s">&#34;istio-csr-&#34;</span><span class="p">,</span>
+			<span class="nx">Annotations</span><span class="p">:</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">{</span>
+				<span class="nx">identityAnnotation</span><span class="p">:</span> <span class="nx">identities</span><span class="p">,</span>
+			<span class="p">},</span>
+		<span class="p">},</span>
+		<span class="nx">Spec</span><span class="p">:</span> <span class="nx">cmapi</span><span class="p">.</span><span class="nx">CertificateRequestSpec</span><span class="p">{</span>
+			<span class="nx">Duration</span><span class="p">:</span> <span class="o">&amp;</span><span class="nx">metav1</span><span class="p">.</span><span class="nx">Duration</span><span class="p">{</span>
+				<span class="nx">Duration</span><span class="p">:</span> <span class="nx">duration</span><span class="p">,</span>
+			<span class="p">},</span>
+			<span class="nx">IsCA</span><span class="p">:</span>      <span class="kc">false</span><span class="p">,</span>
+			<span class="nx">Request</span><span class="p">:</span>   <span class="nx">csrPEM</span><span class="p">,</span>
+			<span class="nx">Usages</span><span class="p">:</span>    <span class="nx">usages</span><span class="p">,</span>
+			<span class="nx">IssuerRef</span><span class="p">:</span> <span class="nx">m</span><span class="p">.</span><span class="nx">opts</span><span class="p">.</span><span class="nx">IssuerRef</span><span class="p">,</span>
+		<span class="p">},</span>
+	<span class="p">}</span>
+
+	<span class="k">for</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">m</span><span class="p">.</span><span class="nx">opts</span><span class="p">.</span><span class="nx">AdditionalAnnotations</span> <span class="p">{</span>
+		<span class="nx">cr</span><span class="p">.</span><span class="nx">ObjectMeta</span><span class="p">.</span><span class="nx">Annotations</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="p">=</span> <span class="nx">v</span>
+	<span class="p">}</span>
+  <span class="c1">// 创建 CertificateRequest，这里的 clent 是 通过 client.CertmanagerV1().CertificateRequests(opts.Namespace) 初始化的
+</span><span class="c1"></span>	<span class="nx">cr</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nx">client</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">cr</span><span class="p">,</span> <span class="nx">metav1</span><span class="p">.</span><span class="nx">CreateOptions</span><span class="p">{})</span>
+
+	<span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;created CertificateRequest&#34;</span><span class="p">)</span>
+
+  <span class="c1">// 是否保留 cr，如果不保留，则在返回时删除
+</span><span class="c1"></span>	<span class="k">if</span> <span class="p">!</span><span class="nx">m</span><span class="p">.</span><span class="nx">opts</span><span class="p">.</span><span class="nx">PreserveCertificateRequests</span> <span class="p">{</span>
+		<span class="k">defer</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+			<span class="c1">// Use go routine to prevent blocking on Delete call.
+</span><span class="c1"></span>			<span class="k">go</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+				<span class="c1">// Use the Background context so that this call is not cancelled by the
+</span><span class="c1"></span>				<span class="c1">// gRPC context closing.
+</span><span class="c1"></span>				<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nx">client</span><span class="p">.</span><span class="nf">Delete</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">(),</span> <span class="nx">cr</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">metav1</span><span class="p">.</span><span class="nx">DeleteOptions</span><span class="p">{});</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+					<span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;failed to delete CertificateRequest&#34;</span><span class="p">)</span>
+					<span class="k">return</span>
+				<span class="p">}</span>
+
+				<span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;deleted CertificateRequest&#34;</span><span class="p">)</span>
+			<span class="p">}()</span>
+		<span class="p">}()</span>
+	<span class="p">}</span>
+  <span class="c1">// 设置 watc 监听 certificaterequest，等待其被签名
+</span><span class="c1"></span>	<span class="nx">signedCR</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">waitForCertificateRequest</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">log</span><span class="p">,</span> <span class="nx">cr</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">Bundle</span><span class="p">{},</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to wait for CertificateRequest %s/%s to be signed: %w&#34;</span><span class="p">,</span>
+			<span class="nx">cr</span><span class="p">.</span><span class="nx">Namespace</span><span class="p">,</span> <span class="nx">cr</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+
+	<span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;signed CertificateRequest&#34;</span><span class="p">)</span>
+
+	<span class="k">return</span> <span class="nx">Bundle</span><span class="p">{</span><span class="nx">Certificate</span><span class="p">:</span> <span class="nx">signedCR</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">,</span> <span class="nx">CA</span><span class="p">:</span> <span class="nx">signedCR</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">CA</span><span class="p">},</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>在 pods 的 sidecar 创建时，会请求到 istio-csr 的 grpc 服务，会执行 grpc server 的 CreateCertificate：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// pkg/server/server.go
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">Server</span><span class="p">)</span> <span class="nf">CreateCertificate</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">icr</span> <span class="o">*</span><span class="nx">securityapi</span><span class="p">.</span><span class="nx">IstioCertificateRequest</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">securityapi</span><span class="p">.</span><span class="nx">IstioCertificateResponse</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="c1">// authn incoming requests, and build concatenated identities for labelling
+</span><span class="c1"></span>	<span class="nx">identities</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nf">authRequest</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">icr</span><span class="p">.</span><span class="nx">Csr</span><span class="p">))</span>
+	<span class="k">if</span> <span class="p">!</span><span class="nx">ok</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">status</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">codes</span><span class="p">.</span><span class="nx">Unauthenticated</span><span class="p">,</span> <span class="s">&#34;request authenticate failure&#34;</span><span class="p">)</span>
+	<span class="p">}</span>
+
+	<span class="nx">log</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">log</span><span class="p">.</span><span class="nf">WithValues</span><span class="p">(</span><span class="s">&#34;identities&#34;</span><span class="p">,</span> <span class="nx">identities</span><span class="p">)</span>
+
+	<span class="c1">// If requested duration is larger than the maximum value, override with the
+</span><span class="c1"></span>	<span class="c1">// maxiumum value.
+</span><span class="c1"></span>	<span class="nx">duration</span> <span class="o">:=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Duration</span><span class="p">(</span><span class="nx">icr</span><span class="p">.</span><span class="nx">ValidityDuration</span><span class="p">)</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span>
+	<span class="k">if</span> <span class="nx">duration</span> <span class="p">&gt;</span> <span class="nx">s</span><span class="p">.</span><span class="nx">opts</span><span class="p">.</span><span class="nx">MaximumClientCertificateDuration</span> <span class="p">{</span>
+		<span class="nx">duration</span> <span class="p">=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">opts</span><span class="p">.</span><span class="nx">MaximumClientCertificateDuration</span>
+	<span class="p">}</span>
+
+	<span class="nx">bundle</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">cm</span><span class="p">.</span><span class="nf">Sign</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">identities</span><span class="p">,</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">icr</span><span class="p">.</span><span class="nx">Csr</span><span class="p">),</span> <span class="nx">duration</span><span class="p">,</span> <span class="p">[]</span><span class="nx">cmapi</span><span class="p">.</span><span class="nx">KeyUsage</span><span class="p">{</span><span class="nx">cmapi</span><span class="p">.</span><span class="nx">UsageClientAuth</span><span class="p">,</span> <span class="nx">cmapi</span><span class="p">.</span><span class="nx">UsageServerAuth</span><span class="p">})</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;failed to sign incoming client certificate signing request&#34;</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">status</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">codes</span><span class="p">.</span><span class="nx">Internal</span><span class="p">,</span> <span class="s">&#34;failed to sign certificate request&#34;</span><span class="p">)</span>
+	<span class="p">}</span>
+
+	<span class="nx">certChain</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nf">parseCertificateBundle</span><span class="p">(</span><span class="nx">bundle</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;failed to parse and verify signed certificate chain from issuer&#34;</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">status</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">codes</span><span class="p">.</span><span class="nx">Internal</span><span class="p">,</span> <span class="s">&#34;failed to parse and verify signed certificate from issuer&#34;</span><span class="p">)</span>
+	<span class="p">}</span>
+
+	<span class="c1">// Build client response object
+</span><span class="c1"></span>	<span class="nx">response</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">securityapi</span><span class="p">.</span><span class="nx">IstioCertificateResponse</span><span class="p">{</span>
+		<span class="nx">CertChain</span><span class="p">:</span> <span class="nx">certChain</span><span class="p">,</span>
+	<span class="p">}</span>
+
+	<span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;workload CertificateRequest signed&#34;</span><span class="p">)</span>
+
+	<span class="c1">// Return response to the client
+</span><span class="c1"></span>	<span class="k">return</span> <span class="nx">response</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这个函数注册的接口信息描述为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// grpc.ServiceDesc 用来描述 istio 的证书服务
+</span><span class="c1"></span><span class="kd">var</span> <span class="nx">IstioCertificateService_ServiceDesc</span> <span class="p">=</span> <span class="nx">grpc</span><span class="p">.</span><span class="nx">ServiceDesc</span><span class="p">{</span>
+	<span class="nx">ServiceName</span><span class="p">:</span> <span class="s">&#34;istio.v1.auth.IstioCertificateService&#34;</span><span class="p">,</span>
+	<span class="nx">HandlerType</span><span class="p">:</span> <span class="p">(</span><span class="o">*</span><span class="nx">IstioCertificateServiceServer</span><span class="p">)(</span><span class="kc">nil</span><span class="p">),</span>
+	<span class="nx">Methods</span><span class="p">:</span> <span class="p">[]</span><span class="nx">grpc</span><span class="p">.</span><span class="nx">MethodDesc</span><span class="p">{</span>
+		<span class="p">{</span>
+			<span class="nx">MethodName</span><span class="p">:</span> <span class="s">&#34;CreateCertificate&#34;</span><span class="p">,</span>
+			<span class="nx">Handler</span><span class="p">:</span>    <span class="nx">_IstioCertificateService_CreateCertificate_Handler</span><span class="p">,</span>
+		<span class="p">},</span>
+	<span class="p">},</span>
+	<span class="nx">Streams</span><span class="p">:</span>  <span class="p">[]</span><span class="nx">grpc</span><span class="p">.</span><span class="nx">StreamDesc</span><span class="p">{},</span>
+	<span class="nx">Metadata</span><span class="p">:</span> <span class="s">&#34;security/v1alpha1/ca.proto&#34;</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>上面会调用 cert-manager 中的客户端，即 CertmanagerV1Client 的 CertificateRequests 函数：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">// pkg/client/clientset/versioned/typed/certmanager/v1/certmanager_client.go
+// istio-csr 中调用 <span class="s2">&#34;client.CertmanagerV1().CertificateRequests(opts.Namespace)&#34;</span>
+func NewForConfigAndClient<span class="o">(</span>c *rest.Config, h *http.Client<span class="o">)</span> <span class="o">(</span>*CertmanagerV1Client, error<span class="o">)</span> <span class="o">{</span>
+	config :<span class="o">=</span> *c
+	<span class="k">if</span> err :<span class="o">=</span> setConfigDefaults<span class="o">(</span><span class="p">&amp;</span>config<span class="o">)</span><span class="p">;</span> err !<span class="o">=</span> nil <span class="o">{</span>
+		<span class="k">return</span> nil, err
+	<span class="o">}</span>
+	client, err :<span class="o">=</span> rest.RESTClientForConfigAndClient<span class="o">(</span><span class="p">&amp;</span>config, h<span class="o">)</span>
+	<span class="k">if</span> err !<span class="o">=</span> nil <span class="o">{</span>
+		<span class="k">return</span> nil, err
+	<span class="o">}</span>
+	<span class="k">return</span> <span class="p">&amp;</span>CertmanagerV1Client<span class="o">{</span>client<span class="o">}</span>, nil
+<span class="o">}</span>
+
+func <span class="o">(</span>c *CertmanagerV1Client<span class="o">)</span> CertificateRequests<span class="o">(</span>namespace string<span class="o">)</span> CertificateRequestInterface <span class="o">{</span>
+	<span class="k">return</span> newCertificateRequests<span class="o">(</span>c, namespace<span class="o">)</span>
+<span class="o">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>最后调用生成：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// pkg/client/clientset/versioned/typed/certmanager/v1/certificaterequest.go
+</span><span class="c1">// newCertificateRequests returns a CertificateRequests
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">newCertificateRequests</span><span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">CertmanagerV1Client</span><span class="p">,</span> <span class="nx">namespace</span> <span class="kt">string</span><span class="p">)</span> <span class="o">*</span><span class="nx">certificateRequests</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">certificateRequests</span><span class="p">{</span>
+		<span class="nx">client</span><span class="p">:</span> <span class="nx">c</span><span class="p">.</span><span class="nf">RESTClient</span><span class="p">(),</span>
+		<span class="nx">ns</span><span class="p">:</span>     <span class="nx">namespace</span><span class="p">,</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// 接受一个 certificateRequest 的资源并创建
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">certificateRequests</span><span class="p">)</span> <span class="nf">Create</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">certificateRequest</span> <span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">CertificateRequest</span><span class="p">,</span> <span class="nx">opts</span> <span class="nx">metav1</span><span class="p">.</span><span class="nx">CreateOptions</span><span class="p">)</span> <span class="p">(</span><span class="nx">result</span> <span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">CertificateRequest</span><span class="p">,</span> <span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">result</span> <span class="p">=</span> <span class="o">&amp;</span><span class="nx">v1</span><span class="p">.</span><span class="nx">CertificateRequest</span><span class="p">{}</span>
+	<span class="nx">err</span> <span class="p">=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">client</span><span class="p">.</span><span class="nf">Post</span><span class="p">().</span>
+		<span class="nf">Namespace</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">ns</span><span class="p">).</span>
+		<span class="nf">Resource</span><span class="p">(</span><span class="s">&#34;certificaterequests&#34;</span><span class="p">).</span>
+		<span class="nf">VersionedParams</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">opts</span><span class="p">,</span> <span class="nx">scheme</span><span class="p">.</span><span class="nx">ParameterCodec</span><span class="p">).</span>
+		<span class="nf">Body</span><span class="p">(</span><span class="nx">certificateRequest</span><span class="p">).</span>
+		<span class="nf">Do</span><span class="p">(</span><span class="nx">ctx</span><span class="p">).</span>
+		<span class="nf">Into</span><span class="p">(</span><span class="nx">result</span><span class="p">)</span>
+	<span class="k">return</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="cert-manager-相关源码">cert-manager 相关源码</h3>
+<p>cert-manager 中的 controller 会监听 CertificateRequest，当其被签名后，会将签名后的证书写入到 CertificateRequest 的 status 中：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 这个控制器在 run 函数调用 worker 从 queueingController 获取的 queue 中循环拿到 obj，然后调用 queueingController 的 ProcessItem 进行处理
+</span><span class="c1">// pkg/controller/controller.go
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">controller</span><span class="p">)</span> <span class="nf">worker</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">log</span> <span class="o">:=</span> <span class="nx">logf</span><span class="p">.</span><span class="nf">FromContext</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">ctx</span><span class="p">)</span>
+
+	<span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="nx">logf</span><span class="p">.</span><span class="nx">DebugLevel</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;starting worker&#34;</span><span class="p">)</span>
+	<span class="k">for</span> <span class="p">{</span>
+    	<span class="c1">// queue 即 queueingController 的 Register 获取的
+</span><span class="c1"></span>		<span class="nx">obj</span><span class="p">,</span> <span class="nx">shutdown</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">queue</span><span class="p">.</span><span class="nf">Get</span><span class="p">()</span>
+		<span class="k">if</span> <span class="nx">shutdown</span> <span class="p">{</span>
+			<span class="k">break</span>
+		<span class="p">}</span>
+
+		<span class="kd">var</span> <span class="nx">key</span> <span class="kt">string</span>
+		<span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+			<span class="k">defer</span> <span class="nx">c</span><span class="p">.</span><span class="nx">queue</span><span class="p">.</span><span class="nf">Done</span><span class="p">(</span><span class="nx">obj</span><span class="p">)</span>
+			<span class="kd">var</span> <span class="nx">ok</span> <span class="kt">bool</span>
+			<span class="k">if</span> <span class="nx">key</span><span class="p">,</span> <span class="nx">ok</span> <span class="p">=</span> <span class="nx">obj</span><span class="p">.(</span><span class="kt">string</span><span class="p">);</span> <span class="p">!</span><span class="nx">ok</span> <span class="p">{</span>
+				<span class="k">return</span>
+			<span class="p">}</span>
+			<span class="nx">log</span> <span class="o">:=</span> <span class="nx">log</span><span class="p">.</span><span class="nf">WithValues</span><span class="p">(</span><span class="s">&#34;key&#34;</span><span class="p">,</span> <span class="nx">key</span><span class="p">)</span>
+			<span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="nx">logf</span><span class="p">.</span><span class="nx">DebugLevel</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;syncing item&#34;</span><span class="p">)</span>
+
+      		<span class="c1">// 即 queueingController 的 ProcessItem
+</span><span class="c1"></span>			<span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">syncHandler</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">key</span><span class="p">)</span>
+      		<span class="c1">// ...
+</span><span class="c1"></span>			<span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="nx">logf</span><span class="p">.</span><span class="nx">DebugLevel</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;finished processing work item&#34;</span><span class="p">)</span>
+			<span class="nx">c</span><span class="p">.</span><span class="nx">queue</span><span class="p">.</span><span class="nf">Forget</span><span class="p">(</span><span class="nx">obj</span><span class="p">)</span>
+		<span class="p">}()</span>
+	<span class="p">}</span>
+	<span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="nx">logf</span><span class="p">.</span><span class="nx">DebugLevel</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;exiting worker loop&#34;</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>证书请求控制器定义和逻辑如下，每次有证书请求事件时，就获取其引用的 issuer 进行签名，然后将签名后的证书和 ca 写入到 CertificateRequest 的 status 中：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">  1
+</span><span class="lnt">  2
+</span><span class="lnt">  3
+</span><span class="lnt">  4
+</span><span class="lnt">  5
+</span><span class="lnt">  6
+</span><span class="lnt">  7
+</span><span class="lnt">  8
+</span><span class="lnt">  9
+</span><span class="lnt"> 10
+</span><span class="lnt"> 11
+</span><span class="lnt"> 12
+</span><span class="lnt"> 13
+</span><span class="lnt"> 14
+</span><span class="lnt"> 15
+</span><span class="lnt"> 16
+</span><span class="lnt"> 17
+</span><span class="lnt"> 18
+</span><span class="lnt"> 19
+</span><span class="lnt"> 20
+</span><span class="lnt"> 21
+</span><span class="lnt"> 22
+</span><span class="lnt"> 23
+</span><span class="lnt"> 24
+</span><span class="lnt"> 25
+</span><span class="lnt"> 26
+</span><span class="lnt"> 27
+</span><span class="lnt"> 28
+</span><span class="lnt"> 29
+</span><span class="lnt"> 30
+</span><span class="lnt"> 31
+</span><span class="lnt"> 32
+</span><span class="lnt"> 33
+</span><span class="lnt"> 34
+</span><span class="lnt"> 35
+</span><span class="lnt"> 36
+</span><span class="lnt"> 37
+</span><span class="lnt"> 38
+</span><span class="lnt"> 39
+</span><span class="lnt"> 40
+</span><span class="lnt"> 41
+</span><span class="lnt"> 42
+</span><span class="lnt"> 43
+</span><span class="lnt"> 44
+</span><span class="lnt"> 45
+</span><span class="lnt"> 46
+</span><span class="lnt"> 47
+</span><span class="lnt"> 48
+</span><span class="lnt"> 49
+</span><span class="lnt"> 50
+</span><span class="lnt"> 51
+</span><span class="lnt"> 52
+</span><span class="lnt"> 53
+</span><span class="lnt"> 54
+</span><span class="lnt"> 55
+</span><span class="lnt"> 56
+</span><span class="lnt"> 57
+</span><span class="lnt"> 58
+</span><span class="lnt"> 59
+</span><span class="lnt"> 60
+</span><span class="lnt"> 61
+</span><span class="lnt"> 62
+</span><span class="lnt"> 63
+</span><span class="lnt"> 64
+</span><span class="lnt"> 65
+</span><span class="lnt"> 66
+</span><span class="lnt"> 67
+</span><span class="lnt"> 68
+</span><span class="lnt"> 69
+</span><span class="lnt"> 70
+</span><span class="lnt"> 71
+</span><span class="lnt"> 72
+</span><span class="lnt"> 73
+</span><span class="lnt"> 74
+</span><span class="lnt"> 75
+</span><span class="lnt"> 76
+</span><span class="lnt"> 77
+</span><span class="lnt"> 78
+</span><span class="lnt"> 79
+</span><span class="lnt"> 80
+</span><span class="lnt"> 81
+</span><span class="lnt"> 82
+</span><span class="lnt"> 83
+</span><span class="lnt"> 84
+</span><span class="lnt"> 85
+</span><span class="lnt"> 86
+</span><span class="lnt"> 87
+</span><span class="lnt"> 88
+</span><span class="lnt"> 89
+</span><span class="lnt"> 90
+</span><span class="lnt"> 91
+</span><span class="lnt"> 92
+</span><span class="lnt"> 93
+</span><span class="lnt"> 94
+</span><span class="lnt"> 95
+</span><span class="lnt"> 96
+</span><span class="lnt"> 97
+</span><span class="lnt"> 98
+</span><span class="lnt"> 99
+</span><span class="lnt">100
+</span><span class="lnt">101
+</span><span class="lnt">102
+</span><span class="lnt">103
+</span><span class="lnt">104
+</span><span class="lnt">105
+</span><span class="lnt">106
+</span><span class="lnt">107
+</span><span class="lnt">108
+</span><span class="lnt">109
+</span><span class="lnt">110
+</span><span class="lnt">111
+</span><span class="lnt">112
+</span><span class="lnt">113
+</span><span class="lnt">114
+</span><span class="lnt">115
+</span><span class="lnt">116
+</span><span class="lnt">117
+</span><span class="lnt">118
+</span><span class="lnt">119
+</span><span class="lnt">120
+</span><span class="lnt">121
+</span><span class="lnt">122
+</span><span class="lnt">123
+</span><span class="lnt">124
+</span><span class="lnt">125
+</span><span class="lnt">126
+</span><span class="lnt">127
+</span><span class="lnt">128
+</span><span class="lnt">129
+</span><span class="lnt">130
+</span><span class="lnt">131
+</span><span class="lnt">132
+</span><span class="lnt">133
+</span><span class="lnt">134
+</span><span class="lnt">135
+</span><span class="lnt">136
+</span><span class="lnt">137
+</span><span class="lnt">138
+</span><span class="lnt">139
+</span><span class="lnt">140
+</span><span class="lnt">141
+</span><span class="lnt">142
+</span><span class="lnt">143
+</span><span class="lnt">144
+</span><span class="lnt">145
+</span><span class="lnt">146
+</span><span class="lnt">147
+</span><span class="lnt">148
+</span><span class="lnt">149
+</span><span class="lnt">150
+</span><span class="lnt">151
+</span><span class="lnt">152
+</span><span class="lnt">153
+</span><span class="lnt">154
+</span><span class="lnt">155
+</span><span class="lnt">156
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// pkg/controller/certificaterequests/controller.go
+</span><span class="c1">// Controller 实现了 queueingController 来实现证书请求
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">Controller</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">helper</span> <span class="nx">issuer</span><span class="p">.</span><span class="nx">Helper</span>
+	<span class="nx">cmClient</span> <span class="nx">cmclient</span><span class="p">.</span><span class="nx">Interface</span>
+	<span class="nx">fieldManager</span> <span class="nx">strin</span>
+
+	<span class="nx">certificateRequestLister</span> <span class="nx">cmlisters</span><span class="p">.</span><span class="nx">CertificateRequestLister</span>
+	<span class="nx">secretLister</span> <span class="nx">internalinformers</span><span class="p">.</span><span class="nx">SecretLister</span>
+
+	<span class="nx">queue</span> <span class="nx">workqueue</span><span class="p">.</span><span class="nx">RateLimitingInterface</span>
+	<span class="nx">recorder</span> <span class="nx">record</span><span class="p">.</span><span class="nx">EventRecorder</span>
+	<span class="c1">// the issuer kind to react to when a certificate request is synced
+</span><span class="c1"></span>	<span class="nx">issuerType</span> <span class="kt">string</span>
+	<span class="nx">issuerLister</span>        <span class="nx">cmlisters</span><span class="p">.</span><span class="nx">IssuerLister</span>
+	<span class="nx">clusterIssuerLister</span> <span class="nx">cmlisters</span><span class="p">.</span><span class="nx">ClusterIssuerLister</span>
+	<span class="nx">registerExtraInformers</span> <span class="p">[]</span><span class="nx">RegisterExtraInformerFn</span>
+
+	<span class="c1">// Issuer to call sign function
+</span><span class="c1"></span>	<span class="nx">issuerConstructor</span> <span class="nx">IssuerConstructor</span>
+	<span class="nx">issuer</span>            <span class="nx">Issuer</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">New</span><span class="p">(</span><span class="nx">issuerType</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">issuerConstructor</span> <span class="nx">IssuerConstructor</span><span class="p">,</span> <span class="nx">registerExtraInformers</span> <span class="o">...</span><span class="nx">RegisterExtraInformerFn</span><span class="p">)</span> <span class="o">*</span><span class="nx">Controller</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">Controller</span><span class="p">{</span>
+		<span class="nx">issuerType</span><span class="p">:</span>             <span class="nx">issuerType</span><span class="p">,</span>
+		<span class="nx">issuerConstructor</span><span class="p">:</span>      <span class="nx">issuerConstructor</span><span class="p">,</span>
+		<span class="nx">registerExtraInformers</span><span class="p">:</span> <span class="nx">registerExtraInformers</span><span class="p">,</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// Register 初始化 controller，监听 CertificateRequest 并加入到 queue 中，并返回一组必须同步的函数
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Controller</span><span class="p">)</span> <span class="nf">Register</span><span class="p">(</span><span class="nx">ctx</span> <span class="o">*</span><span class="nx">controllerpkg</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">(</span><span class="nx">workqueue</span><span class="p">.</span><span class="nx">RateLimitingInterface</span><span class="p">,</span> <span class="p">[]</span><span class="nx">cache</span><span class="p">.</span><span class="nx">InformerSynced</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">componentName</span> <span class="o">:=</span> <span class="s">&#34;certificaterequests-issuer-&#34;</span> <span class="o">+</span> <span class="nx">c</span><span class="p">.</span><span class="nx">issuerType</span>
+
+	<span class="c1">// construct a new named logger to be reused throughout the controller
+</span><span class="c1"></span>	<span class="nx">c</span><span class="p">.</span><span class="nx">log</span> <span class="p">=</span> <span class="nx">logf</span><span class="p">.</span><span class="nf">FromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">.</span><span class="nx">RootContext</span><span class="p">,</span> <span class="nx">componentName</span><span class="p">)</span>
+
+	<span class="c1">// create a queue used to queue up items to be processed
+</span><span class="c1"></span>	<span class="nx">c</span><span class="p">.</span><span class="nx">queue</span> <span class="p">=</span> <span class="nx">workqueue</span><span class="p">.</span><span class="nf">NewNamedRateLimitingQueue</span><span class="p">(</span><span class="nx">controllerpkg</span><span class="p">.</span><span class="nf">DefaultItemBasedRateLimiter</span><span class="p">(),</span> <span class="nx">componentName</span><span class="p">)</span>
+
+	<span class="nx">secretsInformer</span> <span class="o">:=</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">KubeSharedInformerFactory</span><span class="p">.</span><span class="nf">Secrets</span><span class="p">()</span>
+	<span class="nx">issuerInformer</span> <span class="o">:=</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">SharedInformerFactory</span><span class="p">.</span><span class="nf">Certmanager</span><span class="p">().</span><span class="nf">V1</span><span class="p">().</span><span class="nf">Issuers</span><span class="p">()</span>
+	<span class="nx">c</span><span class="p">.</span><span class="nx">issuerLister</span> <span class="p">=</span> <span class="nx">issuerInformer</span><span class="p">.</span><span class="nf">Lister</span><span class="p">()</span>
+	<span class="nx">c</span><span class="p">.</span><span class="nx">secretLister</span> <span class="p">=</span> <span class="nx">secretsInformer</span><span class="p">.</span><span class="nf">Lister</span><span class="p">()</span>
+
+	<span class="c1">// obtain references to all the informers used by this controller
+</span><span class="c1"></span>	<span class="nx">certificateRequestInformer</span> <span class="o">:=</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">SharedInformerFactory</span><span class="p">.</span><span class="nf">Certmanager</span><span class="p">().</span><span class="nf">V1</span><span class="p">().</span><span class="nf">CertificateRequests</span><span class="p">()</span>
+	<span class="nx">mustSync</span> <span class="o">:=</span> <span class="p">[]</span><span class="nx">cache</span><span class="p">.</span><span class="nx">InformerSynced</span><span class="p">{</span>
+		<span class="nx">certificateRequestInformer</span><span class="p">.</span><span class="nf">Informer</span><span class="p">().</span><span class="nx">HasSynced</span><span class="p">,</span>
+		<span class="nx">issuerInformer</span><span class="p">.</span><span class="nf">Informer</span><span class="p">().</span><span class="nx">HasSynced</span><span class="p">,</span>
+		<span class="nx">secretsInformer</span><span class="p">.</span><span class="nf">Informer</span><span class="p">().</span><span class="nx">HasSynced</span><span class="p">,</span>
+	<span class="p">}</span>
+	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">reg</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">c</span><span class="p">.</span><span class="nx">registerExtraInformers</span> <span class="p">{</span>
+		<span class="nx">ms</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">reg</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">log</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">queue</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to register extra informer: %w&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+		<span class="p">}</span>
+		<span class="nx">mustSync</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">mustSync</span><span class="p">,</span> <span class="nx">ms</span><span class="o">...</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="c1">// ...
+</span><span class="c1"></span>	<span class="nx">c</span><span class="p">.</span><span class="nx">certificateRequestLister</span> <span class="p">=</span> <span class="nx">certificateRequestInformer</span><span class="p">.</span><span class="nf">Lister</span><span class="p">()</span>
+	<span class="c1">// 有证书请求事件时，加入到 queue 中
+</span><span class="c1"></span>	<span class="nx">certificateRequestInformer</span><span class="p">.</span><span class="nf">Informer</span><span class="p">().</span><span class="nf">AddEventHandler</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">controllerpkg</span><span class="p">.</span><span class="nx">QueuingEventHandler</span><span class="p">{</span><span class="nx">Queue</span><span class="p">:</span> <span class="nx">c</span><span class="p">.</span><span class="nx">queue</span><span class="p">})</span>
+	<span class="nx">issuerInformer</span><span class="p">.</span><span class="nf">Informer</span><span class="p">().</span><span class="nf">AddEventHandler</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">controllerpkg</span><span class="p">.</span><span class="nx">BlockingEventHandler</span><span class="p">{</span><span class="nx">WorkFunc</span><span class="p">:</span> <span class="nx">c</span><span class="p">.</span><span class="nx">handleGenericIssuer</span><span class="p">})</span>
+	<span class="c1">// create an issuer helper for reading generic issuers
+</span><span class="c1"></span>	<span class="nx">c</span><span class="p">.</span><span class="nx">helper</span> <span class="p">=</span> <span class="nx">issuer</span><span class="p">.</span><span class="nf">NewHelper</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">issuerLister</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">clusterIssuerLister</span><span class="p">)</span>
+	<span class="c1">// Construct the issuer implementation with the built component context.
+</span><span class="c1"></span>	<span class="nx">c</span><span class="p">.</span><span class="nx">issuer</span> <span class="p">=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">issuerConstructor</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+
+	<span class="nx">c</span><span class="p">.</span><span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="nx">logf</span><span class="p">.</span><span class="nx">DebugLevel</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;new certificate request controller registered&#34;</span><span class="p">,</span>
+		<span class="s">&#34;type&#34;</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">issuerType</span><span class="p">)</span>
+
+	<span class="k">return</span> <span class="nx">c</span><span class="p">.</span><span class="nx">queue</span><span class="p">,</span> <span class="nx">mustSync</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">// ProcessItem 在上面的 worker 函数中调用，每当有新的证书请求时，即新的证书请求对象
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Controller</span><span class="p">)</span> <span class="nf">ProcessItem</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">key</span> <span class="kt">string</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="nx">log</span> <span class="o">:=</span> <span class="nx">logf</span><span class="p">.</span><span class="nf">FromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+	<span class="nx">dbg</span> <span class="o">:=</span> <span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="nx">logf</span><span class="p">.</span><span class="nx">DebugLevel</span><span class="p">)</span>
+
+	<span class="nx">namespace</span><span class="p">,</span> <span class="nx">name</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">cache</span><span class="p">.</span><span class="nf">SplitMetaNamespaceKey</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;invalid resource key&#34;</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">nil</span>
+	<span class="p">}</span>
+
+	<span class="nx">cr</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">certificateRequestLister</span><span class="p">.</span><span class="nf">CertificateRequests</span><span class="p">(</span><span class="nx">namespace</span><span class="p">).</span><span class="nf">Get</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">k8sErrors</span><span class="p">.</span><span class="nf">IsNotFound</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+			<span class="nx">dbg</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;certificate request in work queue no longer exists: %s&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">))</span>
+			<span class="k">return</span> <span class="kc">nil</span>
+		<span class="p">}</span>
+
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span>
+
+	<span class="nx">ctx</span> <span class="p">=</span> <span class="nx">logf</span><span class="p">.</span><span class="nf">NewContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">logf</span><span class="p">.</span><span class="nf">WithResource</span><span class="p">(</span><span class="nx">log</span><span class="p">,</span> <span class="nx">cr</span><span class="p">))</span>
+	<span class="k">return</span> <span class="nx">c</span><span class="p">.</span><span class="nf">Sync</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">cr</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// pkg/controller/certificaterequests/sync.go
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Controller</span><span class="p">)</span> <span class="nf">Sync</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">cr</span> <span class="o">*</span><span class="nx">cmapi</span><span class="p">.</span><span class="nx">CertificateRequest</span><span class="p">)</span> <span class="p">(</span><span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">crCopy</span> <span class="o">:=</span> <span class="nx">cr</span><span class="p">.</span><span class="nf">DeepCopy</span><span class="p">()</span>
+	<span class="k">defer</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">saveErr</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">updateCertificateRequestStatusAndAnnotations</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">cr</span><span class="p">,</span> <span class="nx">crCopy</span><span class="p">);</span> <span class="nx">saveErr</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="nx">err</span> <span class="p">=</span> <span class="nx">utilerrors</span><span class="p">.</span><span class="nf">NewAggregate</span><span class="p">([]</span><span class="kt">error</span><span class="p">{</span><span class="nx">saveErr</span><span class="p">,</span> <span class="nx">err</span><span class="p">})</span>
+		<span class="p">}</span>
+	<span class="p">}()</span>
+    <span class="c1">// ...
+</span><span class="c1"></span>	<span class="nx">dbg</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;fetching issuer object referenced by CertificateRequest&#34;</span><span class="p">)</span>
+
+	<span class="nx">issuerObj</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">helper</span><span class="p">.</span><span class="nf">GetGenericIssuer</span><span class="p">(</span><span class="nx">crCopy</span><span class="p">.</span><span class="nx">Spec</span><span class="p">.</span><span class="nx">IssuerRef</span><span class="p">,</span> <span class="nx">crCopy</span><span class="p">.</span><span class="nx">Namespace</span><span class="p">)</span>
+	<span class="c1">// ...
+</span><span class="c1"></span>	<span class="nx">log</span> <span class="p">=</span> <span class="nx">logf</span><span class="p">.</span><span class="nf">WithRelatedResource</span><span class="p">(</span><span class="nx">log</span><span class="p">,</span> <span class="nx">issuerObj</span><span class="p">)</span>
+	<span class="nx">dbg</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;ensuring issuer type matches this controller&#34;</span><span class="p">)</span>
+	<span class="nx">issuerType</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">apiutil</span><span class="p">.</span><span class="nf">NameForIssuer</span><span class="p">(</span><span class="nx">issuerObj</span><span class="p">)</span>
+	<span class="c1">// ...
+</span><span class="c1"></span>	<span class="nx">dbg</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;validating CertificateRequest resource object&#34;</span><span class="p">)</span>
+
+	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">crCopy</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">)</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="nx">dbg</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;certificate field is already set in status so skipping processing&#34;</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">nil</span>
+	<span class="p">}</span>
+
+	<span class="nx">dbg</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;invoking sign function as existing certificate does not exist&#34;</span><span class="p">)</span>
+
+	<span class="c1">// issuer 是调用 NewCA 创建的，
+</span><span class="c1"></span>	<span class="nx">resp</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">issuer</span><span class="p">.</span><span class="nf">Sign</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">crCopy</span><span class="p">,</span> <span class="nx">issuerObj</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;error issuing certificate request&#34;</span><span class="p">)</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span>
+
+	<span class="c1">// If the issuer has not returned any data we may be pending or failed. The
+</span><span class="c1"></span>	<span class="c1">// underlying issuer will have set the condition of pending or failed and we
+</span><span class="c1"></span>	<span class="c1">// should potentially wait for a re-sync.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">resp</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span>
+	<span class="p">}</span>
+
+	<span class="c1">// Update to status with the new given response.
+</span><span class="c1"></span>	<span class="nx">crCopy</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">Certificate</span> <span class="p">=</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">Certificate</span>
+	<span class="nx">crCopy</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">CA</span> <span class="p">=</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">CA</span>
+
+	<span class="c1">// invalid cert
+</span><span class="c1"></span>	<span class="nx">_</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">pki</span><span class="p">.</span><span class="nf">DecodeX509CertificateBytes</span><span class="p">(</span><span class="nx">crCopy</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">c</span><span class="p">.</span><span class="nx">reporter</span><span class="p">.</span><span class="nf">Failed</span><span class="p">(</span><span class="nx">crCopy</span><span class="p">,</span> <span class="nx">err</span><span class="p">,</span> <span class="s">&#34;DecodeError&#34;</span><span class="p">,</span> <span class="s">&#34;Failed to decode returned certificate&#34;</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">nil</span>
+	<span class="p">}</span>
+
+	<span class="c1">// Set condition to Ready.
+</span><span class="c1"></span>	<span class="nx">c</span><span class="p">.</span><span class="nx">reporter</span><span class="p">.</span><span class="nf">Ready</span><span class="p">(</span><span class="nx">crCopy</span><span class="p">)</span>
+
+	<span class="k">return</span> <span class="nx">ni</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>其中证书请求控制器有以下几种类型：</p>
+<ul>
+<li>selfsigned</li>
+<li>ca</li>
+<li>venafi</li>
+<li>acme</li>
+<li>vault</li>
+</ul>
+<p>ca 类型的初始化代码为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// pkg/controller/certificaterequests/ca/ca.go
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">CA</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">issuerOptions</span> <span class="nx">controllerpkg</span><span class="p">.</span><span class="nx">IssuerOptions</span>
+	<span class="nx">secretsLister</span> <span class="nx">internalinformers</span><span class="p">.</span><span class="nx">SecretLister</span>
+
+	<span class="nx">reporter</span> <span class="o">*</span><span class="nx">crutil</span><span class="p">.</span><span class="nx">Reporter</span>
+
+	<span class="c1">// Used for testing to get reproducible resulting certificates
+</span><span class="c1"></span>	<span class="nx">templateGenerator</span> <span class="nx">templateGenerator</span>
+	<span class="nx">signingFn</span>         <span class="nx">signingFn</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">init</span><span class="p">()</span> <span class="p">{</span>
+	<span class="c1">// create certificate request controller for ca issuer
+</span><span class="c1"></span>	<span class="nx">controllerpkg</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span><span class="nx">CRControllerName</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span> <span class="o">*</span><span class="nx">controllerpkg</span><span class="p">.</span><span class="nx">ContextFactory</span><span class="p">)</span> <span class="p">(</span><span class="nx">controllerpkg</span><span class="p">.</span><span class="nx">Interface</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">controllerpkg</span><span class="p">.</span><span class="nf">NewBuilder</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">CRControllerName</span><span class="p">).</span>
+			<span class="nf">For</span><span class="p">(</span><span class="nx">certificaterequests</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="nx">apiutil</span><span class="p">.</span><span class="nx">IssuerCA</span><span class="p">,</span> <span class="nx">NewCA</span><span class="p">)).</span>
+			<span class="nf">Complete</span><span class="p">()</span>
+	<span class="p">})</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">NewCA</span><span class="p">(</span><span class="nx">ctx</span> <span class="o">*</span><span class="nx">controllerpkg</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="nx">certificaterequests</span><span class="p">.</span><span class="nx">Issuer</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">CA</span><span class="p">{</span>
+		<span class="nx">issuerOptions</span><span class="p">:</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">IssuerOptions</span><span class="p">,</span>
+		<span class="nx">secretsLister</span><span class="p">:</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">KubeSharedInformerFactory</span><span class="p">.</span><span class="nf">Secrets</span><span class="p">().</span><span class="nf">Lister</span><span class="p">(),</span>
+		<span class="nx">reporter</span><span class="p">:</span>      <span class="nx">crutil</span><span class="p">.</span><span class="nf">NewReporter</span><span class="p">(</span><span class="nx">ctx</span><span class="p">.</span><span class="nx">Clock</span><span class="p">,</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">Recorder</span><span class="p">),</span>
+		<span class="nx">templateGenerator</span><span class="p">:</span> <span class="kd">func</span><span class="p">(</span><span class="nx">cr</span> <span class="o">*</span><span class="nx">cmapi</span><span class="p">.</span><span class="nx">CertificateRequest</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">x509</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+			<span class="k">if</span> <span class="p">!</span><span class="nx">utilfeature</span><span class="p">.</span><span class="nx">DefaultMutableFeatureGate</span><span class="p">.</span><span class="nf">Enabled</span><span class="p">(</span><span class="nx">feature</span><span class="p">.</span><span class="nx">DisallowInsecureCSRUsageDefinition</span><span class="p">)</span> <span class="p">{</span>
+				<span class="k">return</span> <span class="nx">pki</span><span class="p">.</span><span class="nf">DeprecatedCertificateTemplateFromCertificateRequestAndAllowInsecureCSRUsageDefinition</span><span class="p">(</span><span class="nx">cr</span><span class="p">)</span>
+			<span class="p">}</span>
+
+			<span class="k">return</span> <span class="nx">pki</span><span class="p">.</span><span class="nf">CertificateTemplateFromCertificateRequest</span><span class="p">(</span><span class="nx">cr</span><span class="p">)</span>
+		<span class="p">},</span>
+		<span class="c1">// Sign 中使用，用来签名证书
+</span><span class="c1"></span>		<span class="nx">signingFn</span><span class="p">:</span> <span class="nx">pki</span><span class="p">.</span><span class="nx">SignCSRTemplate</span><span class="p">,</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">CA</span><span class="p">)</span> <span class="nf">Sign</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">cr</span> <span class="o">*</span><span class="nx">cmapi</span><span class="p">.</span><span class="nx">CertificateRequest</span><span class="p">,</span> <span class="nx">issuerObj</span> <span class="nx">cmapi</span><span class="p">.</span><span class="nx">GenericIssuer</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">issuerpkg</span><span class="p">.</span><span class="nx">IssueResponse</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">secretName</span> <span class="o">:=</span> <span class="nx">issuerObj</span><span class="p">.</span><span class="nf">GetSpec</span><span class="p">().</span><span class="nx">CA</span><span class="p">.</span><span class="nx">SecretName</span>
+	<span class="nx">resourceNamespace</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">issuerOptions</span><span class="p">.</span><span class="nf">ResourceNamespace</span><span class="p">(</span><span class="nx">issuerObj</span><span class="p">)</span>
+
+	<span class="c1">// get a copy of the CA certificate named on the Issuer
+</span><span class="c1"></span>	<span class="nx">caCerts</span><span class="p">,</span> <span class="nx">caKey</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">kube</span><span class="p">.</span><span class="nf">SecretTLSKeyPairAndCA</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">secretsLister</span><span class="p">,</span> <span class="nx">resourceNamespace</span><span class="p">,</span> <span class="nx">issuerObj</span><span class="p">.</span><span class="nf">GetSpec</span><span class="p">().</span><span class="nx">CA</span><span class="p">.</span><span class="nx">SecretName</span><span class="p">)</span>
+	<span class="c1">// ...
+</span><span class="c1"></span>	<span class="nx">template</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">templateGenerator</span><span class="p">(</span><span class="nx">cr</span><span class="p">)</span>
+
+	<span class="nx">template</span><span class="p">.</span><span class="nx">CRLDistributionPoints</span> <span class="p">=</span> <span class="nx">issuerObj</span><span class="p">.</span><span class="nf">GetSpec</span><span class="p">().</span><span class="nx">CA</span><span class="p">.</span><span class="nx">CRLDistributionPoints</span>
+	<span class="nx">template</span><span class="p">.</span><span class="nx">OCSPServer</span> <span class="p">=</span> <span class="nx">issuerObj</span><span class="p">.</span><span class="nf">GetSpec</span><span class="p">().</span><span class="nx">CA</span><span class="p">.</span><span class="nx">OCSPServers</span>
+
+	<span class="nx">bundle</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">signingFn</span><span class="p">(</span><span class="nx">caCerts</span><span class="p">,</span> <span class="nx">caKey</span><span class="p">,</span> <span class="nx">template</span><span class="p">)</span>
+	<span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="nx">logf</span><span class="p">.</span><span class="nx">DebugLevel</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;certificate issued&#34;</span><span class="p">)</span>
+
+	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">issuerpkg</span><span class="p">.</span><span class="nx">IssueResponse</span><span class="p">{</span>
+		<span class="nx">Certificate</span><span class="p">:</span> <span class="nx">bundle</span><span class="p">.</span><span class="nx">ChainPEM</span><span class="p">,</span>
+		<span class="nx">CA</span><span class="p">:</span>          <span class="nx">bundle</span><span class="p">.</span><span class="nx">CAPEM</span><span class="p">,</span>
+	<span class="p">},</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="sidecar-逻辑分析">sidecar 逻辑分析</h2>
+<p>主要是利用 [SecretManagerClient] 来创建私钥和获取证书，可参考之前的 <a href="(https://yefengzhichen.github.io/post/istio_pilot_agent_src/#secretmanagerclient)">istio-agent 源码分析</a>。
+这里查看 envoy 配置中，具体哪里有用到证书相关配置。查看 helloworld sidecar 中 envoy 配置中，涉及 5000 端口入向流量的配置，其 tls 部分如下，此时当前 pod 作为服务端，使用 ROOTCA 证书验证客户端请求：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span><span class="lnt">78
+</span><span class="lnt">79
+</span><span class="lnt">80
+</span><span class="lnt">81
+</span><span class="lnt">82
+</span><span class="lnt">83
+</span><span class="lnt">84
+</span><span class="lnt">85
+</span><span class="lnt">86
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="p">{</span>
+    <span class="nt">&#34;filter_chain_match&#34;</span><span class="p">:</span> <span class="p">{</span>
+     <span class="nt">&#34;destination_port&#34;</span><span class="p">:</span> <span class="mi">5000</span><span class="p">,</span>	<span class="c1">// 对外监听的端口
+</span><span class="c1"></span>     <span class="nt">&#34;transport_protocol&#34;</span><span class="p">:</span> <span class="s2">&#34;tls&#34;</span><span class="p">,</span>
+     <span class="nt">&#34;application_protocols&#34;</span><span class="p">:</span> <span class="p">[</span>
+      <span class="s2">&#34;istio&#34;</span><span class="p">,</span>
+      <span class="s2">&#34;istio-peer-exchange&#34;</span><span class="p">,</span>
+      <span class="s2">&#34;istio-http/1.0&#34;</span><span class="p">,</span>
+      <span class="s2">&#34;istio-http/1.1&#34;</span><span class="p">,</span>
+      <span class="s2">&#34;istio-h2&#34;</span>
+     <span class="p">]</span>
+    <span class="p">},</span>
+    <span class="nt">&#34;filters&#34;</span><span class="p">:</span> <span class="p">[</span>
+     <span class="p">{</span>
+      <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;envoy.filters.network.http_connection_manager&#34;</span><span class="p">,</span>
+      <span class="nt">&#34;typed_config&#34;</span><span class="p">:</span> <span class="p">{</span>
+       <span class="nt">&#34;@type&#34;</span><span class="p">:</span> <span class="s2">&#34;type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager&#34;</span><span class="p">,</span>
+       <span class="nt">&#34;stat_prefix&#34;</span><span class="p">:</span> <span class="s2">&#34;inbound_0.0.0.0_5000&#34;</span><span class="p">,</span>
+        <span class="nt">&#34;validate_clusters&#34;</span><span class="p">:</span> <span class="kc">false</span>
+       <span class="p">}</span><span class="err">...</span><span class="p">}</span>
+    <span class="p">],</span>
+    <span class="nt">&#34;transport_socket&#34;</span><span class="p">:</span> <span class="p">{</span>	<span class="c1">// 传输数据的底层套接字配置
+</span><span class="c1"></span>     <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;envoy.transport_sockets.tls&#34;</span><span class="p">,</span>
+     <span class="nt">&#34;typed_config&#34;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="nt">&#34;@type&#34;</span><span class="p">:</span> <span class="s2">&#34;type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext&#34;</span><span class="p">,</span>
+      <span class="nt">&#34;common_tls_context&#34;</span><span class="p">:</span> <span class="p">{</span>
+       <span class="nt">&#34;tls_params&#34;</span><span class="p">:</span> <span class="p">{},</span>
+       <span class="nt">&#34;alpn_protocols&#34;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">&#34;h2&#34;</span><span class="p">,</span>
+        <span class="s2">&#34;http/1.1&#34;</span>
+       <span class="p">],</span>
+       <span class="nt">&#34;tls_certificate_sds_secret_configs&#34;</span><span class="p">:</span> <span class="p">[</span> <span class="c1">// 服务器端证书
+</span><span class="c1"></span>        <span class="p">{</span>
+         <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;default&#34;</span><span class="p">,</span>	<span class="c1">// 服务器证书名称
+</span><span class="c1"></span>         <span class="nt">&#34;sds_config&#34;</span><span class="p">:</span> <span class="p">{</span>
+          <span class="nt">&#34;api_config_source&#34;</span><span class="p">:</span> <span class="p">{</span>
+           <span class="nt">&#34;api_type&#34;</span><span class="p">:</span> <span class="s2">&#34;GRPC&#34;</span><span class="p">,</span>
+           <span class="nt">&#34;grpc_services&#34;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+             <span class="nt">&#34;envoy_grpc&#34;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&#34;cluster_name&#34;</span><span class="p">:</span> <span class="s2">&#34;sds-grpc&#34;</span> <span class="c1">// 获取服务器端证书的 SDS 服务器
+</span><span class="c1"></span>             <span class="p">}</span>
+            <span class="p">}</span>
+           <span class="p">],</span>
+           <span class="nt">&#34;set_node_on_first_message_only&#34;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+           <span class="nt">&#34;transport_api_version&#34;</span><span class="p">:</span> <span class="s2">&#34;V3&#34;</span>
+          <span class="p">},</span>
+          <span class="nt">&#34;initial_fetch_timeout&#34;</span><span class="p">:</span> <span class="s2">&#34;0s&#34;</span><span class="p">,</span>
+          <span class="nt">&#34;resource_api_version&#34;</span><span class="p">:</span> <span class="s2">&#34;V3&#34;</span>
+         <span class="p">}</span>
+        <span class="p">}</span>
+       <span class="p">],</span>
+       <span class="nt">&#34;combined_validation_context&#34;</span><span class="p">:</span> <span class="p">{</span> <span class="c1">// 验证上下文，用于验证客户端，会合并默认和动态上下文的规则
+</span><span class="c1"></span>        <span class="nt">&#34;default_validation_context&#34;</span><span class="p">:</span> <span class="p">{</span>	<span class="c1">// 默认验证上下文
+</span><span class="c1"></span>         <span class="nt">&#34;match_subject_alt_names&#34;</span><span class="p">:</span> <span class="p">[</span>	<span class="c1">// 匹配的 SAN 规则，用于验证服务器或客户端的证书
+</span><span class="c1"></span>          <span class="p">{</span>
+           <span class="nt">&#34;prefix&#34;</span><span class="p">:</span> <span class="s2">&#34;spiffe://cluster.local/&#34;</span>
+          <span class="p">}</span>
+         <span class="p">]</span>
+        <span class="p">},</span>
+        <span class="nt">&#34;validation_context_sds_secret_config&#34;</span><span class="p">:</span> <span class="p">{</span> <span class="c1">// 动态验证上下文
+</span><span class="c1"></span>         <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;ROOTCA&#34;</span><span class="p">,</span>	<span class="c1">// 根证书名称
+</span><span class="c1"></span>         <span class="nt">&#34;sds_config&#34;</span><span class="p">:</span> <span class="p">{</span>
+          <span class="nt">&#34;api_config_source&#34;</span><span class="p">:</span> <span class="p">{</span>
+           <span class="nt">&#34;api_type&#34;</span><span class="p">:</span> <span class="s2">&#34;GRPC&#34;</span><span class="p">,</span>
+           <span class="nt">&#34;grpc_services&#34;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+             <span class="nt">&#34;envoy_grpc&#34;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&#34;cluster_name&#34;</span><span class="p">:</span> <span class="s2">&#34;sds-grpc&#34;</span>	<span class="c1">// 获取根证书的 SDS 服务器
+</span><span class="c1"></span>             <span class="p">}</span>
+            <span class="p">}</span>
+           <span class="p">],</span>
+           <span class="nt">&#34;set_node_on_first_message_only&#34;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+           <span class="nt">&#34;transport_api_version&#34;</span><span class="p">:</span> <span class="s2">&#34;V3&#34;</span>
+          <span class="p">},</span>
+          <span class="nt">&#34;initial_fetch_timeout&#34;</span><span class="p">:</span> <span class="s2">&#34;0s&#34;</span><span class="p">,</span>
+          <span class="nt">&#34;resource_api_version&#34;</span><span class="p">:</span> <span class="s2">&#34;V3&#34;</span>
+         <span class="p">}</span>
+        <span class="p">}</span>
+       <span class="p">}</span>
+      <span class="p">},</span>
+      <span class="nt">&#34;require_client_certificate&#34;</span><span class="p">:</span> <span class="kc">true</span>
+     <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;0.0.0.0_5000&#34;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>其中 sds-grpc cluster 配置为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="p">{</span>
+ <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;sds-grpc&#34;</span><span class="p">,</span>
+ <span class="nt">&#34;type&#34;</span><span class="p">:</span> <span class="s2">&#34;STATIC&#34;</span><span class="p">,</span>
+ <span class="nt">&#34;connect_timeout&#34;</span><span class="p">:</span> <span class="s2">&#34;1s&#34;</span><span class="p">,</span>
+ <span class="nt">&#34;load_assignment&#34;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="nt">&#34;cluster_name&#34;</span><span class="p">:</span> <span class="s2">&#34;sds-grpc&#34;</span><span class="p">,</span>
+  <span class="nt">&#34;endpoints&#34;</span><span class="p">:</span> <span class="p">[</span>
+   <span class="p">{</span>
+    <span class="nt">&#34;lb_endpoints&#34;</span><span class="p">:</span> <span class="p">[</span>
+     <span class="p">{</span>
+      <span class="nt">&#34;endpoint&#34;</span><span class="p">:</span> <span class="p">{</span>
+       <span class="nt">&#34;address&#34;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&#34;pipe&#34;</span><span class="p">:</span> <span class="p">{</span> <span class="c1">// path 为 sds 服务地址，即 pilot-agent 的 socket 地址
+</span><span class="c1"></span>         <span class="nt">&#34;path&#34;</span><span class="p">:</span> <span class="s2">&#34;./var/run/secrets/workload-spiffe-uds/socket&#34;</span>
+        <span class="p">}</span>
+       <span class="p">}</span>
+      <span class="p">}</span>
+     <span class="p">}</span>
+    <span class="p">]</span>
+   <span class="p">}</span>
+  <span class="p">]</span>
+ <span class="p">},</span>
+ <span class="nt">&#34;typed_extension_protocol_options&#34;</span><span class="p">:</span> <span class="p">{}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>同时 helloworld sidecar 中 有配置 sleep cluster 信息如下，此时当前 pods 作为客户端，将 default 证书作为客户端证书，使用 ROOTCA 证书验证服务端的证书：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span><span class="lnt">78
+</span><span class="lnt">79
+</span><span class="lnt">80
+</span><span class="lnt">81
+</span><span class="lnt">82
+</span><span class="lnt">83
+</span><span class="lnt">84
+</span><span class="lnt">85
+</span><span class="lnt">86
+</span><span class="lnt">87
+</span><span class="lnt">88
+</span><span class="lnt">89
+</span><span class="lnt">90
+</span><span class="lnt">91
+</span><span class="lnt">92
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="p">{</span>
+ <span class="nt">&#34;version_info&#34;</span><span class="p">:</span> <span class="s2">&#34;2023-10-24T05:54:24Z/30&#34;</span><span class="p">,</span>
+ <span class="nt">&#34;cluster&#34;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="nt">&#34;@type&#34;</span><span class="p">:</span> <span class="s2">&#34;type.googleapis.com/envoy.config.cluster.v3.Cluster&#34;</span><span class="p">,</span>
+  <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;outbound|80||sleep.sample.svc.cluster.local&#34;</span><span class="p">,</span>
+  <span class="nt">&#34;type&#34;</span><span class="p">:</span> <span class="s2">&#34;EDS&#34;</span><span class="p">,</span>
+  <span class="nt">&#34;metadata&#34;</span><span class="p">:</span> <span class="p">{</span>
+   <span class="nt">&#34;filter_metadata&#34;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&#34;istio&#34;</span><span class="p">:</span> <span class="p">{</span>
+     <span class="nt">&#34;services&#34;</span><span class="p">:</span> <span class="p">[</span>
+      <span class="p">{</span>
+       <span class="nt">&#34;namespace&#34;</span><span class="p">:</span> <span class="s2">&#34;sample&#34;</span><span class="p">,</span>
+       <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;sleep&#34;</span><span class="p">,</span>
+       <span class="nt">&#34;host&#34;</span><span class="p">:</span> <span class="s2">&#34;sleep.sample.svc.cluster.local&#34;</span>
+      <span class="p">}</span>
+     <span class="p">]</span>
+    <span class="p">}</span>
+   <span class="p">}</span>
+  <span class="p">},</span>
+  <span class="nt">&#34;transport_socket_matches&#34;</span><span class="p">:</span> <span class="p">[</span>
+   <span class="p">{</span>
+    <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;tlsMode-istio&#34;</span><span class="p">,</span>
+    <span class="nt">&#34;match&#34;</span><span class="p">:</span> <span class="p">{</span>
+     <span class="nt">&#34;tlsMode&#34;</span><span class="p">:</span> <span class="s2">&#34;istio&#34;</span>
+    <span class="p">},</span>
+    <span class="nt">&#34;transport_socket&#34;</span><span class="p">:</span> <span class="p">{</span>
+     <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;envoy.transport_sockets.tls&#34;</span><span class="p">,</span>
+     <span class="nt">&#34;typed_config&#34;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="nt">&#34;@type&#34;</span><span class="p">:</span> <span class="s2">&#34;type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext&#34;</span><span class="p">,</span>
+      <span class="nt">&#34;common_tls_context&#34;</span><span class="p">:</span> <span class="p">{</span>
+       <span class="nt">&#34;tls_params&#34;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&#34;tls_minimum_protocol_version&#34;</span><span class="p">:</span> <span class="s2">&#34;TLSv1_2&#34;</span><span class="p">,</span>
+        <span class="nt">&#34;tls_maximum_protocol_version&#34;</span><span class="p">:</span> <span class="s2">&#34;TLSv1_3&#34;</span>
+       <span class="p">},</span>
+       <span class="nt">&#34;alpn_protocols&#34;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">&#34;istio-peer-exchange&#34;</span><span class="p">,</span>
+        <span class="s2">&#34;istio&#34;</span>
+       <span class="p">],</span>
+       <span class="nt">&#34;tls_certificate_sds_secret_configs&#34;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+         <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;default&#34;</span><span class="p">,</span>
+         <span class="nt">&#34;sds_config&#34;</span><span class="p">:</span> <span class="p">{</span>
+          <span class="nt">&#34;api_config_source&#34;</span><span class="p">:</span> <span class="p">{</span>
+           <span class="nt">&#34;api_type&#34;</span><span class="p">:</span> <span class="s2">&#34;GRPC&#34;</span><span class="p">,</span>
+           <span class="nt">&#34;grpc_services&#34;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+             <span class="nt">&#34;envoy_grpc&#34;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&#34;cluster_name&#34;</span><span class="p">:</span> <span class="s2">&#34;sds-grpc&#34;</span>
+             <span class="p">}</span>
+            <span class="p">}</span>
+           <span class="p">]</span>
+          <span class="p">}</span>
+         <span class="p">}</span>
+        <span class="p">}</span>
+       <span class="p">],</span>
+       <span class="nt">&#34;combined_validation_context&#34;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&#34;default_validation_context&#34;</span><span class="p">:</span> <span class="p">{</span>
+         <span class="nt">&#34;match_subject_alt_names&#34;</span><span class="p">:</span> <span class="p">[</span>
+          <span class="p">{</span>
+           <span class="nt">&#34;exact&#34;</span><span class="p">:</span> <span class="s2">&#34;spiffe://cluster.local/ns/sample/sa/sleep&#34;</span>
+          <span class="p">}</span>
+         <span class="p">]</span>
+        <span class="p">},</span>
+        <span class="nt">&#34;validation_context_sds_secret_config&#34;</span><span class="p">:</span> <span class="p">{</span>
+         <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;ROOTCA&#34;</span><span class="p">,</span>
+         <span class="nt">&#34;sds_config&#34;</span><span class="p">:</span> <span class="p">{</span>
+          <span class="nt">&#34;api_config_source&#34;</span><span class="p">:</span> <span class="p">{</span>
+           <span class="nt">&#34;api_type&#34;</span><span class="p">:</span> <span class="s2">&#34;GRPC&#34;</span><span class="p">,</span>
+           <span class="nt">&#34;grpc_services&#34;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+             <span class="nt">&#34;envoy_grpc&#34;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&#34;cluster_name&#34;</span><span class="p">:</span> <span class="s2">&#34;sds-grpc&#34;</span>
+             <span class="p">}</span>
+            <span class="p">}</span>
+           <span class="p">],</span>
+           <span class="nt">&#34;set_node_on_first_message_only&#34;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+           <span class="nt">&#34;transport_api_version&#34;</span><span class="p">:</span> <span class="s2">&#34;V3&#34;</span>
+          <span class="p">},</span>
+          <span class="nt">&#34;initial_fetch_timeout&#34;</span><span class="p">:</span> <span class="s2">&#34;0s&#34;</span><span class="p">,</span>
+          <span class="nt">&#34;resource_api_version&#34;</span><span class="p">:</span> <span class="s2">&#34;V3&#34;</span>
+         <span class="p">}</span>
+        <span class="p">}</span>
+       <span class="p">}</span>
+      <span class="p">},</span>
+      <span class="nt">&#34;sni&#34;</span><span class="p">:</span> <span class="s2">&#34;outbound_.80_._.sleep.sample.svc.cluster.local&#34;</span>
+     <span class="p">}</span>
+    <span class="p">}</span>
+   <span class="p">}</span>
+  <span class="p">]</span>
+ <span class="p">},</span>
+ <span class="nt">&#34;last_updated&#34;</span><span class="p">:</span> <span class="s2">&#34;2023-10-25T08:08:29.168Z&#34;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>总结就是，sidecar 从 cert-manager 获取了根证书和服务器证书，在 mTLS 请求中有两个角色：</p>
+<ul>
+<li>作为服务器时：下发当前证书给调用方，用于调用方验证身份；同时用根证书验证调用方身份</li>
+<li>作为客户端时：用根证书验证服务器身份；同时下发当前证书给服务器，用于服务器验证身份</li>
+</ul>
+<p>mTLS 认证流程，可参考 <a href="https://help.aliyun.com/zh/api-gateway/user-guide/mutual-tls-authentication">HTTPS 双向认证</a>。</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://jimmysong.io/blog/istio-certificates-management/">Istio 中的证书管理方式介绍</a></li>
+<li><a href="https://jimmysong.io/blog/understanding-the-tls-encryption-in-istio/">如何理解 Istio 中的 MTLS 流量加密</a></li>
+<li><a href="https://www.zhaohuabing.com/post/2020-05-25-istio-certificate/">Isito 中的证书工作机制</a></li>
+<li><a href="https://help.aliyun.com/zh/api-gateway/user-guide/mutual-tls-authentication">HTTPS 双向认证</a></li>
+</ul>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">yefengzhichen</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2023-10-26
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="../../tags/kubernetes/">kubernetes</a>
+          <a href="../../tags/istio/">istio</a>
+          <a href="../../tags/cert-manager/">cert-manager</a>
+          </div>
+      <nav class="post-nav">
+        
+        <a class="next" href="../../post/istio_visibility/">
+            <span class="next-text nav-default">Istio 服务可见性和命名空间隔离</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="yefengzhichen/yefengzhichen.github.io"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="zhutao_hust@foxmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/yefengzhichen" class="iconfont icon-github" title="github"></a>
+  <a href="https://yefengzhichen.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  <div class="busuanzi-footer">
+    <span id="busuanzi_container_site_pv"> 本站总访问量 <span id="busuanzi_value_site_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次 </span>
+      <span class="division">|</span>
+    <span id="busuanzi_container_site_uv"> 本站总访客数 <span id="busuanzi_value_site_uv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 人 </span>
+  </div>
+
+  <span class="copyright-year">
+    &copy; 
+    2022 - 
+    2023<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="../../js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

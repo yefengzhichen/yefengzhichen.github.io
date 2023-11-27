@@ -3,14 +3,63 @@
   
   <url>
     <loc>https://yefengzhichen.github.io/categories/</loc>
-    <lastmod>2023-05-22T18:46:11+08:00</lastmod>
+    <lastmod>2023-10-26T14:11:10+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/cert-manager/</loc>
+    <lastmod>2023-10-26T14:11:10+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
     <loc>https://yefengzhichen.github.io/tags/istio/</loc>
-    <lastmod>2023-05-22T18:46:11+08:00</lastmod>
+    <lastmod>2023-10-26T14:11:10+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/post/istio_cert_manager_src/</loc>
+    <lastmod>2023-10-26T14:11:10+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/kubernetes/</loc>
+    <lastmod>2023-10-26T14:11:10+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/post/</loc>
+    <lastmod>2023-10-26T14:11:10+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/tags/</loc>
+    <lastmod>2023-10-26T14:11:10+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/</loc>
+    <lastmod>2023-10-26T14:11:10+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://yefengzhichen.github.io/categories/%E4%BA%91%E5%8E%9F%E7%94%9F/</loc>
+    <lastmod>2023-10-26T14:11:10+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -23,42 +72,7 @@
   </url>
   
   <url>
-    <loc>https://yefengzhichen.github.io/tags/kubernetes/</loc>
-    <lastmod>2023-05-22T18:46:11+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
-    <loc>https://yefengzhichen.github.io/post/</loc>
-    <lastmod>2023-05-22T18:46:11+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
     <loc>https://yefengzhichen.github.io/tags/service-mesh/</loc>
-    <lastmod>2023-05-22T18:46:11+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
-    <loc>https://yefengzhichen.github.io/tags/</loc>
-    <lastmod>2023-05-22T18:46:11+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
-    <loc>https://yefengzhichen.github.io/</loc>
-    <lastmod>2023-05-22T18:46:11+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
-    <loc>https://yefengzhichen.github.io/categories/%E4%BA%91%E5%8E%9F%E7%94%9F/</loc>
     <lastmod>2023-05-22T18:46:11+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>

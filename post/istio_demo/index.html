@@ -49,7 +49,7 @@
 <meta itemprop="name" content="Istio 安装和示例实践">
 <meta itemprop="description" content="安装 需要先准备一个 kubernetes 集群，这里是用的 k3s 安装 的 1.25 版本。 下载 istio 先下载 istio 安装文件，执行： 1 curl -L https://istio.io/downloadIstio | sh - 如果测试机器下载不了，可以手动下载脚本和安装"><meta itemprop="datePublished" content="2023-01-05T19:23:49+08:00" />
 <meta itemprop="dateModified" content="2023-01-05T19:23:49+08:00" />
-<meta itemprop="wordCount" content="1816">
+<meta itemprop="wordCount" content="1856">
 <meta itemprop="keywords" content="kubernetes,istio,envoy,service mesh," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Istio 安装和示例实践"/>
 <meta name="twitter:description" content="安装 需要先准备一个 kubernetes 集群，这里是用的 k3s 安装 的 1.25 版本。 下载 istio 先下载 istio 安装文件，执行： 1 curl -L https://istio.io/downloadIstio | sh - 如果测试机器下载不了，可以手动下载脚本和安装"/>
@@ -132,7 +132,7 @@
         <div class="post-category">
             <a href="../../categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
             </div>
-          <span class="more-meta"> 约 1816 字 </span>
+          <span class="more-meta"> 约 1856 字 </span>
           <span class="more-meta"> 预计阅读 4 分钟 </span>
         <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
       </div>
@@ -339,7 +339,16 @@ reviews-v3-c9c4fb987-nfvrq       2/2     Running   <span class="m">0</span>     
 </code></pre></td></tr></table>
 </div>
 </div><h3 id="在集群外部访问">在集群外部访问</h3>
-<p>如果是通过 Minikube 安装的集群，可以使用 Minikube 隧道提供一个外部负载均衡器。这里使用的 k3s，只能通过机器的 ip 和 nodePort 来访问。</p>
+<p>要开放访问，您需要创建 Istio 入站网关， 它会在网格边缘把一个路径映射到路由：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubectl apply -f samples/bookinfo/networking/bookinfo-gateway.yaml
+</code></pre></td></tr></table>
+</div>
+</div><p>如果是通过 Minikube 安装的集群，可以使用 Minikube 隧道提供一个外部负载均衡器。这里使用的 k3s，只能通过机器的 ip 和 nodePort 来访问。</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
