@@ -49,7 +49,7 @@
 <meta itemprop="name" content="istio 集成 cert-manager 使用和源码分析">
 <meta itemprop="description" content="cert-manager 介绍 cert-manager 将证书和证书颁发者添加为 Kubernetes 集群中的资源类型，并简化了获取、更新和使用这些证书的过程。相比 istio 自带的 CA 管理，cert-manager 具有"><meta itemprop="datePublished" content="2023-10-26T14:11:10+08:00" />
 <meta itemprop="dateModified" content="2023-10-26T14:11:10+08:00" />
-<meta itemprop="wordCount" content="6192">
+<meta itemprop="wordCount" content="6226">
 <meta itemprop="keywords" content="kubernetes,istio,cert-manager," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="istio 集成 cert-manager 使用和源码分析"/>
 <meta name="twitter:description" content="cert-manager 介绍 cert-manager 将证书和证书颁发者添加为 Kubernetes 集群中的资源类型，并简化了获取、更新和使用这些证书的过程。相比 istio 自带的 CA 管理，cert-manager 具有"/>
@@ -132,7 +132,7 @@
         <div class="post-category">
             <a href="../../categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
             </div>
-          <span class="more-meta"> 约 6192 字 </span>
+          <span class="more-meta"> 约 6226 字 </span>
           <span class="more-meta"> 预计阅读 13 分钟 </span>
         <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
       </div>
@@ -468,6 +468,8 @@ keyUsage = critical, digitalSignature, nonRepudiation, keyEncipherment, keyCertS
 </span><span class="lnt">63
 </span><span class="lnt">64
 </span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
 </span></code></pre></td>
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 生成私钥</span>
@@ -535,9 +537,13 @@ openssl x509 -req -in workload.csr -CA ca.pem -CAkey ca.key <span class="se">\
 </span><span class="se"></span>    -extensions req_ext -extfile csr.conf -sha256
 <span class="c1"># 查看证书内容，跟 ca.pem 的内容类似，证书中的公钥为 workload.csr 中的公钥</span>
 openssl x509 -noout -text -in workload.pem
+<span class="c1"># 验证证书</span>
+openssl verify -CAfile ca.pem workload.pem
 </code></pre></td></tr></table>
 </div>
 </div><h2 id="istio-集成-cert-manager">istio 集成 cert-manager</h2>
+<p>集成cert-manager后，集群获取证书整体逻辑如下图：
+<img src="../../image/istio_cert_manager_src/cert_manager_arch.png" alt="请求cert-manager获取证书流程图"></p>
 <h3 id="安装和集成">安装和集成</h3>
 <p>参考 <a href="https://cert-manager.io/docs/tutorials/istio-csr/istio-csr/">使用 cert-manager 加密服务网格</a> 即可，这里使用的 istio 示例 <a href="https://istio.io/latest/zh/docs/tasks/security/cert-management/plugin-ca-cert/">插入 CA 证书</a> 中生成的私钥和证书，然后创建 secret：</p>
 <div class="highlight"><div class="chroma">
@@ -674,7 +680,7 @@ openssl x509 -noout -text -in root.pem
 <ul>
 <li>pods 的 sidecar 中 istio-agent，调用 caAddress 配置的 istio-csr 的 grpc 服务，请求签名证书</li>
 <li>istio-csr 中的 grpc 服务，会调用 cert-manager 的提供的 client，创建一个 CertificateRequest cr，等待其被签名</li>
-<li>cert-manager 中的 controller 会监听 CertificateRequest，当其被签名后，会将签名后的证书写入到 CertificateRequest 的 status 中，即设置 status.ca 为 CA 的证书，status.certificate 为签发的证书。</li>
+<li>cert-manager 中的 controller 会监听 CertificateRequest 创建事件，获取相应的issuer并签名，然后将签名后的证书写入到 CertificateRequest 的 status 中，即设置 status.ca 为 CA 的证书，status.certificate 为签发的证书。</li>
 <li>istio-csr 中的 grpc 服务中通过监听此 CertificateRequest，会将签名后的证书返回给 istio-agent。</li>
 <li>sidecar 中的服务 istio-agent 会提供一个 xds 协议的 grpc server，用来提供证书和 ca 证书给 envoy</li>
 <li>sidecar 中 envoy 通过 socket 地址“./var/run/secrets/workload-spiffe-uds/socket”连接 istio-agent，用 xds 协议获取 CA 证书和本地证书。</li>
@@ -1128,7 +1134,7 @@ func <span class="o">(</span>c *CertmanagerV1Client<span class="o">)</span> Cert
 </code></pre></td></tr></table>
 </div>
 </div><h3 id="cert-manager-相关源码">cert-manager 相关源码</h3>
-<p>cert-manager 中的 controller 会监听 CertificateRequest，当其被签名后，会将签名后的证书写入到 CertificateRequest 的 status 中：</p>
+<p>cert-manager 中的 controller 会监听 CertificateRequest 创建事件，获取相应的issuer并签名，然后将签名后的证书写入到 CertificateRequest 的 status 中：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt"> 1
@@ -2114,7 +2120,11 @@ func <span class="o">(</span>c *CertmanagerV1Client<span class="o">)</span> Cert
           <a href="../../tags/cert-manager/">cert-manager</a>
           </div>
       <nav class="post-nav">
-        
+        <a class="prev" href="../../post/istio_multicluster_analyse/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">istio 多集群访问流程和源码分析</span>
+            <span class="prev-text nav-mobile">上一篇</span>
+          </a>
         <a class="next" href="../../post/istio_visibility/">
             <span class="next-text nav-default">Istio 服务可见性和命名空间隔离</span>
             <span class="next-text nav-mobile">下一篇</span>

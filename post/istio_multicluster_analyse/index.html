@@ -1,0 +1,2175 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>istio 多集群访问流程和源码分析 - yefengzhichen&#39;s blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="yefengzhichen" /><meta name="description" content="安装 kubernetes 集群创建 部署方式为多网络多控制面，这里使用 k3s 安装两个 kubernetes 集群，安装后需执行： 1 2 3 4 5 6 7 8 9 # 拷贝 kubeconfig 配置，istioctl 需要 cp /etc/rancher/k3s/k3s.yaml ~/.kube/config #" /><meta name="keywords" content="Hugo, theme, even" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.92.1 with theme even" />
+
+
+<link rel="canonical" href="https://yefengzhichen.github.io/post/istio_multicluster_analyse/" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../favicon-16x16.png">
+<link rel="manifest" href="../../manifest.json">
+<link rel="mask-icon" href="../../safari-pinned-tab.svg" color="#5bbad5">
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<link href="../../sass/main.min.f92fd13721ddf72129410fd8250e73152cc6f2438082b6c0208dc24ee7c13fc4.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="istio 多集群访问流程和源码分析" />
+<meta property="og:description" content="安装 kubernetes 集群创建 部署方式为多网络多控制面，这里使用 k3s 安装两个 kubernetes 集群，安装后需执行： 1 2 3 4 5 6 7 8 9 # 拷贝 kubeconfig 配置，istioctl 需要 cp /etc/rancher/k3s/k3s.yaml ~/.kube/config #" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yefengzhichen.github.io/post/istio_multicluster_analyse/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2023-11-21T16:10:46+08:00" />
+<meta property="article:modified_time" content="2023-11-21T16:10:46+08:00" />
+
+<meta itemprop="name" content="istio 多集群访问流程和源码分析">
+<meta itemprop="description" content="安装 kubernetes 集群创建 部署方式为多网络多控制面，这里使用 k3s 安装两个 kubernetes 集群，安装后需执行： 1 2 3 4 5 6 7 8 9 # 拷贝 kubeconfig 配置，istioctl 需要 cp /etc/rancher/k3s/k3s.yaml ~/.kube/config #"><meta itemprop="datePublished" content="2023-11-21T16:10:46+08:00" />
+<meta itemprop="dateModified" content="2023-11-21T16:10:46+08:00" />
+<meta itemprop="wordCount" content="6859">
+<meta itemprop="keywords" content="kubernetes,istio,envoy,service mesh," /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="istio 多集群访问流程和源码分析"/>
+<meta name="twitter:description" content="安装 kubernetes 集群创建 部署方式为多网络多控制面，这里使用 k3s 安装两个 kubernetes 集群，安装后需执行： 1 2 3 4 5 6 7 8 9 # 拷贝 kubeconfig 配置，istioctl 需要 cp /etc/rancher/k3s/k3s.yaml ~/.kube/config #"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="../../">
+        <li class="mobile-menu-item">首页</li>
+      </a><a href="../../post/">
+        <li class="mobile-menu-item">列表</li>
+      </a><a href="../../tags/">
+        <li class="mobile-menu-item">标签</li>
+      </a><a href="../../categories/">
+        <li class="mobile-menu-item">分类</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="../../">首页</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../post/">列表</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../tags/">标签</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../categories/">分类</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">istio 多集群访问流程和源码分析</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2023-11-21 </span>
+        <div class="post-category">
+            <a href="../../categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
+            </div>
+          <span class="more-meta"> 约 6859 字 </span>
+          <span class="more-meta"> 预计阅读 14 分钟 </span>
+        <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#安装">安装</a>
+      <ul>
+        <li><a href="#kubernetes-集群创建">kubernetes 集群创建</a></li>
+        <li><a href="#创建根证书和中间证书">创建根证书和中间证书</a></li>
+        <li><a href="#安装-istio">安装 istio</a></li>
+        <li><a href="#验证部署">验证部署</a></li>
+      </ul>
+    </li>
+    <li><a href="#跨集群访问逻辑分析">跨集群访问逻辑分析</a>
+      <ul>
+        <li><a href="#客户端-envoy-的路由和证书配置">客户端 envoy 的路由和证书配置</a></li>
+        <li><a href="#东西向网关-envoy-路由和证书配置">东西向网关 envoy 路由和证书配置</a></li>
+        <li><a href="#服务端-envoy-路由和证书配置">服务端 envoy 路由和证书配置</a></li>
+      </ul>
+    </li>
+    <li><a href="#源码分析">源码分析</a>
+      <ul>
+        <li><a href="#当前集群的日志">当前集群的日志</a></li>
+        <li><a href="#连接远程集群的日志">连接远程集群的日志</a></li>
+        <li><a href="#create-remote-secret-源码">create-remote-secret 源码</a></li>
+      </ul>
+    </li>
+    <li><a href="#卸载">卸载</a></li>
+    <li><a href="#参考">参考</a></li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h1 id="安装">安装</h1>
+<h2 id="kubernetes-集群创建">kubernetes 集群创建</h2>
+<p>部署方式为多网络多控制面，这里使用 k3s 安装两个 kubernetes 集群，安装后需执行：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 拷贝 kubeconfig 配置，istioctl 需要</span>
+cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
+<span class="c1"># 创建根证书</span>
+<span class="nb">cd</span> ~/test/istio-1.18.2
+mkdir -p certs <span class="o">&amp;&amp;</span> <span class="nb">cd</span> certs
+make -f ../tools/certs/Makefile.selfsigned.mk root-ca
+make -f ../tools/certs/Makefile.selfsigned.mk cluster1
+make -f ../tools/certs/Makefile.selfsigned.mk cluster2
+<span class="c1"># scp certs 目录到 cluster1 和 cluster2 节点</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="创建根证书和中间证书">创建根证书和中间证书</h2>
+<p>在 cluster1 和 cluster2 集群节点上分别配置两个 istio 集群的证书：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># cluster1</span>
+kubectl create namespace istio-system
+kubectl create secret generic cacerts -n istio-system <span class="se">\
+</span><span class="se"></span>      --from-file<span class="o">=</span>cluster1/ca-cert.pem <span class="se">\
+</span><span class="se"></span>      --from-file<span class="o">=</span>cluster1/ca-key.pem <span class="se">\
+</span><span class="se"></span>      --from-file<span class="o">=</span>cluster1/root-cert.pem <span class="se">\
+</span><span class="se"></span>      --from-file<span class="o">=</span>cluster1/cert-chain.pem
+
+<span class="c1"># cluster2</span>
+kubectl create namespace istio-system
+kubectl create secret generic cacerts -n istio-system <span class="se">\
+</span><span class="se"></span>      --from-file<span class="o">=</span>cluster2/ca-cert.pem <span class="se">\
+</span><span class="se"></span>      --from-file<span class="o">=</span>cluster2/ca-key.pem <span class="se">\
+</span><span class="se"></span>      --from-file<span class="o">=</span>cluster2/root-cert.pem <span class="se">\
+</span><span class="se"></span>      --from-file<span class="o">=</span>cluster2/cert-chain.pem
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="安装-istio">安装 istio</h2>
+<p>IstioOperator 设置为如下，对于多网络多控制面板的多集群场景，node1 和 node2 的网络名称分别设置为 network1 和 network2，集群名称分别设置为 cluster1 和 cluster2，文件分别为 cluster1.yaml 和 cluster2.yaml。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">install.istio.io/v1alpha1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">IstioOperator</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">hub</span><span class="p">:</span><span class="w"> </span><span class="l">docker.io/istio</span><span class="w">
+</span><span class="w">  </span><span class="nt">meshConfig</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">accessLogFile</span><span class="p">:</span><span class="w"> </span><span class="l">/dev/stdout</span><span class="w">
+</span><span class="w">    </span><span class="nt">accessLogEncoding</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;JSON&#34;</span><span class="w">
+</span><span class="w">    </span><span class="nt">defaultConfig</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">proxyMetadata</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">ISTIO_META_DNS_CAPTURE</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;true&#34;</span><span class="w">
+</span><span class="w">  </span><span class="nt">tag</span><span class="p">:</span><span class="w"> </span><span class="m">1.18.2</span><span class="w">
+</span><span class="w">  </span><span class="nt">profile</span><span class="p">:</span><span class="w"> </span><span class="l">demo</span><span class="w">
+</span><span class="w">  </span><span class="nt">components</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">ingressGateways</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">istio-eastwestgateway</span><span class="w">
+</span><span class="w">        </span><span class="nt">label</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">istio</span><span class="p">:</span><span class="w"> </span><span class="l">eastwestgateway</span><span class="w">
+</span><span class="w">          </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">istio-eastwestgateway</span><span class="w">
+</span><span class="w">          </span><span class="nt">topology.istio.io/network</span><span class="p">:</span><span class="w"> </span><span class="l">network1</span><span class="w">
+</span><span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">        </span><span class="nt">k8s</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">env</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span><span class="c"># traffic through this gateway should be routed inside the network</span><span class="w">
+</span><span class="w">            </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">ISTIO_META_REQUESTED_NETWORK_VIEW</span><span class="w">
+</span><span class="w">              </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l">network1</span><span class="w">
+</span><span class="w">          </span><span class="nt">service</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span><span class="w">              </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">status-port</span><span class="w">
+</span><span class="w">                </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">15021</span><span class="w">
+</span><span class="w">                </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="m">15021</span><span class="w">
+</span><span class="w">              </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tls</span><span class="w">
+</span><span class="w">                </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">15443</span><span class="w">
+</span><span class="w">                </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="m">15443</span><span class="w">
+</span><span class="w">              </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tls-istiod</span><span class="w">
+</span><span class="w">                </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">15012</span><span class="w">
+</span><span class="w">                </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="m">15012</span><span class="w">
+</span><span class="w">              </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tls-webhook</span><span class="w">
+</span><span class="w">                </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">15017</span><span class="w">
+</span><span class="w">                </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="m">15017</span><span class="w">
+</span><span class="w">  </span><span class="nt">values</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">global</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">logging</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">level</span><span class="p">:</span><span class="w"> </span><span class="l">default:debug</span><span class="w">
+</span><span class="w">      </span><span class="nt">configValidation</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">      </span><span class="nt">istioNamespace</span><span class="p">:</span><span class="w"> </span><span class="l">istio-system</span><span class="w">
+</span><span class="w">      </span><span class="nt">meshID</span><span class="p">:</span><span class="w"> </span><span class="l">mesh1</span><span class="w">
+</span><span class="w">      </span><span class="nt">multiCluster</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">clusterName</span><span class="p">:</span><span class="w"> </span><span class="l">cluster1</span><span class="w">
+</span><span class="w">      </span><span class="nt">network</span><span class="p">:</span><span class="w"> </span><span class="l">network1</span><span class="w">
+</span><span class="w">    </span><span class="nt">gateways</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">istio-ingressgateway</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">injectionTemplate</span><span class="p">:</span><span class="w"> </span><span class="l">gateway</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>expose-services.yaml 配置为如下，通过该设置，该 Gateway 作为本数据面所有服务的流量入口。也就是所有服务共享单个 ingress gateway （单个 IP)，这里其实是利用了 TLS 中的 SNI(Server Name Indication)，可以允许服务无需配置 VirtualService，而直接使用 TLS 中的 SNI 值来表示 upstream，服务相关的 service/subset/port 都可以编码到 SNI 内容中。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">networking.istio.io/v1alpha3</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Gateway</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">cross-network-gateway</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">istio</span><span class="p">:</span><span class="w"> </span><span class="l">eastwestgateway</span><span class="w">
+</span><span class="w">  </span><span class="nt">servers</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">port</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">number</span><span class="p">:</span><span class="w"> </span><span class="m">15443</span><span class="w">
+</span><span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tls</span><span class="w">
+</span><span class="w">        </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l">TLS</span><span class="w">
+</span><span class="w">      </span><span class="nt">tls</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l">AUTO_PASSTHROUGH</span><span class="w">
+</span><span class="w">      </span><span class="nt">hosts</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="s2">&#34;*.local&#34;</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>执行以下命令部署 istio：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># cluster1</span>
+istioctl install -f cluster1.yaml
+kubectl  apply -n istio-system -f expose-services.yaml
+<span class="c1"># 可通过以下查看安装的文件 </span>
+<span class="c1"># istioctl manifest generate -f cluster1.yaml &gt; out_all.yaml</span>
+<span class="c1"># 查看 external ip，这个 ip 是这台 cluster1 云主机的内网 ip</span>
+kubectl  get svc istio-eastwestgateway -n istio-system
+NAME                    TYPE           CLUSTER-IP     EXTERNAL-IP      PORT<span class="o">(</span>S<span class="o">)</span>                                                           
+istio-eastwestgateway   LoadBalancer   10.43.102.254  192.168.111.205   15021:31047/TCP...
+
+<span class="c1"># cluster2 </span>
+istioctl install -f cluster2.yaml
+kubectl apply -n istio-system -f expose-services.yaml
+<span class="c1"># 查看 external ip，这个 ip 是这台 cluster1 云主机的内网 ip</span>
+kubectl get svc istio-eastwestgateway -n istio-system
+NAME                    TYPE           CLUSTER-IP     EXTERNAL-IP      PORT<span class="o">(</span>S<span class="o">)</span>                                                           
+istio-eastwestgateway   LoadBalancer   10.43.109.162  192.168.111.131   15021:31047/TCP...
+</code></pre></td></tr></table>
+</div>
+</div><p>在两个集群中分别设置另一个集群 api-server 的访问证书的 secret：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># cluster1 使用当前节点的外网 ip</span>
+istioctl x create-remote-secret --name<span class="o">=</span>cluster1 --server<span class="o">=</span>https://192.168.111.205:6443 &gt; cluster1-remote-secret.yaml
+<span class="c1"># cluster2 使用当前节点的外网 ip</span>
+istioctl x create-remote-secret --name<span class="o">=</span>cluster2 --server<span class="o">=</span>https://192.168.111.131:6443 &gt; cluster2-remote-secret.yaml
+<span class="c1"># cluster2</span>
+kubectl apply -f cluster1-remote-secret.yaml
+<span class="c1"># cluster1</span>
+kubectl apply -f cluster2-remote-secret.yaml
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="验证部署">验证部署</h2>
+<p>分别在两个集群中部署测试的 helloworld 的 service 和 sleep 的 service：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># cluster1 and cluster2</span>
+kubectl create namespace sample
+kubectl label namespace sample istio-injection<span class="o">=</span>enabled
+kubectl apply  -f samples/helloworld/helloworld.yaml <span class="se">\
+</span><span class="se"></span>    -l <span class="nv">service</span><span class="o">=</span>helloworld -n sample
+kubectl apply -f samples/sleep/sleep.yaml -n sample
+
+<span class="c1"># cluster1</span>
+kubectl apply -f samples/helloworld/helloworld.yaml <span class="se">\
+</span><span class="se"></span>    -l <span class="nv">version</span><span class="o">=</span>v1 -n sample
+
+<span class="c1"># cluster2</span>
+kubectl apply -f samples/helloworld/helloworld.yaml <span class="se">\
+</span><span class="se"></span>    -l <span class="nv">version</span><span class="o">=</span>v2 -n sample
+</code></pre></td></tr></table>
+</div>
+</div><p>在两集群测试和查看：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># cluster1 查看 endpoints，其中一个为另一个集群的 eastwestgateway 地址</span>
+istioctl pc endpoints -nsample <span class="s2">&#34;</span><span class="k">$(</span>kubectl get pod -n sample -l <span class="nv">app</span><span class="o">=</span>sleep -o <span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.items[0].metadata.name}&#39;</span><span class="k">)</span><span class="s2">&#34;</span> --cluster <span class="s2">&#34;outbound|5000||helloworld.sample.svc.cluster.local&#34;</span>
+ENDPOINT                  STATUS      OUTLIER CHECK     CLUSTER
+10.42.0.59:5000           HEALTHY     OK                outbound<span class="p">|</span>5000<span class="o">||</span>helloworld.sample.svc.cluster.local
+192.168.111.131:15443     HEALTHY     OK                outbound<span class="p">|</span>5000<span class="o">||</span>helloworld.sample.svc.cluster.local
+<span class="c1"># cluster1 通过 curl 测试</span>
+kubectl <span class="nb">exec</span> -n sample -c sleep <span class="s2">&#34;</span><span class="k">$(</span>kubectl get pod -n sample -l <span class="se">\
+</span><span class="se"></span>    <span class="nv">app</span><span class="o">=</span>sleep -o <span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.items[0].metadata.name}&#39;</span><span class="k">)</span><span class="s2">&#34;</span> <span class="se">\
+</span><span class="se"></span>    -- curl helloworld.sample:5000/hello
+
+<span class="c1"># cluster2</span>
+istioctl pc endpoints -nsample <span class="s2">&#34;</span><span class="k">$(</span>kubectl get pod -n sample -l <span class="se">\
+</span><span class="se"></span>    <span class="nv">app</span><span class="o">=</span>sleep -o <span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.items[0].metadata.name}&#39;</span><span class="k">)</span><span class="s2">&#34;</span> --cluster <span class="s2">&#34;outbound|5000||helloworld.sample.svc.cluster.local&#34;</span>
+ENDPOINT                  STATUS      OUTLIER CHECK     CLUSTER
+10.42.0.15:5000           HEALTHY     OK                outbound<span class="p">|</span>5000<span class="o">||</span>helloworld.sample.svc.cluster.local
+192.168.111.205:15443     HEALTHY     OK                outbound<span class="p">|</span>5000<span class="o">||</span>helloworld.sample.svc.cluster.local
+</code></pre></td></tr></table>
+</div>
+</div><h1 id="跨集群访问逻辑分析">跨集群访问逻辑分析</h1>
+<p>整体请求流程图如下，pods 内部使用 http，pod 之间通过 mTLS 交互，并且会先请求到 cluster2 集群的 eastweastgateway pods，然后转发到服务 pods：
+<img src="../../image/istio_multicluster_analyse/cross_req.png" alt="istio 跨集群请求流程"></p>
+<h2 id="客户端-envoy-的路由和证书配置">客户端 envoy 的路由和证书配置</h2>
+<p>这里以在 cluster1 集群的 sleep pod 上访问 cluster2 集群的 helloworld 服务为例，首先获取 sleep pods 的出向请求相关配置：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 从 listener 配置得到 &#34;routeConfigName&#34;: &#34;5000&#34;，可以看到这里协议是 http</span>
+istioctl pc listener sleep-9454cc476-5sbrw.sample --port <span class="m">5000</span> -ojson
+<span class="c1"># 从 route 配置得到 &#34;cluster&#34;: &#34;outbound|5000||helloworld.sample.svc.cluster.local&#34;</span>
+istioctl pc route sleep-9454cc476-5sbrw.sample --name <span class="m">5000</span> -ojson
+<span class="c1"># 获取集群配置，会表明 tls 认证配置，可以看到这里协议是 tls</span>
+istioctl pc cluster sleep-9454cc476-5sbrw.sample --fqdn <span class="s2">&#34;outbound|5000||helloworld.sample.svc.cluster.local&#34;</span> -ojson
+</code></pre></td></tr></table>
+</div>
+</div><p>此 cluster 的详细配置如下，会表明当前节点使用的 tls 证书和根证书名称：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="p">{</span>
+ <span class="nt">&#34;cluster&#34;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="nt">&#34;@type&#34;</span><span class="p">:</span> <span class="s2">&#34;type.googleapis.com/envoy.config.cluster.v3.Cluster&#34;</span><span class="p">,</span>
+  <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;outbound|5000||helloworld.sample.svc.cluster.local&#34;</span><span class="p">,</span>
+  <span class="nt">&#34;type&#34;</span><span class="p">:</span> <span class="s2">&#34;EDS&#34;</span><span class="p">,</span>
+   <span class="nt">&#34;service_name&#34;</span><span class="p">:</span> <span class="s2">&#34;outbound|5000||helloworld.sample.svc.cluster.local&#34;</span>
+  <span class="p">},</span>
+  <span class="nt">&#34;transport_socket_matches&#34;</span><span class="p">:</span> <span class="p">[</span>
+   <span class="p">{</span>
+    <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;tlsMode-istio&#34;</span><span class="p">,</span>
+    <span class="nt">&#34;match&#34;</span><span class="p">:</span> <span class="p">{</span><span class="nt">&#34;tlsMode&#34;</span><span class="p">:</span> <span class="s2">&#34;istio&#34;</span><span class="p">},</span>
+    <span class="nt">&#34;transport_socket&#34;</span><span class="p">:</span> <span class="p">{</span>
+     <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;envoy.transport_sockets.tls&#34;</span><span class="p">,</span>
+     <span class="nt">&#34;typed_config&#34;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="nt">&#34;@type&#34;</span><span class="p">:</span> <span class="s2">&#34;type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext&#34;</span><span class="p">,</span>
+      <span class="nt">&#34;common_tls_context&#34;</span><span class="p">:</span> <span class="p">{</span>
+       <span class="nt">&#34;tls_params&#34;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&#34;tls_minimum_protocol_version&#34;</span><span class="p">:</span> <span class="s2">&#34;TLSv1_2&#34;</span><span class="p">,</span>
+        <span class="nt">&#34;tls_maximum_protocol_version&#34;</span><span class="p">:</span> <span class="s2">&#34;TLSv1_3&#34;</span>
+       <span class="p">},</span>
+       <span class="nt">&#34;alpn_protocols&#34;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">&#34;istio-peer-exchange&#34;</span><span class="p">,</span>
+        <span class="s2">&#34;istio&#34;</span>
+       <span class="p">],</span>
+       <span class="nt">&#34;tls_certificate_sds_secret_configs&#34;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+         <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;default&#34;</span><span class="p">,</span>  <span class="c1">// 本地证书名称
+</span><span class="c1"></span>         <span class="nt">&#34;sds_config&#34;</span><span class="p">:</span> <span class="p">{</span>
+          <span class="nt">&#34;api_config_source&#34;</span><span class="p">:</span> <span class="p">{</span>
+           <span class="nt">&#34;api_type&#34;</span><span class="p">:</span> <span class="s2">&#34;GRPC&#34;</span><span class="p">,</span>
+           <span class="nt">&#34;grpc_services&#34;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+             <span class="nt">&#34;envoy_grpc&#34;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&#34;cluster_name&#34;</span><span class="p">:</span> <span class="s2">&#34;sds-grpc&#34;</span> <span class="c1">// 获取根证书的 SDS 服务器即通过 pilot-agent 向 istiod 获取的
+</span><span class="c1"></span>             <span class="p">}</span>
+            <span class="p">}</span>
+           <span class="p">],</span>
+          <span class="p">},</span>
+         <span class="p">}</span>
+        <span class="p">}</span>
+       <span class="p">],</span>
+       <span class="nt">&#34;combined_validation_context&#34;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&#34;default_validation_context&#34;</span><span class="p">:</span> <span class="p">{},</span>
+        <span class="nt">&#34;validation_context_sds_secret_config&#34;</span><span class="p">:</span> <span class="p">{</span>
+         <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;ROOTCA&#34;</span><span class="p">,</span> <span class="c1">// 根证书名称
+</span><span class="c1"></span>         <span class="nt">&#34;sds_config&#34;</span><span class="p">:</span> <span class="p">{</span>
+          <span class="nt">&#34;api_config_source&#34;</span><span class="p">:</span> <span class="p">{</span>
+           <span class="nt">&#34;api_type&#34;</span><span class="p">:</span> <span class="s2">&#34;GRPC&#34;</span><span class="p">,</span>
+           <span class="nt">&#34;grpc_services&#34;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+             <span class="nt">&#34;envoy_grpc&#34;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&#34;cluster_name&#34;</span><span class="p">:</span> <span class="s2">&#34;sds-grpc&#34;</span> <span class="c1">// 获取根证书的 SDS 服务器即通过 pilot-agent 向 istiod 获取的
+</span><span class="c1"></span>             <span class="p">}</span>
+            <span class="p">}</span>
+           <span class="p">],</span>
+          <span class="p">},</span>
+         <span class="p">}</span>
+        <span class="p">}</span>
+       <span class="p">}</span>
+      <span class="p">},</span>
+      <span class="nt">&#34;sni&#34;</span><span class="p">:</span> <span class="s2">&#34;outbound_.5000_._.helloworld.sample.svc.cluster.local&#34;</span>
+     <span class="p">}</span>
+    <span class="p">}</span>
+   <span class="p">}</span>
+  <span class="p">]</span>
+ <span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>获取 cluster1 集群 sleep pod 的证书和根证书，其中 default 对应的是一个证书链，里面包含四个证书（里面包含 cluster1 集群的中间证书），ROOTCA 对应的是根证书：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 获取证书链</span>
+istioctl proxy-config secret sleep-9454cc476-5sbrw.sample -o json <span class="p">|</span> jq -r <span class="se">\
+</span><span class="se"></span><span class="s1">&#39;.dynamicActiveSecrets[0].secret.tlsCertificate.certificateChain.inlineBytes&#39;</span> <span class="p">|</span> base64 --decode &gt; chain.pem
+<span class="c1"># 里面有四个证书，第一个是当前 pods 证书，第二个当前集群证书，即上面手动生成的中间证书 certs/cluster1/ca_cert.pem，</span>
+<span class="c1"># 第三个和第四个为根证书，即上面手动生成的根证书 certs/root.pem（为啥根证书会在这记录两次？？）</span>
+openssl x509 -noout -text -in chain.pem
+<span class="c1"># 获取根证书，即上面第三个四个证书</span>
+istioctl proxy-config secret sleep-9454cc476-5sbrw.sample -o json <span class="p">|</span> jq -r <span class="se">\
+</span><span class="se"></span><span class="s1">&#39;.dynamicActiveSecrets[1].secret.validationContext.trustedCa.inlineBytes&#39;</span> <span class="p">|</span> base64 --decode &gt; root.pem
+<span class="c1"># 查看根证书内容</span>
+openssl x509 -noout -text -in root.pem
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="东西向网关-envoy-路由和证书配置">东西向网关 envoy 路由和证书配置</h2>
+<p>跨集群访问时，会先访问到 cluster2 集群的 eastwestgateway pod，查看此 pod envoy 路由配置：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 获取转发的 cluster</span>
+istioctl pc listener istio-eastwestgateway-765d464695-9wnbp.istio-system --port <span class="m">15443</span> -ojson
+<span class="c1"># cluster 详细信息，标记负载为 sample 空间下的 helloworld</span>
+istioctl pc cluster istio-eastwestgateway-765d464695-9wnbp.istio-system --fqdn <span class="s2">&#34;outbound_.5000_._.helloworld.sample.svc.cluster.local&#34;</span> -ojson
+</code></pre></td></tr></table>
+</div>
+</div><p>listener 配置如下，根据服务名称自动转发到名为“outbound_.5000_._.helloworld.sample.svc.cluster.local”的 cluster，协议是 tls：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="p">{</span>
+ <span class="nt">&#34;filter_chain_match&#34;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="nt">&#34;application_protocols&#34;</span><span class="p">:</span> <span class="p">[</span>
+   <span class="s2">&#34;istio&#34;</span><span class="p">,</span>
+   <span class="s2">&#34;istio-peer-exchange&#34;</span><span class="p">,</span>
+   <span class="s2">&#34;istio-http/1.0&#34;</span><span class="p">,</span>
+   <span class="s2">&#34;istio-http/1.1&#34;</span><span class="p">,</span>
+   <span class="s2">&#34;istio-h2&#34;</span>
+  <span class="p">],</span>
+  <span class="nt">&#34;server_names&#34;</span><span class="p">:</span> <span class="p">[</span>
+   <span class="s2">&#34;outbound_.5000_._.helloworld.sample.svc.cluster.local&#34;</span>
+  <span class="p">]</span>
+ <span class="p">},</span>
+ <span class="nt">&#34;filters&#34;</span><span class="p">:</span> <span class="p">[</span>
+  <span class="p">{</span>
+   <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;envoy.filters.network.tcp_proxy&#34;</span><span class="p">,</span>
+   <span class="nt">&#34;typed_config&#34;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&#34;@type&#34;</span><span class="p">:</span> <span class="s2">&#34;type.googleapis.com/envoy.extensions.filters.network.tcp_proxy.v3.TcpProxy&#34;</span><span class="p">,</span>
+    <span class="nt">&#34;stat_prefix&#34;</span><span class="p">:</span> <span class="s2">&#34;outbound_.5000_._.helloworld.sample.svc.cluster.local&#34;</span><span class="p">,</span>
+    <span class="nt">&#34;cluster&#34;</span><span class="p">:</span> <span class="s2">&#34;outbound_.5000_._.helloworld.sample.svc.cluster.local&#34;</span><span class="p">,</span>
+   <span class="p">}</span>
+  <span class="p">}</span>
+ <span class="p">]</span>
+<span class="p">}</span><span class="err">,</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>同样，获取 cluster2 eastwestgateway 节点的证书配置：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 获取证书链</span>
+istioctl proxy-config secret istio-eastwestgateway-765d464695-9wnbp.istio-system -o json <span class="p">|</span> jq -r <span class="se">\
+</span><span class="se"></span><span class="s1">&#39;.dynamicActiveSecrets[0].secret.tlsCertificate.certificateChain.inlineBytes&#39;</span> <span class="p">|</span> base64 --decode &gt; chain.pem
+<span class="c1"># 里面有四个证书，第一个是当前 pods 证书，第二个当前集群证书，即上面手动生成的中间证书 certs/cluster2/ca_cert.pem，</span>
+<span class="c1"># 第三个和第四个为根证书，即上面手动生成的根证书 certs/root.pem</span>
+openssl x509 -noout -text -in chain.pem
+<span class="c1"># 获取根证书，即上面第三个四个证书</span>
+istioctl proxy-config secret istio-eastwestgateway-765d464695-9wnbp.istio-system -o json <span class="p">|</span> jq -r <span class="se">\
+</span><span class="se"></span><span class="s1">&#39;.dynamicActiveSecrets[1].secret.validationContext.trustedCa.inlineBytes&#39;</span> <span class="p">|</span> base64 --decode &gt; root.pem
+<span class="c1"># 查看根证书内容</span>
+openssl x509 -noout -text -in root.pem
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="服务端-envoy-路由和证书配置">服务端 envoy 路由和证书配置</h2>
+<p>查看 cluster2 集群的 helloworld pods 的 envoy 配置：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 从 listener 配置得到 &#34;name&#34;: &#34;inbound|5000||&#34;，可以看到 5000 端口的 listener 有两种，一个协议是 tls，另一个是 raw_buffer，两个都转发到 “inbound|5000||”</span>
+istioctl pc listener helloworld-v2-79d5467d55-whmmb.sample --port <span class="m">15006</span> -ojson
+<span class="c1"># 获取集群配置</span>
+istioctl pc cluster helloworld-v2-79d5467d55-whmmb.sample --fqdn <span class="s2">&#34;inbound|5000||&#34;</span> -ojson
+</code></pre></td></tr></table>
+</div>
+</div><p>查看 listener 详细配置：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="p">{</span>
+ <span class="nt">&#34;filter_chain_match&#34;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="nt">&#34;destination_port&#34;</span><span class="p">:</span> <span class="mi">5000</span><span class="p">,</span>
+  <span class="nt">&#34;transport_protocol&#34;</span><span class="p">:</span> <span class="s2">&#34;tls&#34;</span><span class="p">,</span>
+ <span class="p">},</span>
+ <span class="nt">&#34;filters&#34;</span><span class="p">:</span> <span class="p">[</span>
+  <span class="p">{</span>
+   <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;envoy.filters.network.http_connection_manager&#34;</span><span class="p">,</span>
+   <span class="nt">&#34;typed_config&#34;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&#34;@type&#34;</span><span class="p">:</span> <span class="s2">&#34;type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager&#34;</span><span class="p">,</span>
+    <span class="nt">&#34;route_config&#34;</span><span class="p">:</span> <span class="p">{</span>
+     <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;inbound|5000||&#34;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="nt">&#34;server_name&#34;</span><span class="p">:</span> <span class="s2">&#34;istio-envoy&#34;</span><span class="p">,</span>
+   <span class="p">}</span>
+  <span class="p">}</span>
+ <span class="p">],</span>
+ <span class="nt">&#34;transport_socket&#34;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;envoy.transport_sockets.tls&#34;</span><span class="p">,</span>
+  <span class="nt">&#34;typed_config&#34;</span><span class="p">:</span> <span class="p">{</span>
+   <span class="nt">&#34;@type&#34;</span><span class="p">:</span> <span class="s2">&#34;type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext&#34;</span><span class="p">,</span>
+   <span class="nt">&#34;common_tls_context&#34;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&#34;tls_params&#34;</span><span class="p">:</span> <span class="p">{</span>
+     <span class="nt">&#34;tls_minimum_protocol_version&#34;</span><span class="p">:</span> <span class="s2">&#34;TLSv1_2&#34;</span><span class="p">,</span>
+     <span class="nt">&#34;tls_maximum_protocol_version&#34;</span><span class="p">:</span> <span class="s2">&#34;TLSv1_3&#34;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="nt">&#34;alpn_protocols&#34;</span><span class="p">:</span> <span class="p">[</span>
+     <span class="s2">&#34;h2&#34;</span><span class="p">,</span>
+     <span class="s2">&#34;http/1.1&#34;</span>
+    <span class="p">],</span>
+    <span class="nt">&#34;tls_certificate_sds_secret_configs&#34;</span><span class="p">:</span> <span class="p">[</span>
+     <span class="p">{</span>
+      <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;default&#34;</span><span class="p">,</span> <span class="c1">// 服务器证书名称
+</span><span class="c1"></span>      <span class="nt">&#34;sds_config&#34;</span><span class="p">:</span> <span class="p">{</span>
+       <span class="nt">&#34;api_config_source&#34;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&#34;api_type&#34;</span><span class="p">:</span> <span class="s2">&#34;GRPC&#34;</span><span class="p">,</span>
+        <span class="nt">&#34;grpc_services&#34;</span><span class="p">:</span> <span class="p">[</span>
+         <span class="p">{</span>
+          <span class="nt">&#34;envoy_grpc&#34;</span><span class="p">:</span> <span class="p">{</span>
+           <span class="nt">&#34;cluster_name&#34;</span><span class="p">:</span> <span class="s2">&#34;sds-grpc&#34;</span> <span class="c1">// 获取根证书的 SDS 服务器即通过 pilot-agent 向 istiod 获取的
+</span><span class="c1"></span>          <span class="p">}</span>
+         <span class="p">}</span>
+        <span class="p">],</span>
+       <span class="p">},</span>
+      <span class="p">}</span>
+     <span class="p">}</span>
+    <span class="p">],</span>
+    <span class="nt">&#34;combined_validation_context&#34;</span><span class="p">:</span> <span class="p">{</span>
+     <span class="nt">&#34;validation_context_sds_secret_config&#34;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;ROOTCA&#34;</span><span class="p">,</span> <span class="c1">// 根证书名称
+</span><span class="c1"></span>      <span class="nt">&#34;sds_config&#34;</span><span class="p">:</span> <span class="p">{</span>
+       <span class="nt">&#34;api_config_source&#34;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&#34;api_type&#34;</span><span class="p">:</span> <span class="s2">&#34;GRPC&#34;</span><span class="p">,</span>
+        <span class="nt">&#34;grpc_services&#34;</span><span class="p">:</span> <span class="p">[</span>
+         <span class="p">{</span>
+          <span class="nt">&#34;envoy_grpc&#34;</span><span class="p">:</span> <span class="p">{</span>
+           <span class="nt">&#34;cluster_name&#34;</span><span class="p">:</span> <span class="s2">&#34;sds-grpc&#34;</span> <span class="c1">// 获取根证书的 SDS 服务器即通过 pilot-agent 向 istiod 获取的
+</span><span class="c1"></span>          <span class="p">}</span>
+         <span class="p">}</span>
+        <span class="p">],</span>
+       <span class="p">},</span>
+      <span class="p">}</span>
+     <span class="p">}</span>
+    <span class="p">}</span>
+   <span class="p">},</span>
+   <span class="nt">&#34;require_client_certificate&#34;</span><span class="p">:</span> <span class="kc">true</span>
+  <span class="p">}</span>
+ <span class="p">},</span>
+<span class="p">}</span><span class="err">,</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>获取 cluster2 集群 helloworld pod 的证书：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 获取证书链</span>
+istioctl proxy-config secret helloworld-v2-79d5467d55-whmmb.sample -o json <span class="p">|</span> jq -r <span class="se">\
+</span><span class="se"></span><span class="s1">&#39;.dynamicActiveSecrets[0].secret.tlsCertificate.certificateChain.inlineBytes&#39;</span> <span class="p">|</span> base64 --decode &gt; chain.pem
+<span class="c1"># 里面有四个证书，第一个是当前 pods 证书，第二个当前集群证书，即上面手动生成的中间证书 certs/cluster2/ca_cert.pem，</span>
+<span class="c1"># 第三个和第四个为根证书，即上面手动生成的根证书 certs/root.pem（为啥根证书会在这记录两次？？）</span>
+openssl x509 -noout -text -in chain.pem
+<span class="c1"># 获取根证书，和上面第三个四个证书一样</span>
+istioctl proxy-config secret helloworld-v2-79d5467d55-whmmb.sample -o json <span class="p">|</span> jq -r <span class="se">\
+</span><span class="se"></span><span class="s1">&#39;.dynamicActiveSecrets[1].secret.validationContext.trustedCa.inlineBytes&#39;</span> <span class="p">|</span> base64 --decode &gt; root.pem
+<span class="c1"># 查看根证书内容</span>
+openssl x509 -noout -text -in root.pem
+</code></pre></td></tr></table>
+</div>
+</div><h1 id="源码分析">源码分析</h1>
+<p>从 cluster1 istiod 日志中，分别抓取当前集群初始化时的日志，和创建远程集群 secret 后连接远程集群的日志，来分析 istiod 执行了哪些代码。</p>
+<h2 id="当前集群的日志">当前集群的日志</h2>
+<p>在日志中找到当前集群的记录：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">2122 2023-09-21T10:38:02.154035Z     info    Starting Istiod Server with primary cluster caa
+2123 2023-09-21T10:38:02.154146Z     info    initializing Kubernetes credential reader for cluster caa
+2124 2023-09-21T10:38:02.154124Z     info    ControlZ available at 127.0.0.1:9876
+2125 2023-09-21T10:38:02.154198Z     info    kube    Initializing Kubernetes service registry &#34;caa&#34;
+2126 2023-09-21T10:38:02.154277Z     info    kube    should join leader-election for cluster caa: false
+2127 2023-09-21T10:38:02.154376Z     info    Starting multicluster remote secrets controller
+2128 2023-09-21T10:38:02.154582Z     info    status  Starting status manager
+2129 2023-09-21T10:38:02.154633Z     info    Starting validation controller
+2130 2023-09-21T10:38:02.154654Z     info    Starting ADS server
+2131 2023-09-21T10:38:02.154666Z     info    Starting IstioD CA
+2132 2023-09-21T10:38:02.154672Z     info    JWT policy is third-party-jwt
+2133 2023-09-21T10:38:02.154670Z     debug   started queue 2npvxgc495
+</code></pre></td></tr></table>
+</div>
+</div><p>执行相关代码函数如下：</p>
+<ul>
+<li>pilot/pkg/bootstrap/server.go: NewServer</li>
+<li>pilot/pkg/server/instance.go: New</li>
+<li>pilot/pkg/bootstrap/server.go: NewServer</li>
+<li>pilot/pkg/bootstrap/server.go: Server.Start</li>
+<li>pkg/kube/multicluster/secretcontroller.go: Controller.handleAdd
+<ul>
+<li>控制器 1：pilot/pkg/credentials/kube/multicluster.go: Multicluster.ClusterAdded</li>
+<li>控制器 2：pilot/pkg/serviceregistry/kube/controller/multicluster.go: Multicluster.ClusterAdded</li>
+</ul>
+</li>
+</ul>
+<h2 id="连接远程集群的日志">连接远程集群的日志</h2>
+<p>创建对方 cluster 的 secret 后，日志为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">2023-09-20T10:32:01.576782Z     info    processing secret event for secret istio-system/istio-remote-secret-cluster2
+2023-09-20T10:32:01.576819Z     debug   secret istio-system/istio-remote-secret-cluster2 exists in informer cache, processing it
+2023-09-20T10:32:01.576830Z     info    Adding cluster  cluster=cluster2 secret=istio-system/istio-remote-secret-cluster2
+2023-09-20T10:32:01.595271Z     info    initializing Kubernetes credential reader for cluster cluster2
+2023-09-20T10:32:01.601914Z     info    kube    Initializing Kubernetes service registry &#34;cluster2&#34;
+2023-09-20T10:32:01.602043Z     info    kube    Creating WorkloadEntry only config store for cluster2
+2023-09-20T10:32:01.661006Z     info    kube    should join leader-election for cluster cluster2: false
+2023-09-20T10:32:01.661036Z     info    finished callback for cluster and starting to sync      cluster=cluster2 secret=istio-system/istio-remote-secret-cluster2
+2023-09-20T10:32:01.661044Z     info    Number of remote clusters: 1
+2023-09-20T10:32:01.661026Z     debug   started queue 8tvl4q7vq2
+2023-09-20T10:32:01.661045Z     info    kube    Starting Pilot K8S CRD controller       controller=mc-workload-entry-controller
+2023-09-20T10:32:01.661090Z     info    kube    controller &#34;networking.istio.io/v1alpha3/WorkloadEntry&#34; is syncing...   controller=mc-workload-entry-controller
+2023-09-20T10:32:01.663156Z     info    kube    controller &#34;networking.istio.io/v1alpha3/WorkloadEntry&#34; is syncing...   controller=mc-workload-entry-controller
+2023-09-20T10:32:01.667403Z     info    kube    Pilot K8S CRD controller synced in 6.359402ms   controller=mc-workload-entry-controller
+2023-09-20T10:32:01.667423Z     debug   started queue xkkswrrc2d
+2023-09-20T10:32:01.692274Z     info    kube    kube controller for cluster2 synced after 31.195466ms
+2023-09-20T10:32:01.692315Z     debug   started queue cluster2
+2023-09-20T10:32:01.692740Z     info    model   reloading network gateways
+2023-09-20T10:32:01.692759Z     info    model   gateways changed, triggering push
+</code></pre></td></tr></table>
+</div>
+</div><p>执行相关代码函数如下，可以看到逻辑十分相似：</p>
+<ul>
+<li>pkg/kube/multicluster/secretcontroller.go: Controller.processItem</li>
+<li>pkg/kube/multicluster/secretcontroller.go: Controller.addSecret</li>
+<li>pkg/kube/multicluster/secretcontroller.go: Controller.handleAdd
+<ul>
+<li>控制器 1：pilot/pkg/credentials/kube/multicluster.go: Multicluster.ClusterAdded</li>
+<li>控制器 2：pilot/pkg/serviceregistry/kube/controller/multicluster.go: Multicluster.ClusterAdded</li>
+</ul>
+</li>
+</ul>
+<p>其中在 secretcontroller.handerAdd 中，会调用多个 handlers 的 ClusterAdded 函数，这些 handlers 是调用 secretcontroller.AddHandler 添加的，有以下两个地方调用了：</p>
+<ul>
+<li>pilot/pkg/bootstrap/server.go: Server.initSDSServer，对应添加的 handler 为 credentials/kube/multicluster.go 中的 Multicluster</li>
+<li>pilot/pkg/bootstrap/servicecontroller.go: Server.initKubeRegistry，对应添加的 handler 为 serviceregistry/kube/controller/multicluster.go 中的 Multicluster</li>
+</ul>
+<p>其中 secretcontroller.go 中 Controller 是在服务启动时初始化的：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// pilot/pkg/bootstrap/server.go
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">Server</span><span class="p">)</span> <span class="nf">Start</span><span class="p">(</span><span class="nx">stop</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{})</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="nx">log</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;Starting Istiod Server with primary cluster %s&#34;</span><span class="p">,</span> <span class="nx">s</span><span class="p">.</span><span class="nx">clusterID</span><span class="p">)</span>
+  <span class="c1">// ...
+</span><span class="c1"></span><span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">Server</span><span class="p">)</span> <span class="nf">initMulticluster</span><span class="p">(</span><span class="nx">args</span> <span class="o">*</span><span class="nx">PilotArgs</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">s</span><span class="p">.</span><span class="nx">kubeClient</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+	<span class="nx">s</span><span class="p">.</span><span class="nx">multiclusterController</span> <span class="p">=</span> <span class="nx">multicluster</span><span class="p">.</span><span class="nf">NewController</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nx">kubeClient</span><span class="p">,</span> <span class="nx">args</span><span class="p">.</span><span class="nx">Namespace</span><span class="p">,</span> <span class="nx">s</span><span class="p">.</span><span class="nx">clusterID</span><span class="p">,</span> <span class="nx">s</span><span class="p">.</span><span class="nx">environment</span><span class="p">.</span><span class="nx">Watcher</span><span class="p">)</span>
+	<span class="nx">s</span><span class="p">.</span><span class="nx">XDSServer</span><span class="p">.</span><span class="nx">ListRemoteClusters</span> <span class="p">=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">multiclusterController</span><span class="p">.</span><span class="nx">ListRemoteClusters</span>
+	<span class="nx">s</span><span class="p">.</span><span class="nf">addStartFunc</span><span class="p">(</span><span class="kd">func</span><span class="p">(</span><span class="nx">stop</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{})</span> <span class="kt">error</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">s</span><span class="p">.</span><span class="nx">multiclusterController</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="nx">stop</span><span class="p">)</span>
+	<span class="p">})</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>其运行逻辑主要在 Run 函数中，调用 informer 获取集群资源列表和监听集群资源变化：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">//  pkg/kube/multicluster/secretcontroller.go
+</span><span class="c1">// Run starts the controller until it receives a message over stopCh
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Controller</span><span class="p">)</span> <span class="nf">Run</span><span class="p">(</span><span class="nx">stopCh</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{})</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="c1">// run handlers for the config cluster; do not store this *Cluster in the ClusterStore or give it a SyncTimeout
+</span><span class="c1"></span>	<span class="c1">// this is done outside the goroutine, we should block other Run/startFuncs until this is registered
+</span><span class="c1"></span>  <span class="c1">// 为配置的集群运行 handlers，对于当前集群来说，会在 goroutine 外执行，将会阻塞其它的 Run/startFuncs 直到这个注册完成
+</span><span class="c1"></span>  <span class="c1">// 因为当前集群是主集群，已经有相关的 kube client 配置了
+</span><span class="c1"></span>	<span class="nx">configCluster</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">Cluster</span><span class="p">{</span><span class="nx">Client</span><span class="p">:</span> <span class="nx">c</span><span class="p">.</span><span class="nx">configClusterClient</span><span class="p">,</span> <span class="nx">ID</span><span class="p">:</span> <span class="nx">c</span><span class="p">.</span><span class="nx">configClusterID</span><span class="p">}</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">handleAdd</span><span class="p">(</span><span class="nx">configCluster</span><span class="p">,</span> <span class="nx">stopCh</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed initializing primary cluster %s: %v&#34;</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">configClusterID</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">go</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="c1">// 处理远程集群的逻辑
+</span><span class="c1"></span>		<span class="nx">t0</span> <span class="o">:=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Now</span><span class="p">()</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;Starting multicluster remote secrets controller&#34;</span><span class="p">)</span>
+
+		<span class="k">go</span> <span class="nx">c</span><span class="p">.</span><span class="nx">informer</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="nx">stopCh</span><span class="p">)</span>
+
+		<span class="k">if</span> <span class="p">!</span><span class="nx">kube</span><span class="p">.</span><span class="nf">WaitForCacheSync</span><span class="p">(</span><span class="nx">stopCh</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">informer</span><span class="p">.</span><span class="nx">HasSynced</span><span class="p">)</span> <span class="p">{</span>
+			<span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="s">&#34;Failed to sync multicluster remote secrets controller cache&#34;</span><span class="p">)</span>
+			<span class="k">return</span>
+		<span class="p">}</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;multicluster remote secrets controller cache synced in %v&#34;</span><span class="p">,</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Since</span><span class="p">(</span><span class="nx">t0</span><span class="p">))</span>
+		<span class="nx">c</span><span class="p">.</span><span class="nx">queue</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="nx">stopCh</span><span class="p">)</span>
+	<span class="p">}()</span>
+	<span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>通过初始化 CredentialsController 处理添加集群后认证相关逻辑：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// pilot/pkg/credentials/kube/multicluster.go
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Multicluster</span><span class="p">)</span> <span class="nf">ClusterAdded</span><span class="p">(</span><span class="nx">cluster</span> <span class="o">*</span><span class="nx">multicluster</span><span class="p">.</span><span class="nx">Cluster</span><span class="p">,</span> <span class="nx">_</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{})</span> <span class="p">{</span>
+	<span class="nx">log</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;initializing Kubernetes credential reader for cluster %v&#34;</span><span class="p">,</span> <span class="nx">cluster</span><span class="p">.</span><span class="nx">ID</span><span class="p">)</span>
+	<span class="nx">sc</span> <span class="o">:=</span> <span class="nf">NewCredentialsController</span><span class="p">(</span><span class="nx">cluster</span><span class="p">.</span><span class="nx">Client</span><span class="p">)</span>
+	<span class="nx">m</span><span class="p">.</span><span class="nx">m</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+	<span class="k">defer</span> <span class="nx">m</span><span class="p">.</span><span class="nx">m</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+	<span class="nx">m</span><span class="p">.</span><span class="nf">addCluster</span><span class="p">(</span><span class="nx">cluster</span><span class="p">,</span> <span class="nx">sc</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>addSecret 相关逻辑：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// pkg/kube/multicluster/secretcontroller.go
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Controller</span><span class="p">)</span> <span class="nf">addSecret</span><span class="p">(</span><span class="nx">name</span> <span class="nx">types</span><span class="p">.</span><span class="nx">NamespacedName</span><span class="p">,</span> <span class="nx">s</span> <span class="o">*</span><span class="nx">corev1</span><span class="p">.</span><span class="nx">Secret</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="nx">secretKey</span> <span class="o">:=</span> <span class="nx">name</span><span class="p">.</span><span class="nf">String</span><span class="p">()</span>
+	<span class="c1">// First delete clusters
+</span><span class="c1"></span>	<span class="nx">existingClusters</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">cs</span><span class="p">.</span><span class="nf">GetExistingClustersFor</span><span class="p">(</span><span class="nx">secretKey</span><span class="p">)</span>
+	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">existingCluster</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">existingClusters</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">Data</span><span class="p">[</span><span class="nb">string</span><span class="p">(</span><span class="nx">existingCluster</span><span class="p">.</span><span class="nx">ID</span><span class="p">)];</span> <span class="p">!</span><span class="nx">ok</span> <span class="p">{</span>
+			<span class="nx">c</span><span class="p">.</span><span class="nf">deleteCluster</span><span class="p">(</span><span class="nx">secretKey</span><span class="p">,</span> <span class="nx">existingCluster</span><span class="p">)</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+
+	<span class="kd">var</span> <span class="nx">errs</span> <span class="o">*</span><span class="nx">multierror</span><span class="p">.</span><span class="nx">Error</span>
+	<span class="k">for</span> <span class="nx">clusterID</span><span class="p">,</span> <span class="nx">kubeConfig</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">s</span><span class="p">.</span><span class="nx">Data</span> <span class="p">{</span>
+		<span class="nx">logger</span> <span class="o">:=</span> <span class="nx">log</span><span class="p">.</span><span class="nf">WithLabels</span><span class="p">(</span><span class="s">&#34;cluster&#34;</span><span class="p">,</span> <span class="nx">clusterID</span><span class="p">,</span> <span class="s">&#34;secret&#34;</span><span class="p">,</span> <span class="nx">secretKey</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">cluster</span><span class="p">.</span><span class="nf">ID</span><span class="p">(</span><span class="nx">clusterID</span><span class="p">)</span> <span class="o">==</span> <span class="nx">c</span><span class="p">.</span><span class="nx">configClusterID</span> <span class="p">{</span>
+			<span class="nx">logger</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;ignoring cluster as it would overwrite the config cluster&#34;</span><span class="p">)</span>
+			<span class="k">continue</span>
+		<span class="p">}</span>
+
+		<span class="nx">action</span><span class="p">,</span> <span class="nx">callback</span> <span class="o">:=</span> <span class="s">&#34;Adding&#34;</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">handleAdd</span>
+		<span class="k">if</span> <span class="nx">prev</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">cs</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="nx">secretKey</span><span class="p">,</span> <span class="nx">cluster</span><span class="p">.</span><span class="nf">ID</span><span class="p">(</span><span class="nx">clusterID</span><span class="p">));</span> <span class="nx">prev</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="nx">action</span><span class="p">,</span> <span class="nx">callback</span> <span class="p">=</span> <span class="s">&#34;Updating&#34;</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">handleUpdate</span>
+			<span class="c1">// clusterID must be unique even across multiple secrets
+</span><span class="c1"></span>			<span class="nx">kubeConfigSha</span> <span class="o">:=</span> <span class="nx">sha256</span><span class="p">.</span><span class="nf">Sum256</span><span class="p">(</span><span class="nx">kubeConfig</span><span class="p">)</span>
+			<span class="k">if</span> <span class="nx">bytes</span><span class="p">.</span><span class="nf">Equal</span><span class="p">(</span><span class="nx">kubeConfigSha</span><span class="p">[:],</span> <span class="nx">prev</span><span class="p">.</span><span class="nx">kubeConfigSha</span><span class="p">[:])</span> <span class="p">{</span>
+				<span class="nx">logger</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;skipping update (kubeconfig are identical)&#34;</span><span class="p">)</span>
+				<span class="k">continue</span>
+			<span class="p">}</span>
+			<span class="c1">// stop previous remote cluster
+</span><span class="c1"></span>			<span class="nx">prev</span><span class="p">.</span><span class="nf">Stop</span><span class="p">()</span>
+		<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="nx">c</span><span class="p">.</span><span class="nx">cs</span><span class="p">.</span><span class="nf">Contains</span><span class="p">(</span><span class="nx">cluster</span><span class="p">.</span><span class="nf">ID</span><span class="p">(</span><span class="nx">clusterID</span><span class="p">))</span> <span class="p">{</span>
+			<span class="c1">// if the cluster has been registered before by another secret, ignore the new one.
+</span><span class="c1"></span>			<span class="nx">logger</span><span class="p">.</span><span class="nf">Warnf</span><span class="p">(</span><span class="s">&#34;cluster has already been registered&#34;</span><span class="p">)</span>
+			<span class="k">continue</span>
+		<span class="p">}</span>
+		<span class="nx">logger</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;%s cluster&#34;</span><span class="p">,</span> <span class="nx">action</span><span class="p">)</span>
+
+		<span class="nx">remoteCluster</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">createRemoteCluster</span><span class="p">(</span><span class="nx">kubeConfig</span><span class="p">,</span> <span class="nx">clusterID</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="nx">logger</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;%s cluster: create remote cluster failed: %v&#34;</span><span class="p">,</span> <span class="nx">action</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+			<span class="nx">errs</span> <span class="p">=</span> <span class="nx">multierror</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="nx">errs</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+			<span class="k">continue</span>
+		<span class="p">}</span>
+		<span class="nf">callback</span><span class="p">(</span><span class="nx">remoteCluster</span><span class="p">,</span> <span class="nx">remoteCluster</span><span class="p">.</span><span class="nx">stop</span><span class="p">)</span>
+		<span class="nx">logger</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;finished callback for cluster and starting to sync&#34;</span><span class="p">)</span>
+		<span class="nx">c</span><span class="p">.</span><span class="nx">cs</span><span class="p">.</span><span class="nf">Store</span><span class="p">(</span><span class="nx">secretKey</span><span class="p">,</span> <span class="nx">remoteCluster</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span> <span class="nx">remoteCluster</span><span class="p">)</span>
+		<span class="k">go</span> <span class="nx">remoteCluster</span><span class="p">.</span><span class="nf">Run</span><span class="p">()</span>
+	<span class="p">}</span>
+
+	<span class="nx">log</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;Number of remote clusters: %d&#34;</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">cs</span><span class="p">.</span><span class="nf">Len</span><span class="p">())</span>
+	<span class="k">return</span> <span class="nx">errs</span><span class="p">.</span><span class="nf">ErrorOrNil</span><span class="p">()</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>reload 是重新加载网关配置：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span><span class="lnt">78
+</span><span class="lnt">79
+</span><span class="lnt">80
+</span><span class="lnt">81
+</span><span class="lnt">82
+</span><span class="lnt">83
+</span><span class="lnt">84
+</span><span class="lnt">85
+</span><span class="lnt">86
+</span><span class="lnt">87
+</span><span class="lnt">88
+</span><span class="lnt">89
+</span><span class="lnt">90
+</span><span class="lnt">91
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// pilot/pkg/model/network.go
+</span><span class="c1">// 重新加载网络网关，从 MeshNetworks 和 ServiceRegistries 获取
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">mgr</span> <span class="o">*</span><span class="nx">NetworkManager</span><span class="p">)</span> <span class="nf">reload</span><span class="p">()</span> <span class="nx">NetworkGatewaySet</span> <span class="p">{</span>
+	<span class="nx">log</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;reloading network gateways&#34;</span><span class="p">)</span>
+
+	<span class="c1">// Generate a snapshot of the state of gateways by merging the contents of
+</span><span class="c1"></span>	<span class="c1">// MeshNetworks and the ServiceRegistries.
+</span><span class="c1"></span>
+	<span class="c1">// Store all gateways in a set initially to eliminate duplicates.
+</span><span class="c1"></span>	<span class="nx">gatewaySet</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="nx">NetworkGatewaySet</span><span class="p">)</span>
+
+  <span class="c1">// 	NetworksWatcher 初始化为代码 ”multiWatcher := kubemesh.NewConfigMapWatcher(s.kubeClient, args.Namespace, configMapName, configMapKey, multiWatch, s.internalStop)“
+</span><span class="c1"></span>  <span class="c1">// 首先，从静态的网格网络配置获取，是从全局配置字段“meshNetworks”中获取的，这里没配置为 &#34;{}&#34;
+</span><span class="c1"></span>	<span class="nx">meshNetworks</span> <span class="o">:=</span> <span class="nx">mgr</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">NetworksWatcher</span><span class="p">.</span><span class="nf">Networks</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">meshNetworks</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">for</span> <span class="nx">nw</span><span class="p">,</span> <span class="nx">networkConf</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">meshNetworks</span><span class="p">.</span><span class="nx">Networks</span> <span class="p">{</span>
+			<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">gw</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">networkConf</span><span class="p">.</span><span class="nx">Gateways</span> <span class="p">{</span>
+				<span class="k">if</span> <span class="nx">gw</span><span class="p">.</span><span class="nf">GetAddress</span><span class="p">()</span> <span class="o">==</span> <span class="s">&#34;&#34;</span> <span class="p">{</span>
+					<span class="c1">// registryServiceName addresses will be populated via kube service registry
+</span><span class="c1"></span>					<span class="k">continue</span>
+				<span class="p">}</span>
+				<span class="nx">gatewaySet</span><span class="p">[</span><span class="nx">NetworkGateway</span><span class="p">{</span>
+					<span class="nx">Cluster</span><span class="p">:</span> <span class="s">&#34;&#34;</span><span class="p">,</span> <span class="cm">/* TODO(nmittler): Add Cluster to the API */</span>
+					<span class="nx">Network</span><span class="p">:</span> <span class="nx">network</span><span class="p">.</span><span class="nf">ID</span><span class="p">(</span><span class="nx">nw</span><span class="p">),</span>
+					<span class="nx">Addr</span><span class="p">:</span>    <span class="nx">gw</span><span class="p">.</span><span class="nf">GetAddress</span><span class="p">(),</span>
+					<span class="nx">Port</span><span class="p">:</span>    <span class="nx">gw</span><span class="p">.</span><span class="nx">Port</span><span class="p">,</span>
+				<span class="p">}]</span> <span class="p">=</span> <span class="kd">struct</span><span class="p">{}{}</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+
+  <span class="c1">// 其次，从指定的注册中心获取 gateways，调用的 ServiceDiscovery.NetworkGateways 函数
+</span><span class="c1"></span>	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">gw</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">mgr</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nf">NetworkGateways</span><span class="p">()</span> <span class="p">{</span>
+		<span class="c1">// - the internal map of label gateways - these get deleted if the service is deleted, updated if the ip changes etc.
+</span><span class="c1"></span>		<span class="c1">// - the computed map from meshNetworks (triggered by reloadNetworkLookup, the ported logic from getGatewayAddresses)
+</span><span class="c1"></span>		<span class="nx">gatewaySet</span><span class="p">[</span><span class="nx">gw</span><span class="p">]</span> <span class="p">=</span> <span class="kd">struct</span><span class="p">{}{}</span>
+	<span class="p">}</span>
+	<span class="nx">mgr</span><span class="p">.</span><span class="nx">multiNetworkEnabled</span> <span class="p">=</span> <span class="nb">len</span><span class="p">(</span><span class="nx">gatewaySet</span><span class="p">)</span> <span class="p">&gt;</span> <span class="mi">0</span>
+
+	<span class="nx">mgr</span><span class="p">.</span><span class="nf">resolveHostnameGateways</span><span class="p">(</span><span class="nx">gatewaySet</span><span class="p">)</span>
+
+	<span class="c1">// Now populate the maps by network and by network+cluster.
+</span><span class="c1"></span>	<span class="nx">byNetwork</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="nx">network</span><span class="p">.</span><span class="nx">ID</span><span class="p">][]</span><span class="nx">NetworkGateway</span><span class="p">)</span>
+	<span class="nx">byNetworkAndCluster</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="nx">networkAndCluster</span><span class="p">][]</span><span class="nx">NetworkGateway</span><span class="p">)</span>
+	<span class="k">for</span> <span class="nx">gw</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">gatewaySet</span> <span class="p">{</span>
+		<span class="nx">byNetwork</span><span class="p">[</span><span class="nx">gw</span><span class="p">.</span><span class="nx">Network</span><span class="p">]</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">byNetwork</span><span class="p">[</span><span class="nx">gw</span><span class="p">.</span><span class="nx">Network</span><span class="p">],</span> <span class="nx">gw</span><span class="p">)</span>
+		<span class="nx">nc</span> <span class="o">:=</span> <span class="nf">networkAndClusterForGateway</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">gw</span><span class="p">)</span>
+		<span class="nx">byNetworkAndCluster</span><span class="p">[</span><span class="nx">nc</span><span class="p">]</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">byNetworkAndCluster</span><span class="p">[</span><span class="nx">nc</span><span class="p">],</span> <span class="nx">gw</span><span class="p">)</span>
+	<span class="p">}</span>
+
+	<span class="nx">gwNum</span> <span class="o">:=</span> <span class="p">[]</span><span class="kt">int</span><span class="p">{}</span>
+	<span class="c1">// Sort the gateways in byNetwork, and also calculate the max number
+</span><span class="c1"></span>	<span class="c1">// of gateways per network.
+</span><span class="c1"></span>	<span class="k">for</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">gws</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">byNetwork</span> <span class="p">{</span>
+		<span class="nx">byNetwork</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="p">=</span> <span class="nf">SortGateways</span><span class="p">(</span><span class="nx">gws</span><span class="p">)</span>
+		<span class="nx">gwNum</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">gwNum</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">gws</span><span class="p">))</span>
+	<span class="p">}</span>
+
+	<span class="c1">// Sort the gateways in byNetworkAndCluster.
+</span><span class="c1"></span>	<span class="k">for</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">gws</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">byNetworkAndCluster</span> <span class="p">{</span>
+		<span class="nx">byNetworkAndCluster</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="p">=</span> <span class="nf">SortGateways</span><span class="p">(</span><span class="nx">gws</span><span class="p">)</span>
+		<span class="nx">gwNum</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">gwNum</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">gws</span><span class="p">))</span>
+	<span class="p">}</span>
+
+	<span class="nx">lcmVal</span> <span class="o">:=</span> <span class="mi">1</span>
+	<span class="c1">// calculate lcm
+</span><span class="c1"></span>	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">num</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">gwNum</span> <span class="p">{</span>
+		<span class="nx">lcmVal</span> <span class="p">=</span> <span class="nf">lcm</span><span class="p">(</span><span class="nx">lcmVal</span><span class="p">,</span> <span class="nx">num</span><span class="p">)</span>
+	<span class="p">}</span>
+
+	<span class="nx">mgr</span><span class="p">.</span><span class="nx">lcm</span> <span class="p">=</span> <span class="nb">uint32</span><span class="p">(</span><span class="nx">lcmVal</span><span class="p">)</span>
+	<span class="nx">mgr</span><span class="p">.</span><span class="nx">byNetwork</span> <span class="p">=</span> <span class="nx">byNetwork</span>
+	<span class="nx">mgr</span><span class="p">.</span><span class="nx">byNetworkAndCluster</span> <span class="p">=</span> <span class="nx">byNetworkAndCluster</span>
+
+	<span class="k">return</span> <span class="nx">gatewaySet</span>
+<span class="p">}</span>
+
+<span class="c1">// 初始化，合并 MeshNetworks 和 ServiceRegistries 获取的网关
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewNetworkManager</span><span class="p">(</span><span class="nx">env</span> <span class="o">*</span><span class="nx">Environment</span><span class="p">,</span> <span class="nx">xdsUpdater</span> <span class="nx">XDSUpdater</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">NetworkManager</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">nameCache</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">newNetworkGatewayNameCache</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="nx">mgr</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">NetworkManager</span><span class="p">{</span><span class="nx">env</span><span class="p">:</span> <span class="nx">env</span><span class="p">,</span> <span class="nx">NameCache</span><span class="p">:</span> <span class="nx">nameCache</span><span class="p">,</span> <span class="nx">xdsUpdater</span><span class="p">:</span> <span class="nx">xdsUpdater</span><span class="p">}</span>
+	<span class="nx">env</span><span class="p">.</span><span class="nf">AddNetworksHandler</span><span class="p">(</span><span class="nx">mgr</span><span class="p">.</span><span class="nx">reloadGateways</span><span class="p">)</span>
+	<span class="c1">// register to per registry, will be called when gateway service changed
+</span><span class="c1"></span>	<span class="nx">env</span><span class="p">.</span><span class="nf">AppendNetworkGatewayHandler</span><span class="p">(</span><span class="nx">mgr</span><span class="p">.</span><span class="nx">reloadGateways</span><span class="p">)</span>
+	<span class="nx">nameCache</span><span class="p">.</span><span class="nf">AppendNetworkGatewayHandler</span><span class="p">(</span><span class="nx">mgr</span><span class="p">.</span><span class="nx">reloadGateways</span><span class="p">)</span>
+	<span class="nx">mgr</span><span class="p">.</span><span class="nf">reload</span><span class="p">()</span>
+	<span class="k">return</span> <span class="nx">mgr</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>静态网格网络配置字段“meshNetworks”，参考 <a href="https://istio.io/latest/docs/reference/config/istio.mesh.v1alpha1/#MeshNetworks">MeshNetworks</a>，提供网格内部的网络集合信息，和如何路由到每个网络中的端点，示例配置：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">MeshNetworks</span><span class="p">:</span><span class="w"> 
+</span><span class="w">  </span><span class="nt">networks</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">network1</span><span class="p">:</span><span class="w"> </span><span class="c"># 网络名</span><span class="w">
+</span><span class="w">      </span><span class="nt">endpoints</span><span class="p">:</span><span class="w">  </span><span class="c"># 网络中的端点</span><span class="w">
+</span><span class="w">      </span><span class="c"># 将指定注册中心的所有端点添加到此网络中，注册中心名称应该与用于配置注册中心 (Kubernetes 多集群）或 MCP 服务器提供的密钥中的 kubecconfig 文件名相对应。（多集群的 secret 配置是”istioctl create-remote-secret“命名创建的 secret？？？)</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">fromRegistry</span><span class="p">:</span><span class="w"> </span><span class="l">registry1 </span><span class="w">
+</span><span class="w">      </span>- <span class="nt">fromCidr</span><span class="p">:</span><span class="w"> </span><span class="m">192.168.100.0</span><span class="l">/22</span><span class="w"> </span><span class="c"># 端点来自指定的网段</span><span class="w">
+</span><span class="w">      </span><span class="nt">gateways</span><span class="p">:</span><span class="w"> </span><span class="c"># 网关</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">registryServiceName</span><span class="p">:</span><span class="w"> </span><span class="l">istio-ingressgateway.istio-system.svc.cluster.local</span><span class="w"> </span><span class="c"># 全限定域名</span><span class="w">
+</span><span class="w">        </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">15443</span><span class="w">
+</span><span class="w">        </span><span class="nt">locality</span><span class="p">:</span><span class="w"> </span><span class="l">us-east-1a</span><span class="w"> </span><span class="c"># 网关的位置</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="m">192.168.100.1</span><span class="w"> </span><span class="c"># ip 地址或者可对外解析的 DNS 地址</span><span class="w">
+</span><span class="w">        </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">15443</span><span class="w">
+</span><span class="w">        </span><span class="nt">locality</span><span class="p">:</span><span class="w"> </span><span class="l">us-east-1a</span><span class="w"> </span><span class="c"># 网关的位置</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>networkendpoint 描述了应该如何推断与端点相关联的网络。端点将根据以下规则分配给网络：</p>
+<ul>
+<li>隐式方式：如果注册表显式地提供有关端点所属网络的信息。在某些情况下，可以通过向 sidecar 添加 ISTIO_META_NETWORK 环境变量来指示与端点关联的网络。</li>
+<li>显示方式：通过将服务注册中心名称与网格配置中的“fromRegistry”之一匹配，“from_registry”只能分配给单个网络；或者将 IP 地址与 mesh 配置的网络中的某个 CIDR 范围匹配。CIDR 范围不能重叠，不能分配给单个网络。如果都存在时，显示方式会覆盖隐式方式配置。</li>
+</ul>
+<p>在参考 istio 官方多集群部署时，静态网格网络配置字段没有进行设置，因此这里为空。同时参考 <a href="https://discuss.istio.io/t/demystifying-meshnetworks-when-using-multi-cluster-deployments-or-vms/9109/2">istio 多集群部署情况下 MeshNetworks 配置探究</a>，MeshNetworks 是一个遗留配置，只在很少的高级场景会用到。</p>
+<p>会从这里获取跨网络的 gateway：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// pilot/pkg/serviceregistry/aggregate/controller.go
+</span><span class="c1">// NetworkGateways 合并各个注册中心基于服务的跨网络 gateway
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Controller</span><span class="p">)</span> <span class="nf">NetworkGateways</span><span class="p">()</span> <span class="p">[]</span><span class="nx">model</span><span class="p">.</span><span class="nx">NetworkGateway</span> <span class="p">{</span>
+	<span class="kd">var</span> <span class="nx">gws</span> <span class="p">[]</span><span class="nx">model</span><span class="p">.</span><span class="nx">NetworkGateway</span>
+	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">r</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">c</span><span class="p">.</span><span class="nf">GetRegistries</span><span class="p">()</span> <span class="p">{</span>
+		<span class="nx">gws</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">gws</span><span class="p">,</span> <span class="nx">r</span><span class="p">.</span><span class="nf">NetworkGateways</span><span class="p">()</span><span class="o">...</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">gws</span>
+<span class="p">}</span>
+
+<span class="c1">// GetRegistries 返回所有的 registries
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Controller</span><span class="p">)</span> <span class="nf">GetRegistries</span><span class="p">()</span> <span class="p">[]</span><span class="nx">serviceregistry</span><span class="p">.</span><span class="nx">Instance</span> <span class="p">{</span>
+	<span class="nx">c</span><span class="p">.</span><span class="nx">storeLock</span><span class="p">.</span><span class="nf">RLock</span><span class="p">()</span>
+	<span class="k">defer</span> <span class="nx">c</span><span class="p">.</span><span class="nx">storeLock</span><span class="p">.</span><span class="nf">RUnlock</span><span class="p">()</span>
+
+	<span class="c1">// copy registries to prevent race, no need to deep copy here.
+</span><span class="c1"></span>	<span class="nx">out</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">([]</span><span class="nx">serviceregistry</span><span class="p">.</span><span class="nx">Instance</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">registries</span><span class="p">))</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">c</span><span class="p">.</span><span class="nx">registries</span> <span class="p">{</span>
+		<span class="nx">out</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="p">=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">registries</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">out</span>
+<span class="p">}</span>
+
+<span class="c1">// 添加注册中心和设置 handler 处理注册中心事件
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Controller</span><span class="p">)</span> <span class="nf">addRegistry</span><span class="p">(</span><span class="nx">registry</span> <span class="nx">serviceregistry</span><span class="p">.</span><span class="nx">Instance</span><span class="p">,</span> <span class="nx">stop</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{})</span> <span class="p">{</span>
+	<span class="nx">c</span><span class="p">.</span><span class="nx">registries</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">registries</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">registryEntry</span><span class="p">{</span><span class="nx">Instance</span><span class="p">:</span> <span class="nx">registry</span><span class="p">,</span> <span class="nx">stop</span><span class="p">:</span> <span class="nx">stop</span><span class="p">})</span>
+
+	<span class="nx">registry</span><span class="p">.</span><span class="nf">AppendNetworkGatewayHandler</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">NotifyGatewayHandlers</span><span class="p">)</span>
+	<span class="nx">registry</span><span class="p">.</span><span class="nf">AppendServiceHandler</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">handlers</span><span class="p">.</span><span class="nx">NotifyServiceHandlers</span><span class="p">)</span>
+	<span class="nx">registry</span><span class="p">.</span><span class="nf">AppendServiceHandler</span><span class="p">(</span><span class="kd">func</span><span class="p">(</span><span class="nx">prev</span><span class="p">,</span> <span class="nx">curr</span> <span class="o">*</span><span class="nx">model</span><span class="p">.</span><span class="nx">Service</span><span class="p">,</span> <span class="nx">event</span> <span class="nx">model</span><span class="p">.</span><span class="nx">Event</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">handlers</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">c</span><span class="p">.</span><span class="nf">getClusterHandlers</span><span class="p">()</span> <span class="p">{</span>
+			<span class="nx">handlers</span><span class="p">.</span><span class="nf">NotifyServiceHandlers</span><span class="p">(</span><span class="nx">prev</span><span class="p">,</span> <span class="nx">curr</span><span class="p">,</span> <span class="nx">event</span><span class="p">)</span>
+		<span class="p">}</span>
+	<span class="p">})</span>
+<span class="p">}</span>
+
+<span class="c1">// 添加注册中心，用于当前集群，在 pilot/pkg/bootstrap/servicecontroller.go 的 initServiceController 中调用
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Controller</span><span class="p">)</span> <span class="nf">AddRegistry</span><span class="p">(</span><span class="nx">registry</span> <span class="nx">serviceregistry</span><span class="p">.</span><span class="nx">Instance</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">c</span><span class="p">.</span><span class="nx">storeLock</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+	<span class="k">defer</span> <span class="nx">c</span><span class="p">.</span><span class="nx">storeLock</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+	<span class="nx">c</span><span class="p">.</span><span class="nf">addRegistry</span><span class="p">(</span><span class="nx">registry</span><span class="p">,</span> <span class="kc">nil</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// 添加注册中心，用于远程集群，在 pilot/pkg/serviceregistry/kube/controller/multicluster.go 的 Multicluster.initializeCluster 调用
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Controller</span><span class="p">)</span> <span class="nf">AddRegistryAndRun</span><span class="p">(</span><span class="nx">registry</span> <span class="nx">serviceregistry</span><span class="p">.</span><span class="nx">Instance</span><span class="p">,</span> <span class="nx">stop</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{})</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">stop</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Warnf</span><span class="p">(</span><span class="s">&#34;nil stop channel passed to AddRegistryAndRun for registry %s/%s&#34;</span><span class="p">,</span> <span class="nx">registry</span><span class="p">.</span><span class="nf">Provider</span><span class="p">(),</span> <span class="nx">registry</span><span class="p">.</span><span class="nf">Cluster</span><span class="p">())</span>
+	<span class="p">}</span>
+	<span class="nx">c</span><span class="p">.</span><span class="nx">storeLock</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+	<span class="k">defer</span> <span class="nx">c</span><span class="p">.</span><span class="nx">storeLock</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+	<span class="nx">c</span><span class="p">.</span><span class="nf">addRegistry</span><span class="p">(</span><span class="nx">registry</span><span class="p">,</span> <span class="nx">stop</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">c</span><span class="p">.</span><span class="nx">running</span> <span class="p">{</span>
+		<span class="k">go</span> <span class="nx">registry</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="nx">stop</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>最终会调用到 reloadNetworkGateways 函数，最终在 getGatewayDetails 函数可以看到，是通过“topology.istio.io/network”标签判断是否为网关：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">  1
+</span><span class="lnt">  2
+</span><span class="lnt">  3
+</span><span class="lnt">  4
+</span><span class="lnt">  5
+</span><span class="lnt">  6
+</span><span class="lnt">  7
+</span><span class="lnt">  8
+</span><span class="lnt">  9
+</span><span class="lnt"> 10
+</span><span class="lnt"> 11
+</span><span class="lnt"> 12
+</span><span class="lnt"> 13
+</span><span class="lnt"> 14
+</span><span class="lnt"> 15
+</span><span class="lnt"> 16
+</span><span class="lnt"> 17
+</span><span class="lnt"> 18
+</span><span class="lnt"> 19
+</span><span class="lnt"> 20
+</span><span class="lnt"> 21
+</span><span class="lnt"> 22
+</span><span class="lnt"> 23
+</span><span class="lnt"> 24
+</span><span class="lnt"> 25
+</span><span class="lnt"> 26
+</span><span class="lnt"> 27
+</span><span class="lnt"> 28
+</span><span class="lnt"> 29
+</span><span class="lnt"> 30
+</span><span class="lnt"> 31
+</span><span class="lnt"> 32
+</span><span class="lnt"> 33
+</span><span class="lnt"> 34
+</span><span class="lnt"> 35
+</span><span class="lnt"> 36
+</span><span class="lnt"> 37
+</span><span class="lnt"> 38
+</span><span class="lnt"> 39
+</span><span class="lnt"> 40
+</span><span class="lnt"> 41
+</span><span class="lnt"> 42
+</span><span class="lnt"> 43
+</span><span class="lnt"> 44
+</span><span class="lnt"> 45
+</span><span class="lnt"> 46
+</span><span class="lnt"> 47
+</span><span class="lnt"> 48
+</span><span class="lnt"> 49
+</span><span class="lnt"> 50
+</span><span class="lnt"> 51
+</span><span class="lnt"> 52
+</span><span class="lnt"> 53
+</span><span class="lnt"> 54
+</span><span class="lnt"> 55
+</span><span class="lnt"> 56
+</span><span class="lnt"> 57
+</span><span class="lnt"> 58
+</span><span class="lnt"> 59
+</span><span class="lnt"> 60
+</span><span class="lnt"> 61
+</span><span class="lnt"> 62
+</span><span class="lnt"> 63
+</span><span class="lnt"> 64
+</span><span class="lnt"> 65
+</span><span class="lnt"> 66
+</span><span class="lnt"> 67
+</span><span class="lnt"> 68
+</span><span class="lnt"> 69
+</span><span class="lnt"> 70
+</span><span class="lnt"> 71
+</span><span class="lnt"> 72
+</span><span class="lnt"> 73
+</span><span class="lnt"> 74
+</span><span class="lnt"> 75
+</span><span class="lnt"> 76
+</span><span class="lnt"> 77
+</span><span class="lnt"> 78
+</span><span class="lnt"> 79
+</span><span class="lnt"> 80
+</span><span class="lnt"> 81
+</span><span class="lnt"> 82
+</span><span class="lnt"> 83
+</span><span class="lnt"> 84
+</span><span class="lnt"> 85
+</span><span class="lnt"> 86
+</span><span class="lnt"> 87
+</span><span class="lnt"> 88
+</span><span class="lnt"> 89
+</span><span class="lnt"> 90
+</span><span class="lnt"> 91
+</span><span class="lnt"> 92
+</span><span class="lnt"> 93
+</span><span class="lnt"> 94
+</span><span class="lnt"> 95
+</span><span class="lnt"> 96
+</span><span class="lnt"> 97
+</span><span class="lnt"> 98
+</span><span class="lnt"> 99
+</span><span class="lnt">100
+</span><span class="lnt">101
+</span><span class="lnt">102
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// pilot/pkg/serviceregistry/kube/controller/network.go
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Controller</span><span class="p">)</span> <span class="nf">NetworkGateways</span><span class="p">()</span> <span class="p">[]</span><span class="nx">model</span><span class="p">.</span><span class="nx">NetworkGateway</span> <span class="p">{</span>
+	<span class="nx">c</span><span class="p">.</span><span class="nx">networkManager</span><span class="p">.</span><span class="nf">RLock</span><span class="p">()</span>
+	<span class="k">defer</span> <span class="nx">c</span><span class="p">.</span><span class="nx">networkManager</span><span class="p">.</span><span class="nf">RUnlock</span><span class="p">()</span>
+
+	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">networkGatewaysBySvc</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span>
+	<span class="p">}</span>
+
+	<span class="c1">// Merge all the gateways into a single set to eliminate duplicates.
+</span><span class="c1"></span>	<span class="nx">out</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="nx">model</span><span class="p">.</span><span class="nx">NetworkGatewaySet</span><span class="p">)</span>
+	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">gateways</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">c</span><span class="p">.</span><span class="nx">networkGatewaysBySvc</span> <span class="p">{</span>
+		<span class="nx">out</span><span class="p">.</span><span class="nf">AddAll</span><span class="p">(</span><span class="nx">gateways</span><span class="p">)</span>
+	<span class="p">}</span>
+
+	<span class="k">return</span> <span class="nx">out</span><span class="p">.</span><span class="nf">ToArray</span><span class="p">()</span>
+<span class="p">}</span>
+
+<span class="c1">// 加载 gateways，Controller 有成员变量 networkManager，会调用到 extractGatewaysInner
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Controller</span><span class="p">)</span> <span class="nf">reloadNetworkGateways</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">c</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+	<span class="nx">gwsChanged</span> <span class="o">:=</span> <span class="kc">false</span>
+	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">svc</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">c</span><span class="p">.</span><span class="nx">servicesMap</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">c</span><span class="p">.</span><span class="nf">extractGatewaysInner</span><span class="p">(</span><span class="nx">svc</span><span class="p">)</span> <span class="p">{</span>
+			<span class="nx">gwsChanged</span> <span class="p">=</span> <span class="kc">true</span>
+			<span class="k">break</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="nx">c</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">gwsChanged</span> <span class="p">{</span>
+		<span class="nx">c</span><span class="p">.</span><span class="nf">NotifyGatewayHandlers</span><span class="p">()</span>
+		<span class="c1">// TODO ConfigUpdate via gateway handler
+</span><span class="c1"></span>		<span class="nx">c</span><span class="p">.</span><span class="nx">opts</span><span class="p">.</span><span class="nx">XDSUpdater</span><span class="p">.</span><span class="nf">ConfigUpdate</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">model</span><span class="p">.</span><span class="nx">PushRequest</span><span class="p">{</span><span class="nx">Full</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span> <span class="nx">Reason</span><span class="p">:</span> <span class="p">[]</span><span class="nx">model</span><span class="p">.</span><span class="nx">TriggerReason</span><span class="p">{</span><span class="nx">model</span><span class="p">.</span><span class="nx">NetworksTrigger</span><span class="p">}})</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// 从指定的服务中提取 gateways
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">n</span> <span class="o">*</span><span class="nx">networkManager</span><span class="p">)</span> <span class="nf">extractGatewaysInner</span><span class="p">(</span><span class="nx">svc</span> <span class="o">*</span><span class="nx">model</span><span class="p">.</span><span class="nx">Service</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
+	<span class="nx">n</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+	<span class="k">defer</span> <span class="nx">n</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+	<span class="nx">previousGateways</span> <span class="o">:=</span> <span class="nx">n</span><span class="p">.</span><span class="nx">networkGatewaysBySvc</span><span class="p">[</span><span class="nx">svc</span><span class="p">.</span><span class="nx">Hostname</span><span class="p">]</span>
+	<span class="nx">gateways</span> <span class="o">:=</span> <span class="nx">n</span><span class="p">.</span><span class="nf">getGatewayDetails</span><span class="p">(</span><span class="nx">svc</span><span class="p">)</span>
+	<span class="c1">// short circuit for most services.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">previousGateways</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="nb">len</span><span class="p">(</span><span class="nx">gateways</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">false</span>
+	<span class="p">}</span>
+
+	<span class="nx">newGateways</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="nx">model</span><span class="p">.</span><span class="nx">NetworkGatewaySet</span><span class="p">)</span>
+	<span class="c1">// check if we have node port mappings
+</span><span class="c1"></span>	<span class="nx">nodePortMap</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="kt">uint32</span><span class="p">]</span><span class="kt">uint32</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">svc</span><span class="p">.</span><span class="nx">Attributes</span><span class="p">.</span><span class="nx">ClusterExternalPorts</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">npm</span><span class="p">,</span> <span class="nx">exists</span> <span class="o">:=</span> <span class="nx">svc</span><span class="p">.</span><span class="nx">Attributes</span><span class="p">.</span><span class="nx">ClusterExternalPorts</span><span class="p">[</span><span class="nx">n</span><span class="p">.</span><span class="nx">clusterID</span><span class="p">];</span> <span class="nx">exists</span> <span class="p">{</span>
+			<span class="nx">nodePortMap</span> <span class="p">=</span> <span class="nx">npm</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+
+	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">addr</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">svc</span><span class="p">.</span><span class="nx">Attributes</span><span class="p">.</span><span class="nx">ClusterExternalAddresses</span><span class="p">.</span><span class="nf">GetAddressesFor</span><span class="p">(</span><span class="nx">n</span><span class="p">.</span><span class="nx">clusterID</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">gw</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">gateways</span> <span class="p">{</span>
+			<span class="c1">// what we now have is a service port. If there is a mapping for cluster external ports,
+</span><span class="c1"></span>			<span class="c1">// look it up and get the node port for the remote port
+</span><span class="c1"></span>			<span class="k">if</span> <span class="nx">nodePort</span><span class="p">,</span> <span class="nx">exists</span> <span class="o">:=</span> <span class="nx">nodePortMap</span><span class="p">[</span><span class="nx">gw</span><span class="p">.</span><span class="nx">Port</span><span class="p">];</span> <span class="nx">exists</span> <span class="p">{</span>
+				<span class="nx">gw</span><span class="p">.</span><span class="nx">Port</span> <span class="p">=</span> <span class="nx">nodePort</span>
+			<span class="p">}</span>
+
+			<span class="nx">gw</span><span class="p">.</span><span class="nx">Cluster</span> <span class="p">=</span> <span class="nx">n</span><span class="p">.</span><span class="nx">clusterID</span>
+			<span class="nx">gw</span><span class="p">.</span><span class="nx">Addr</span> <span class="p">=</span> <span class="nx">addr</span>
+			<span class="nx">newGateways</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="nx">gw</span><span class="p">)</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+
+	<span class="nx">gatewaysChanged</span> <span class="o">:=</span> <span class="p">!</span><span class="nx">newGateways</span><span class="p">.</span><span class="nf">Equals</span><span class="p">(</span><span class="nx">previousGateways</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">newGateways</span><span class="p">)</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="nx">n</span><span class="p">.</span><span class="nx">networkGatewaysBySvc</span><span class="p">[</span><span class="nx">svc</span><span class="p">.</span><span class="nx">Hostname</span><span class="p">]</span> <span class="p">=</span> <span class="nx">newGateways</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+		<span class="nb">delete</span><span class="p">(</span><span class="nx">n</span><span class="p">.</span><span class="nx">networkGatewaysBySvc</span><span class="p">,</span> <span class="nx">svc</span><span class="p">.</span><span class="nx">Hostname</span><span class="p">)</span>
+	<span class="p">}</span>
+
+	<span class="k">return</span> <span class="nx">gatewaysChanged</span>
+<span class="p">}</span>
+
+<span class="c1">// 返回没有填充地址的网关，对给定服务只有网络和（未映射的）端口
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">n</span> <span class="o">*</span><span class="nx">networkManager</span><span class="p">)</span> <span class="nf">getGatewayDetails</span><span class="p">(</span><span class="nx">svc</span> <span class="o">*</span><span class="nx">model</span><span class="p">.</span><span class="nx">Service</span><span class="p">)</span> <span class="p">[]</span><span class="nx">model</span><span class="p">.</span><span class="nx">NetworkGateway</span> <span class="p">{</span>
+  <span class="c1">// 通过“topology.istio.io/network”标签判断是否为网关
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">nw</span> <span class="o">:=</span> <span class="nx">svc</span><span class="p">.</span><span class="nx">Attributes</span><span class="p">.</span><span class="nx">Labels</span><span class="p">[</span><span class="nx">label</span><span class="p">.</span><span class="nx">TopologyNetwork</span><span class="p">.</span><span class="nx">Name</span><span class="p">];</span> <span class="nx">nw</span> <span class="o">!=</span> <span class="s">&#34;&#34;</span> <span class="p">{</span>
+    <span class="c1">// 自定义网关端口
+</span><span class="c1"></span>		<span class="k">if</span> <span class="nx">gwPortStr</span> <span class="o">:=</span> <span class="nx">svc</span><span class="p">.</span><span class="nx">Attributes</span><span class="p">.</span><span class="nx">Labels</span><span class="p">[</span><span class="nx">label</span><span class="p">.</span><span class="nx">NetworkingGatewayPort</span><span class="p">.</span><span class="nx">Name</span><span class="p">];</span> <span class="nx">gwPortStr</span> <span class="o">!=</span> <span class="s">&#34;&#34;</span> <span class="p">{</span>
+			<span class="k">if</span> <span class="nx">gwPort</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">strconv</span><span class="p">.</span><span class="nf">Atoi</span><span class="p">(</span><span class="nx">gwPortStr</span><span class="p">);</span> <span class="nx">err</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+				<span class="k">return</span> <span class="p">[]</span><span class="nx">model</span><span class="p">.</span><span class="nx">NetworkGateway</span><span class="p">{{</span><span class="nx">Port</span><span class="p">:</span> <span class="nb">uint32</span><span class="p">(</span><span class="nx">gwPort</span><span class="p">),</span> <span class="nx">Network</span><span class="p">:</span> <span class="nx">network</span><span class="p">.</span><span class="nf">ID</span><span class="p">(</span><span class="nx">nw</span><span class="p">)}}</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+    <span class="c1">// 默认端口为 15443
+</span><span class="c1"></span>		<span class="k">return</span> <span class="p">[]</span><span class="nx">model</span><span class="p">.</span><span class="nx">NetworkGateway</span><span class="p">{{</span><span class="nx">Port</span><span class="p">:</span> <span class="nx">DefaultNetworkGatewayPort</span><span class="p">,</span> <span class="nx">Network</span><span class="p">:</span> <span class="nx">network</span><span class="p">.</span><span class="nf">ID</span><span class="p">(</span><span class="nx">nw</span><span class="p">)}}</span>
+	<span class="p">}</span>
+
+	<span class="c1">// MeshNetworks 静态配置中获取，这里没配置
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">gws</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">n</span><span class="p">.</span><span class="nx">registryServiceNameGateways</span><span class="p">[</span><span class="nx">svc</span><span class="p">.</span><span class="nx">Hostname</span><span class="p">];</span> <span class="nx">ok</span> <span class="p">{</span>
+		<span class="nx">out</span> <span class="o">:=</span> <span class="nb">append</span><span class="p">(</span><span class="nb">make</span><span class="p">([]</span><span class="nx">model</span><span class="p">.</span><span class="nx">NetworkGateway</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">gws</span><span class="p">)),</span> <span class="nx">gws</span><span class="o">...</span><span class="p">)</span>
+		<span class="k">return</span> <span class="nx">out</span>
+	<span class="p">}</span>
+
+	<span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="create-remote-secret-源码">create-remote-secret 源码</h2>
+<p>针对远程集群操作：将会在远程集群 istio-system 命名空间下创建 istio-reader-service-account 和 istiod-service-account 两个服务账户，以及对这两个账户的 RBAC 相关授权，执行成功后，返回控制集群所需的 Secret。主要逻辑在 createRemoteSecret 中：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// istioctl/pkg/multicluster/remote_secret.go
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">createRemoteSecret</span><span class="p">(</span><span class="nx">opt</span> <span class="nx">RemoteSecretOptions</span><span class="p">,</span> <span class="nx">client</span> <span class="nx">kube</span><span class="p">.</span><span class="nx">CLIClient</span><span class="p">,</span> <span class="nx">env</span> <span class="nx">Environment</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Secret</span><span class="p">,</span> <span class="nx">Warning</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+  <span class="c1">// ... 获取 tokenSecret 
+</span><span class="c1"></span>	<span class="nx">tokenSecret</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">getServiceAccountSecret</span><span class="p">(</span><span class="nx">client</span><span class="p">,</span> <span class="nx">opt</span><span class="p">)</span>
+
+	<span class="kd">var</span> <span class="nx">remoteSecret</span> <span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Secret</span>
+	<span class="k">switch</span> <span class="nx">opt</span><span class="p">.</span><span class="nx">AuthType</span> <span class="p">{</span>
+	<span class="k">case</span> <span class="nx">RemoteSecretAuthTypeBearerToken</span><span class="p">:</span>
+    <span class="c1">// 创建 remote secret，给其他集群使用
+</span><span class="c1"></span>		<span class="nx">remoteSecret</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nf">createRemoteSecretFromTokenAndServer</span><span class="p">(</span><span class="nx">client</span><span class="p">,</span> <span class="nx">tokenSecret</span><span class="p">,</span> <span class="nx">opt</span><span class="p">.</span><span class="nx">ClusterName</span><span class="p">,</span> <span class="nx">server</span><span class="p">,</span> <span class="nx">secretName</span><span class="p">)</span>
+  <span class="c1">// ...
+</span><span class="c1"></span>	<span class="k">default</span><span class="p">:</span>
+		<span class="nx">err</span> <span class="p">=</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;unsupported authentication type: %v&#34;</span><span class="p">,</span> <span class="nx">opt</span><span class="p">.</span><span class="nx">AuthType</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">remoteSecret</span><span class="p">,</span> <span class="nx">warn</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">getServiceAccountSecret</span><span class="p">(</span><span class="nx">client</span> <span class="nx">kube</span><span class="p">.</span><span class="nx">CLIClient</span><span class="p">,</span> <span class="nx">opt</span> <span class="nx">RemoteSecretOptions</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Secret</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="c1">// 在当前集群的指定命名空间创建 serviceaccount istio-reader-service-account，用--istioNamespace 指定
+</span><span class="c1"></span>	<span class="nx">serviceAccount</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">getOrCreateServiceAccount</span><span class="p">(</span><span class="nx">client</span><span class="p">,</span> <span class="nx">opt</span><span class="p">)</span>
+  <span class="c1">// 创建对应的 secret istio-reader-service-account-istio-remote-secret-token。
+</span><span class="c1"></span>	<span class="k">return</span> <span class="nf">getOrCreateServiceAccountSecret</span><span class="p">(</span><span class="nx">serviceAccount</span><span class="p">,</span> <span class="nx">client</span><span class="p">,</span> <span class="nx">opt</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>查看创建的示例，里面包含 Kubernetes 的 ServiceAccount 的 token 和 ca.crt：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="c"># istio-reader-service-account-istio-remote-secret-token</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w"></span><span class="nt">data</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">ca.crt</span><span class="p">:</span><span class="w"> </span><span class="l">LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJkakNDQVIyZ0F3SUJBZ0lCQURBS0JnZ3Foa2pPUFFRREFqQWpNU0V3SHdZRFZRUUREQmhyTTNNdGMyVnkKZG1WeUxXTmhRREUyT1RVd01EZzROamt3SGhjTk1qTXdPVEU0TURNME56UTVXaGNOTXpNd09URTFNRE0wTnpRNQpXakFqTVNFd0h3WURWUVFEREJock0zTXRjMlZ5ZG1WeUxXTmhRREUyT1RVd01EZzROamt3V1RBVEJnY3Foa2pPClBRSUJCZ2dxaGtqT1BRTUJCd05DQUFSdFRJdlVPQWpHcHA1MnRIamd4eVFDSk5ZVzNwM204MXVFb0VGUjdPcHUKbEw1Tll5d1hid2VacHo0eGZNcEcraFZqd0dZSldoM1RHRGVlUy9pbFh4OHpvMEl3UURBT0JnTlZIUThCQWY4RQpCQU1DQXFRd0R3WURWUjBUQVFIL0JBVXdBd0VCL3pBZEJnTlZIUTRFRmdRVXlMeFp1eDlyTE9LS1JSd1NMNXhXCnRIRHh5MUF3Q2dZSUtvWkl6ajBFQXdJRFJ3QXdSQUlnSi84MllGdXpjZTlqcmdpUkQyL2x5eUpJeEI2ckthN0QKdHJQTjBlZVZuYm9DSUQxTHFEbmpYSTRDQ1FkMEsybUdBVmRaNWlmeXV3cGd6TTNQbTg4djJSYXIKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">aXN0aW8tc3lzdGVt</span><span class="w">
+</span><span class="w">  </span><span class="nt">token</span><span class="p">:</span><span class="w"> </span><span class="l">ZXlKaGJHY2lPaUpTVXpJMU5pSXNJbXRwWkNJNkltSkZhMVZEYlhWR01qaGtWVE5oYVVoS2JXaHVZMnQzTUdJMVNGaG9kMDlsYW5sak9VcFJTVmh2UkRnaWZRLmV5SnBjM01pT2lKcmRXSmxjbTVsZEdWekwzTmxjblpwWTJWaFkyTnZkVzUwSWl3aWEzVmlaWEp1WlhSbGN5NXBieTl6WlhKMmFXTmxZV05qYjNWdWRDOXVZVzFsYzNCaFkyVWlPaUpwYzNScGJ5MXplWE4wWlcwaUxDSnJkV0psY201bGRHVnpMbWx2TDNObGNuWnBZMlZoWTJOdmRXNTBMM05sWTNKbGRDNXVZVzFsSWpvaWFYTjBhVzh0Y21WaFpHVnlMWE5sY25acFkyVXRZV05qYjNWdWRDMXBjM1JwYnkxeVpXMXZkR1V0YzJWamNtVjBMWFJ2YTJWdUlpd2lhM1ZpWlhKdVpYUmxjeTVwYnk5elpYSjJhV05sWVdOamIzVnVkQzl6WlhKMmFXTmxMV0ZqWTI5MWJuUXVibUZ0WlNJNkltbHpkR2x2TFhKbFlXUmxjaTF6WlhKMmFXTmxMV0ZqWTI5MWJuUWlMQ0pyZFdKbGNtNWxkR1Z6TG1sdkwzTmxjblpwWTJWaFkyTnZkVzUwTDNObGNuWnBZMlV0WVdOamIzVnVkQzUxYVdRaU9pSXhOamhrT1RVMlpTMWtOR1l4TFRSbFptVXRZalJpTmkxaVptSTBOVEExTkRJeFpXWWlMQ0p6ZFdJaU9pSnplWE4wWlcwNmMyVnlkbWxqWldGalkyOTFiblE2YVhOMGFXOHRjM2x6ZEdWdE9tbHpkR2x2TFhKbFlXUmxjaTF6WlhKMmFXTmxMV0ZqWTI5MWJuUWlmUS5ITU1BRzR6S0szaGRrcEM3ZHAtSldfWmgzS3dLYzZlcUdEaGdYcks5QlJ1WWNTRlRzRWd6ZTk0c2tlYVFBQWNhNkR2MGUxT1ZjbENiUmNJWl9NVUVhSjc3cmJMQmdoenBNalRQanYya2ZjQlA1aTVoQXRlQlZpcnpmaWRwd2owZjY2eG0yQ2xiQzNXOE9RY2xQcTBHcUgzY0xacWhSc05MMEl3a0xhSHpyX0J1QUc0WENmUXFJU0Z5Uk1HTnF2NnVJODVnbG9fZzBQN3VlY2xUVGhaSDlOWU5uZDd4MnVfaTlMYnZXQml5TUdvbWhEQTZDeEEwcHdQeXVzUk0yQjBoRGNnU1lYOGxLdkMzQnZuWndZQk5Dak4wTUtkQnZrOVBSd09lck1kd3BBVVdNcl9JYm1VdUZfNHliTnlkSHFvU3F0anp5MFpSMFZCbHQwN0NQNFp2cXc=</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Secret</span><span class="w">
+</span><span class="w"></span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">kubernetes.io/service-account-token</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>最后使用命令<code>istioctl x create-remote-secret --name=cluster2</code>时，创建的内容如下，即由上面的 secret 内容生成的：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Secret</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">annotations</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">networking.istio.io/cluster</span><span class="p">:</span><span class="w"> </span><span class="l">cluster2</span><span class="w">
+</span><span class="w">  </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">istio/multiCluster</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;true&#34;</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">istio-remote-secret-cluster2</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">istio-system</span><span class="w">
+</span><span class="w"></span><span class="nt">stringData</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">cluster2</span><span class="p">:</span><span class="w"> </span><span class="p">|</span><span class="sd">
+</span><span class="sd">    apiVersion: v1
+</span><span class="sd">    clusters:
+</span><span class="sd">    - cluster:
+</span><span class="sd">        certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJkakNDQVIyZ0F3SUJBZ0lCQURBS0JnZ3Foa2pPUFFRREFqQWpNU0V3SHdZRFZRUUREQmhyTTNNdGMyVnkKZG1WeUxXTmhRREUyT1RVd01EZzROamt3SGhjTk1qTXdPVEU0TURNME56UTVXaGNOTXpNd09URTFNRE0wTnpRNQpXakFqTVNFd0h3WURWUVFEREJock0zTXRjMlZ5ZG1WeUxXTmhRREUyT1RVd01EZzROamt3V1RBVEJnY3Foa2pPClBRSUJCZ2dxaGtqT1BRTUJCd05DQUFSdFRJdlVPQWpHcHA1MnRIamd4eVFDSk5ZVzNwM204MXVFb0VGUjdPcHUKbEw1Tll5d1hid2VacHo0eGZNcEcraFZqd0dZSldoM1RHRGVlUy9pbFh4OHpvMEl3UURBT0JnTlZIUThCQWY4RQpCQU1DQXFRd0R3WURWUjBUQVFIL0JBVXdBd0VCL3pBZEJnTlZIUTRFRmdRVXlMeFp1eDlyTE9LS1JSd1NMNXhXCnRIRHh5MUF3Q2dZSUtvWkl6ajBFQXdJRFJ3QXdSQUlnSi84MllGdXpjZTlqcmdpUkQyL2x5eUpJeEI2ckthN0QKdHJQTjBlZVZuYm9DSUQxTHFEbmpYSTRDQ1FkMEsybUdBVmRaNWlmeXV3cGd6TTNQbTg4djJSYXIKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+</span><span class="sd">        server: https://192.168.60.57:6443
+</span><span class="sd">      name: cluster2
+</span><span class="sd">    contexts:
+</span><span class="sd">    - context:
+</span><span class="sd">        cluster: cluster2
+</span><span class="sd">        user: cluster2
+</span><span class="sd">      name: cluster2
+</span><span class="sd">    current-context: cluster2
+</span><span class="sd">    kind: Config
+</span><span class="sd">    preferences: {}
+</span><span class="sd">    users:
+</span><span class="sd">    - name: cluster2
+</span><span class="sd">      user:
+</span><span class="sd">        token: eyJhbGciOiJSUzI1NiIsImtpZCI6ImJFa1VDbXVGMjhkVTNhaUhKbWhuY2t3MGI1SFhod09lanljOUpRSVhvRDgifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJpc3Rpby1zeXN0ZW0iLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlY3JldC5uYW1lIjoiaXN0aW8tcmVhZGVyLXNlcnZpY2UtYWNjb3VudC1pc3Rpby1yZW1vdGUtc2VjcmV0LXRva2VuIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQubmFtZSI6ImlzdGlvLXJlYWRlci1zZXJ2aWNlLWFjY291bnQiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC51aWQiOiIxNjhkOTU2ZS1kNGYxLTRlZmUtYjRiNi1iZmI0NTA1NDIxZWYiLCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6aXN0aW8tc3lzdGVtOmlzdGlvLXJlYWRlci1zZXJ2aWNlLWFjY291bnQifQ.HMMAG4zKK3hdkpC7dp-JW_Zh3KwKc6eqGDhgXrK9BRuYcSFTsEgze94skeaQAAca6Dv0e1OVclCbRcIZ_MUEaJ77rbLBghzpMjTPjv2kfcBP5i5hAteBVirzfidpwj0f66xm2ClbC3W8OQclPq0GqH3cLZqhRsNL0IwkLaHzr_BuAG4XCfQqISFyRMGNqv6uI85glo_g0P7ueclTThZH9NYNnd7x2u_i9LbvWBiyMGomhDA6CxA0pwPyusRM2B0hDcgSYX8lKvC3BvnZwYBNCjN0MKdBvk9PRwOerMdwpAUWMr_IbmUuF_4ybNydHqoSqtjzy0ZR0VBlt07CP4Zvqw</span><span class="w">    
+</span></code></pre></td></tr></table>
+</div>
+</div><h1 id="卸载">卸载</h1>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubectl delete ns sample
+kubectl delete ns istio-system
+</code></pre></td></tr></table>
+</div>
+</div><h1 id="参考">参考</h1>
+<ul>
+<li><a href="https://cloudnative.to/blog/istio-pilot/">https://cloudnative.to/blog/istio-pilot/</a></li>
+<li><a href="https://cloudnative.to/blog/istio-analysis-5/">https://cloudnative.to/blog/istio-analysis-5/</a></li>
+<li><a href="https://istio.tetratelabs.io/zh/blog/external-ca-integration-with-cert-manager-using-istio-csr/">https://istio.tetratelabs.io/zh/blog/external-ca-integration-with-cert-manager-using-istio-csr/</a></li>
+</ul>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">yefengzhichen</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2023-11-21
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="../../tags/kubernetes/">kubernetes</a>
+          <a href="../../tags/istio/">istio</a>
+          <a href="../../tags/envoy/">envoy</a>
+          <a href="../../tags/service-mesh/">service mesh</a>
+          </div>
+      <nav class="post-nav">
+        
+        <a class="next" href="../../post/istio_cert_manager_src/">
+            <span class="next-text nav-default">istio 集成 cert-manager 使用和源码分析</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="yefengzhichen/yefengzhichen.github.io"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="zhutao_hust@foxmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/yefengzhichen" class="iconfont icon-github" title="github"></a>
+  <a href="https://yefengzhichen.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  <div class="busuanzi-footer">
+    <span id="busuanzi_container_site_pv"> 本站总访问量 <span id="busuanzi_value_site_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次 </span>
+      <span class="division">|</span>
+    <span id="busuanzi_container_site_uv"> 本站总访客数 <span id="busuanzi_value_site_uv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 人 </span>
+  </div>
+
+  <span class="copyright-year">
+    &copy; 
+    2022 - 
+    2023<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="../../js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

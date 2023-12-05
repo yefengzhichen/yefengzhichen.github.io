@@ -6,7 +6,16 @@
     <description>Recent content in envoy on yefengzhichen&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Wed, 11 Jan 2023 14:30:26 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/envoy/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Tue, 21 Nov 2023 16:10:46 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/envoy/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>istio 多集群访问流程和源码分析</title>
+      <link>https://yefengzhichen.github.io/post/istio_multicluster_analyse/</link>
+      <pubDate>Tue, 21 Nov 2023 16:10:46 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/post/istio_multicluster_analyse/</guid>
+      <description>安装 kubernetes 集群创建 部署方式为多网络多控制面，这里使用 k3s 安装两个 kubernetes 集群，安装后需执行： 1 2 3 4 5 6 7 8 9 # 拷贝 kubeconfig 配置，istioctl 需要 cp /etc/rancher/k3s/k3s.yaml ~/.kube/config #</description>
+    </item>
+    
     <item>
       <title>Istio 多协议、多注册中心支持调研</title>
       <link>https://yefengzhichen.github.io/post/istio_multi_protocols_multi_registries/</link>
