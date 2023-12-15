@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
 
 
-<meta name="author" content="yefengzhichen" /><meta name="description" content="cert-manager 介绍 cert-manager 将证书和证书颁发者添加为 Kubernetes 集群中的资源类型，并简化了获取、更新和使用这些证书的过程。相比 istio 自带的 CA 管理，cert-manager 具有" /><meta name="keywords" content="Hugo, theme, even" />
+<meta name="author" content="yefengzhichen" /><meta name="description" content="cert-manager 和 mTLS 介绍 cert-manager 将证书和证书颁发者添加为 Kubernetes 集群中的资源类型，并简化了获取、更新和使用这些证书的过程。相比 istio 自带的 CA 管理，cert-manager" /><meta name="keywords" content="Hugo, theme, even" />
 
 
 
@@ -40,19 +40,19 @@
 
 
 <meta property="og:title" content="istio 集成 cert-manager 使用和源码分析" />
-<meta property="og:description" content="cert-manager 介绍 cert-manager 将证书和证书颁发者添加为 Kubernetes 集群中的资源类型，并简化了获取、更新和使用这些证书的过程。相比 istio 自带的 CA 管理，cert-manager 具有" />
+<meta property="og:description" content="cert-manager 和 mTLS 介绍 cert-manager 将证书和证书颁发者添加为 Kubernetes 集群中的资源类型，并简化了获取、更新和使用这些证书的过程。相比 istio 自带的 CA 管理，cert-manager" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://yefengzhichen.github.io/post/istio_cert_manager_src/" /><meta property="article:section" content="post" />
 <meta property="article:published_time" content="2023-10-26T14:11:10+08:00" />
 <meta property="article:modified_time" content="2023-10-26T14:11:10+08:00" />
 
 <meta itemprop="name" content="istio 集成 cert-manager 使用和源码分析">
-<meta itemprop="description" content="cert-manager 介绍 cert-manager 将证书和证书颁发者添加为 Kubernetes 集群中的资源类型，并简化了获取、更新和使用这些证书的过程。相比 istio 自带的 CA 管理，cert-manager 具有"><meta itemprop="datePublished" content="2023-10-26T14:11:10+08:00" />
+<meta itemprop="description" content="cert-manager 和 mTLS 介绍 cert-manager 将证书和证书颁发者添加为 Kubernetes 集群中的资源类型，并简化了获取、更新和使用这些证书的过程。相比 istio 自带的 CA 管理，cert-manager"><meta itemprop="datePublished" content="2023-10-26T14:11:10+08:00" />
 <meta itemprop="dateModified" content="2023-10-26T14:11:10+08:00" />
-<meta itemprop="wordCount" content="6226">
+<meta itemprop="wordCount" content="7466">
 <meta itemprop="keywords" content="kubernetes,istio,cert-manager," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="istio 集成 cert-manager 使用和源码分析"/>
-<meta name="twitter:description" content="cert-manager 介绍 cert-manager 将证书和证书颁发者添加为 Kubernetes 集群中的资源类型，并简化了获取、更新和使用这些证书的过程。相比 istio 自带的 CA 管理，cert-manager 具有"/>
+<meta name="twitter:description" content="cert-manager 和 mTLS 介绍 cert-manager 将证书和证书颁发者添加为 Kubernetes 集群中的资源类型，并简化了获取、更新和使用这些证书的过程。相比 istio 自带的 CA 管理，cert-manager"/>
 
 <!--[if lte IE 9]>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
@@ -132,8 +132,8 @@
         <div class="post-category">
             <a href="../../categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
             </div>
-          <span class="more-meta"> 约 6226 字 </span>
-          <span class="more-meta"> 预计阅读 13 分钟 </span>
+          <span class="more-meta"> 约 7466 字 </span>
+          <span class="more-meta"> 预计阅读 15 分钟 </span>
         <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
       </div>
     </header>
@@ -145,7 +145,12 @@
   <ul>
     <li>
       <ul>
-        <li><a href="#cert-manager-介绍">cert-manager 介绍</a></li>
+        <li><a href="#cert-manager-和-mtls-介绍">cert-manager 和 mTLS 介绍</a>
+          <ul>
+            <li><a href="#什么是tls">什么是TLS</a></li>
+            <li><a href="#mtls是如何运作的">mTLS是如何运作的</a></li>
+          </ul>
+        </li>
         <li><a href="#openssl-模拟证书流程">openssl 模拟证书流程</a>
           <ul>
             <li><a href="#创建-ca-端的私钥和证书">创建 CA 端的私钥和证书</a></li>
@@ -175,9 +180,142 @@
   </div>
 </div>
     <div class="post-content">
-      <h2 id="cert-manager-介绍">cert-manager 介绍</h2>
+      <h2 id="cert-manager-和-mtls-介绍">cert-manager 和 mTLS 介绍</h2>
 <p>cert-manager 将证书和证书颁发者添加为 Kubernetes 集群中的资源类型，并简化了获取、更新和使用这些证书的过程。相比 istio 自带的 CA 管理，cert-manager 具有以下优势：支持多种证书颁发机构，方面实现中间 CA 证书的轮换等。</p>
-<p>istio 网格的一大特点，就是可实现自动 mTLS（Mutual Transport Layer Security），完成网格内的流量加密，有助于缩小云原生部署的攻击面。初始化配置中“enableAutoMtls”选项默认为 true，表示 pods 之间默认开启 mTLS，即是 pods 中应用使用 http 明文请求时，经过 sidecar 代理后，请求会被转换为 tls 加密请求，然后再转发到目标服务。</p>
+<p>istio 网格的一大特点，就是可实现自动 mTLS（Mutual Transport Layer Security），完成网格内的流量加密，有助于缩小云原生部署的攻击面。istio开启mTLS的设置方式有：</p>
+<ul>
+<li>通过初始化配置“enableAutoMtls”选项设置，默认为 true，示例配置如下：</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: istio
+  namespace: istio-system
+data:
+  mesh: |-
+    enableAutoMtls: true  # 开启自动mTLS
+</code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>PeerAuthentication：指定某个命名空间或者某个工作负载是否开启 mTLS，mode值可为STRICT、PERMISSIVE、DISABLE、UNSET</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"># foo命名空间可以接受mTLS和纯文本流量
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: foo
+spec:
+  mtls:
+    mode: PERMISSIVE  
+---
+# foo空间下finance服务只接受mTLS流量
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: finance
+  namespace: foo
+spec:
+  selector:
+    matchLabels:
+      app: finance
+  mtls:
+    mode: STRICT
+</code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>DestinationRule：指定某个工作负载是否开启 mTLS，mode值可为ISTIO_MUTUAL、MUTUAL、SIMPLE、DISABLE</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"># 请求ratings服务时，需要使用istio mTLS
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: ratings-istio-mtls
+spec:
+  host: ratings.prod.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="什么是tls">什么是TLS</h3>
+<p>传输层安全 (TLS) 是互联网上广泛使用的一种加密协议。TLS 的前身是 SSL，在客户端-服务器连接中对服务器进行身份验证，并对客户和服务器之间的通信进行加密，以便外部各方无法窥视通信。TLS协议主要组成：</p>
+<ul>
+<li>公钥和私钥</li>
+<li>TLS 证书</li>
+</ul>
+<h3 id="mtls是如何运作的">mTLS是如何运作的</h3>
+<p>通常在 TLS 中，服务器有一个 TLS 证书和一个公钥/私钥对，而客户端没有。典型的 TLS 流程是这样运作的：</p>
+<ul>
+<li>客户端连接到服务器</li>
+<li>服务器出示其 TLS 证书</li>
+<li>客户端验证服务器的证书</li>
+<li>客户端和服务器通过加密的 TLS 连接交换信息
+<img src="../../image/istio_cert_manager_src/tls_arch.png" alt="TLS流程"></li>
+</ul>
+<p>在 mTLS 中，客户端和服务器都有一个证书，并且双方都使用它们的公钥/私钥对进行身份验证。与常规 TLS 相比，mTLS 中有一些额外步骤来验证双方：</p>
+<ul>
+<li>客户端连接到服务器</li>
+<li>服务器出示其 TLS 证书</li>
+<li>客户端验证服务器的证书</li>
+<li><strong>客户端出示其 TLS 证书</strong></li>
+<li><strong>服务器验证客户端的证书</strong></li>
+<li><strong>服务器授予访问权限</strong></li>
+<li>客户端和服务器通过加密的 TLS 连接交换信息
+<img src="../../image/istio_cert_manager_src/mtls_arch.png" alt="mTLS流程"></li>
+</ul>
 <h2 id="openssl-模拟证书流程">openssl 模拟证书流程</h2>
 <p>这里使用 openssl 模拟一个 CA 证书机构，生成 CA 端的私钥和证书，以及签发服务端证书。</p>
 <h3 id="创建-ca-端的私钥和证书">创建 CA 端的私钥和证书</h3>
@@ -222,7 +360,24 @@ basicConstraints = critical, CA:true    # 基本约束，是否是 CA 证书
 keyUsage = critical, digitalSignature, nonRepudiation, keyEncipherment, keyCertSign # 密钥用法
 </code></pre></td></tr></table>
 </div>
-</div><p>执行命令：</p>
+</div><p>参考<a href="https://superuser.com/questions/738612/openssl-ca-keyusage-extension">openssl-ca-keyusage</a>中的说明，列举了几个使用场景下keyUsage如何设置：</p>
+<ul>
+<li>自签名 CA：值设置为“critical, cRLSign, digitalSignature, keyCertSign”</li>
+<li>中间CA：值设置为“critical, cRLSign, digitalSignature, keyCertSign”</li>
+<li>VPN/Web Server非CA证书：值设置为“critical, nonRepudiation, digitalSignature, keyEncipherment, keyAgreement”</li>
+<li>VPN Client非CA证书：值设置为“critical, nonRepudiation, digitalSignature, keyEncipherment”</li>
+</ul>
+<p>keyUsage中部分值说明：</p>
+<ul>
+<li>critical：表示字段是否为重要字段，如果一个扩展被标记为 critical，那么任何不理解该扩展的实体都必须拒绝该证书</li>
+<li>keyCertSign：用于验证证书上的签名</li>
+<li>digitalSignature：证书可用于应用数字签名，数字签名通常用于具有完整性的实体认证和数据源认证</li>
+<li>nonRepudiation：证书可用于签署上述数据，但证书公钥可用于提供不可否认服务；这可以防止签名实体错误地拒绝某些操作</li>
+<li>keyEncipherment：证书可用于加密对称密钥，然后将该密钥传输到目标；目标解密密钥，使用它来加密和解密实体之间的数据</li>
+<li>cRLSign：证书可用于验证撤销信息(如CRL)上的签名</li>
+<li>keyAgreement：证书允许使用密钥协议来建立具有目标的对称密钥，可以使用对称密钥对实体之间发送的数据进行加密和解密</li>
+</ul>
+<p>执行命令：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt"> 1
@@ -706,13 +861,13 @@ openssl x509 -noout -text -in root.pem
 </span><span class="lnt">7
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">2023-10-23T06:58:52.327281Z	info	klog	cert-manager <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;created CertificateRequest&#34;</span> <span class="s2">&#34;identity&#34;</span><span class="o">=</span><span class="s2">&#34;spiffe://cluster.local/ns/sample/sa/sleep&#34;</span> <span class="s2">&#34;name&#34;</span><span class="o">=</span><span class="s2">&#34;istio-csr-mjvpt&#34;</span> <span class="s2">&#34;namespace&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system&#34;</span>
-2023-10-23T06:58:52.335491Z	info	klog	cert-manager <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;waiting for CertificateRequest to become ready&#34;</span> <span class="s2">&#34;identity&#34;</span><span class="o">=</span><span class="s2">&#34;spiffe://cluster.local/ns/sample/sa/sleep&#34;</span> <span class="s2">&#34;name&#34;</span><span class="o">=</span><span class="s2">&#34;istio-csr-mjvpt&#34;</span> <span class="s2">&#34;namespace&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system&#34;</span>
-2023-10-23T06:58:52.335529Z	info	klog	cert-manager <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;waiting for CertificateRequest to become ready&#34;</span> <span class="s2">&#34;identity&#34;</span><span class="o">=</span><span class="s2">&#34;spiffe://cluster.local/ns/sample/sa/sleep&#34;</span> <span class="s2">&#34;name&#34;</span><span class="o">=</span><span class="s2">&#34;istio-csr-mjvpt&#34;</span> <span class="s2">&#34;namespace&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system&#34;</span>
-2023-10-23T06:58:52.346034Z	info	klog	cert-manager <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;waiting for CertificateRequest to become ready&#34;</span> <span class="s2">&#34;identity&#34;</span><span class="o">=</span><span class="s2">&#34;spiffe://cluster.local/ns/sample/sa/sleep&#34;</span> <span class="s2">&#34;name&#34;</span><span class="o">=</span><span class="s2">&#34;istio-csr-mjvpt&#34;</span> <span class="s2">&#34;namespace&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system&#34;</span>
-2023-10-23T06:58:52.384642Z	info	klog	cert-manager <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;signed CertificateRequest&#34;</span> <span class="s2">&#34;identity&#34;</span><span class="o">=</span><span class="s2">&#34;spiffe://cluster.local/ns/sample/sa/sleep&#34;</span> <span class="s2">&#34;name&#34;</span><span class="o">=</span><span class="s2">&#34;istio-csr-mjvpt&#34;</span> <span class="s2">&#34;namespace&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system&#34;</span>
-2023-10-23T06:58:52.385999Z	info	klog	grpc-server <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;workload CertificateRequest signed&#34;</span> <span class="s2">&#34;identities&#34;</span><span class="o">=</span><span class="s2">&#34;spiffe://cluster.local/ns/sample/sa/sleep&#34;</span> <span class="s2">&#34;serving-addr&#34;</span><span class="o">=</span><span class="s2">&#34;0.0.0.0:6443&#34;</span>
-2023-10-23T06:58:52.393159Z	info	klog	cert-manager <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;deleted CertificateRequest&#34;</span> <span class="s2">&#34;identity&#34;</span><span class="o">=</span><span class="s2">&#34;spiffe://cluster.local/ns/sample/sa/sleep&#34;</span> <span class="s2">&#34;name&#34;</span><span class="o">=</span><span class="s2">&#34;istio-csr-mjvpt&#34;</span> <span class="s2">&#34;namespace&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system&#34;</span>
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">2023-10-23T06:58:52.327281Z  info  klog  cert-manager <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;created CertificateRequest&#34;</span> <span class="s2">&#34;identity&#34;</span><span class="o">=</span><span class="s2">&#34;spiffe://cluster.local/ns/sample/sa/sleep&#34;</span> <span class="s2">&#34;name&#34;</span><span class="o">=</span><span class="s2">&#34;istio-csr-mjvpt&#34;</span> <span class="s2">&#34;namespace&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system&#34;</span>
+2023-10-23T06:58:52.335491Z  info  klog  cert-manager <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;waiting for CertificateRequest to become ready&#34;</span> <span class="s2">&#34;identity&#34;</span><span class="o">=</span><span class="s2">&#34;spiffe://cluster.local/ns/sample/sa/sleep&#34;</span> <span class="s2">&#34;name&#34;</span><span class="o">=</span><span class="s2">&#34;istio-csr-mjvpt&#34;</span> <span class="s2">&#34;namespace&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system&#34;</span>
+2023-10-23T06:58:52.335529Z  info  klog  cert-manager <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;waiting for CertificateRequest to become ready&#34;</span> <span class="s2">&#34;identity&#34;</span><span class="o">=</span><span class="s2">&#34;spiffe://cluster.local/ns/sample/sa/sleep&#34;</span> <span class="s2">&#34;name&#34;</span><span class="o">=</span><span class="s2">&#34;istio-csr-mjvpt&#34;</span> <span class="s2">&#34;namespace&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system&#34;</span>
+2023-10-23T06:58:52.346034Z  info  klog  cert-manager <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;waiting for CertificateRequest to become ready&#34;</span> <span class="s2">&#34;identity&#34;</span><span class="o">=</span><span class="s2">&#34;spiffe://cluster.local/ns/sample/sa/sleep&#34;</span> <span class="s2">&#34;name&#34;</span><span class="o">=</span><span class="s2">&#34;istio-csr-mjvpt&#34;</span> <span class="s2">&#34;namespace&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system&#34;</span>
+2023-10-23T06:58:52.384642Z  info  klog  cert-manager <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;signed CertificateRequest&#34;</span> <span class="s2">&#34;identity&#34;</span><span class="o">=</span><span class="s2">&#34;spiffe://cluster.local/ns/sample/sa/sleep&#34;</span> <span class="s2">&#34;name&#34;</span><span class="o">=</span><span class="s2">&#34;istio-csr-mjvpt&#34;</span> <span class="s2">&#34;namespace&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system&#34;</span>
+2023-10-23T06:58:52.385999Z  info  klog  grpc-server <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;workload CertificateRequest signed&#34;</span> <span class="s2">&#34;identities&#34;</span><span class="o">=</span><span class="s2">&#34;spiffe://cluster.local/ns/sample/sa/sleep&#34;</span> <span class="s2">&#34;serving-addr&#34;</span><span class="o">=</span><span class="s2">&#34;0.0.0.0:6443&#34;</span>
+2023-10-23T06:58:52.393159Z  info  klog  cert-manager <span class="s2">&#34;msg&#34;</span><span class="o">=</span><span class="s2">&#34;deleted CertificateRequest&#34;</span> <span class="s2">&#34;identity&#34;</span><span class="o">=</span><span class="s2">&#34;spiffe://cluster.local/ns/sample/sa/sleep&#34;</span> <span class="s2">&#34;name&#34;</span><span class="o">=</span><span class="s2">&#34;istio-csr-mjvpt&#34;</span> <span class="s2">&#34;namespace&#34;</span><span class="o">=</span><span class="s2">&#34;istio-system&#34;</span>
 </code></pre></td></tr></table>
 </div>
 </div><p>查看 cert-manager 的日志：</p>
@@ -870,58 +1025,58 @@ I1023 06:58:52.383236       <span class="m">1</span> controller.go:174<span clas
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// pkg/certmanager/certmanager.go
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">manager</span><span class="p">)</span> <span class="nf">Sign</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">identities</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">csrPEM</span> <span class="p">[]</span><span class="kt">byte</span><span class="p">,</span> <span class="nx">duration</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span><span class="p">,</span> <span class="nx">usages</span> <span class="p">[]</span><span class="nx">cmapi</span><span class="p">.</span><span class="nx">KeyUsage</span><span class="p">)</span> <span class="p">(</span><span class="nx">Bundle</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
-	<span class="nx">cr</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">cmapi</span><span class="p">.</span><span class="nx">CertificateRequest</span><span class="p">{</span>
-		<span class="nx">ObjectMeta</span><span class="p">:</span> <span class="nx">metav1</span><span class="p">.</span><span class="nx">ObjectMeta</span><span class="p">{</span>
-			<span class="nx">GenerateName</span><span class="p">:</span> <span class="s">&#34;istio-csr-&#34;</span><span class="p">,</span>
-			<span class="nx">Annotations</span><span class="p">:</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">{</span>
-				<span class="nx">identityAnnotation</span><span class="p">:</span> <span class="nx">identities</span><span class="p">,</span>
-			<span class="p">},</span>
-		<span class="p">},</span>
-		<span class="nx">Spec</span><span class="p">:</span> <span class="nx">cmapi</span><span class="p">.</span><span class="nx">CertificateRequestSpec</span><span class="p">{</span>
-			<span class="nx">Duration</span><span class="p">:</span> <span class="o">&amp;</span><span class="nx">metav1</span><span class="p">.</span><span class="nx">Duration</span><span class="p">{</span>
-				<span class="nx">Duration</span><span class="p">:</span> <span class="nx">duration</span><span class="p">,</span>
-			<span class="p">},</span>
-			<span class="nx">IsCA</span><span class="p">:</span>      <span class="kc">false</span><span class="p">,</span>
-			<span class="nx">Request</span><span class="p">:</span>   <span class="nx">csrPEM</span><span class="p">,</span>
-			<span class="nx">Usages</span><span class="p">:</span>    <span class="nx">usages</span><span class="p">,</span>
-			<span class="nx">IssuerRef</span><span class="p">:</span> <span class="nx">m</span><span class="p">.</span><span class="nx">opts</span><span class="p">.</span><span class="nx">IssuerRef</span><span class="p">,</span>
-		<span class="p">},</span>
-	<span class="p">}</span>
+  <span class="nx">cr</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">cmapi</span><span class="p">.</span><span class="nx">CertificateRequest</span><span class="p">{</span>
+    <span class="nx">ObjectMeta</span><span class="p">:</span> <span class="nx">metav1</span><span class="p">.</span><span class="nx">ObjectMeta</span><span class="p">{</span>
+      <span class="nx">GenerateName</span><span class="p">:</span> <span class="s">&#34;istio-csr-&#34;</span><span class="p">,</span>
+      <span class="nx">Annotations</span><span class="p">:</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">{</span>
+        <span class="nx">identityAnnotation</span><span class="p">:</span> <span class="nx">identities</span><span class="p">,</span>
+      <span class="p">},</span>
+    <span class="p">},</span>
+    <span class="nx">Spec</span><span class="p">:</span> <span class="nx">cmapi</span><span class="p">.</span><span class="nx">CertificateRequestSpec</span><span class="p">{</span>
+      <span class="nx">Duration</span><span class="p">:</span> <span class="o">&amp;</span><span class="nx">metav1</span><span class="p">.</span><span class="nx">Duration</span><span class="p">{</span>
+        <span class="nx">Duration</span><span class="p">:</span> <span class="nx">duration</span><span class="p">,</span>
+      <span class="p">},</span>
+      <span class="nx">IsCA</span><span class="p">:</span>      <span class="kc">false</span><span class="p">,</span>
+      <span class="nx">Request</span><span class="p">:</span>   <span class="nx">csrPEM</span><span class="p">,</span>
+      <span class="nx">Usages</span><span class="p">:</span>    <span class="nx">usages</span><span class="p">,</span>
+      <span class="nx">IssuerRef</span><span class="p">:</span> <span class="nx">m</span><span class="p">.</span><span class="nx">opts</span><span class="p">.</span><span class="nx">IssuerRef</span><span class="p">,</span>
+    <span class="p">},</span>
+  <span class="p">}</span>
 
-	<span class="k">for</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">m</span><span class="p">.</span><span class="nx">opts</span><span class="p">.</span><span class="nx">AdditionalAnnotations</span> <span class="p">{</span>
-		<span class="nx">cr</span><span class="p">.</span><span class="nx">ObjectMeta</span><span class="p">.</span><span class="nx">Annotations</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="p">=</span> <span class="nx">v</span>
-	<span class="p">}</span>
+  <span class="k">for</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">m</span><span class="p">.</span><span class="nx">opts</span><span class="p">.</span><span class="nx">AdditionalAnnotations</span> <span class="p">{</span>
+    <span class="nx">cr</span><span class="p">.</span><span class="nx">ObjectMeta</span><span class="p">.</span><span class="nx">Annotations</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="p">=</span> <span class="nx">v</span>
+  <span class="p">}</span>
   <span class="c1">// 创建 CertificateRequest，这里的 clent 是 通过 client.CertmanagerV1().CertificateRequests(opts.Namespace) 初始化的
-</span><span class="c1"></span>	<span class="nx">cr</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nx">client</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">cr</span><span class="p">,</span> <span class="nx">metav1</span><span class="p">.</span><span class="nx">CreateOptions</span><span class="p">{})</span>
+</span><span class="c1"></span>  <span class="nx">cr</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nx">client</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">cr</span><span class="p">,</span> <span class="nx">metav1</span><span class="p">.</span><span class="nx">CreateOptions</span><span class="p">{})</span>
 
-	<span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;created CertificateRequest&#34;</span><span class="p">)</span>
+  <span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;created CertificateRequest&#34;</span><span class="p">)</span>
 
   <span class="c1">// 是否保留 cr，如果不保留，则在返回时删除
-</span><span class="c1"></span>	<span class="k">if</span> <span class="p">!</span><span class="nx">m</span><span class="p">.</span><span class="nx">opts</span><span class="p">.</span><span class="nx">PreserveCertificateRequests</span> <span class="p">{</span>
-		<span class="k">defer</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
-			<span class="c1">// Use go routine to prevent blocking on Delete call.
-</span><span class="c1"></span>			<span class="k">go</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
-				<span class="c1">// Use the Background context so that this call is not cancelled by the
-</span><span class="c1"></span>				<span class="c1">// gRPC context closing.
-</span><span class="c1"></span>				<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nx">client</span><span class="p">.</span><span class="nf">Delete</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">(),</span> <span class="nx">cr</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">metav1</span><span class="p">.</span><span class="nx">DeleteOptions</span><span class="p">{});</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-					<span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;failed to delete CertificateRequest&#34;</span><span class="p">)</span>
-					<span class="k">return</span>
-				<span class="p">}</span>
+</span><span class="c1"></span>  <span class="k">if</span> <span class="p">!</span><span class="nx">m</span><span class="p">.</span><span class="nx">opts</span><span class="p">.</span><span class="nx">PreserveCertificateRequests</span> <span class="p">{</span>
+    <span class="k">defer</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+      <span class="c1">// Use go routine to prevent blocking on Delete call.
+</span><span class="c1"></span>      <span class="k">go</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+        <span class="c1">// Use the Background context so that this call is not cancelled by the
+</span><span class="c1"></span>        <span class="c1">// gRPC context closing.
+</span><span class="c1"></span>        <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nx">client</span><span class="p">.</span><span class="nf">Delete</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">(),</span> <span class="nx">cr</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">metav1</span><span class="p">.</span><span class="nx">DeleteOptions</span><span class="p">{});</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+          <span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;failed to delete CertificateRequest&#34;</span><span class="p">)</span>
+          <span class="k">return</span>
+        <span class="p">}</span>
 
-				<span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;deleted CertificateRequest&#34;</span><span class="p">)</span>
-			<span class="p">}()</span>
-		<span class="p">}()</span>
-	<span class="p">}</span>
+        <span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;deleted CertificateRequest&#34;</span><span class="p">)</span>
+      <span class="p">}()</span>
+    <span class="p">}()</span>
+  <span class="p">}</span>
   <span class="c1">// 设置 watc 监听 certificaterequest，等待其被签名
-</span><span class="c1"></span>	<span class="nx">signedCR</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">waitForCertificateRequest</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">log</span><span class="p">,</span> <span class="nx">cr</span><span class="p">)</span>
-	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-		<span class="k">return</span> <span class="nx">Bundle</span><span class="p">{},</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to wait for CertificateRequest %s/%s to be signed: %w&#34;</span><span class="p">,</span>
-			<span class="nx">cr</span><span class="p">.</span><span class="nx">Namespace</span><span class="p">,</span> <span class="nx">cr</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
-	<span class="p">}</span>
+</span><span class="c1"></span>  <span class="nx">signedCR</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">waitForCertificateRequest</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">log</span><span class="p">,</span> <span class="nx">cr</span><span class="p">)</span>
+  <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">Bundle</span><span class="p">{},</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to wait for CertificateRequest %s/%s to be signed: %w&#34;</span><span class="p">,</span>
+      <span class="nx">cr</span><span class="p">.</span><span class="nx">Namespace</span><span class="p">,</span> <span class="nx">cr</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+  <span class="p">}</span>
 
-	<span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;signed CertificateRequest&#34;</span><span class="p">)</span>
+  <span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;signed CertificateRequest&#34;</span><span class="p">)</span>
 
-	<span class="k">return</span> <span class="nx">Bundle</span><span class="p">{</span><span class="nx">Certificate</span><span class="p">:</span> <span class="nx">signedCR</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">,</span> <span class="nx">CA</span><span class="p">:</span> <span class="nx">signedCR</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">CA</span><span class="p">},</span> <span class="kc">nil</span>
+  <span class="k">return</span> <span class="nx">Bundle</span><span class="p">{</span><span class="nx">Certificate</span><span class="p">:</span> <span class="nx">signedCR</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">,</span> <span class="nx">CA</span><span class="p">:</span> <span class="nx">signedCR</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">CA</span><span class="p">},</span> <span class="kc">nil</span>
 <span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
@@ -971,42 +1126,42 @@ I1023 06:58:52.383236       <span class="m">1</span> controller.go:174<span clas
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// pkg/server/server.go
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">Server</span><span class="p">)</span> <span class="nf">CreateCertificate</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">icr</span> <span class="o">*</span><span class="nx">securityapi</span><span class="p">.</span><span class="nx">IstioCertificateRequest</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">securityapi</span><span class="p">.</span><span class="nx">IstioCertificateResponse</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
-	<span class="c1">// authn incoming requests, and build concatenated identities for labelling
-</span><span class="c1"></span>	<span class="nx">identities</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nf">authRequest</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">icr</span><span class="p">.</span><span class="nx">Csr</span><span class="p">))</span>
-	<span class="k">if</span> <span class="p">!</span><span class="nx">ok</span> <span class="p">{</span>
-		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">status</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">codes</span><span class="p">.</span><span class="nx">Unauthenticated</span><span class="p">,</span> <span class="s">&#34;request authenticate failure&#34;</span><span class="p">)</span>
-	<span class="p">}</span>
+  <span class="c1">// authn incoming requests, and build concatenated identities for labelling
+</span><span class="c1"></span>  <span class="nx">identities</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nf">authRequest</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">icr</span><span class="p">.</span><span class="nx">Csr</span><span class="p">))</span>
+  <span class="k">if</span> <span class="p">!</span><span class="nx">ok</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">status</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">codes</span><span class="p">.</span><span class="nx">Unauthenticated</span><span class="p">,</span> <span class="s">&#34;request authenticate failure&#34;</span><span class="p">)</span>
+  <span class="p">}</span>
 
-	<span class="nx">log</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">log</span><span class="p">.</span><span class="nf">WithValues</span><span class="p">(</span><span class="s">&#34;identities&#34;</span><span class="p">,</span> <span class="nx">identities</span><span class="p">)</span>
+  <span class="nx">log</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">log</span><span class="p">.</span><span class="nf">WithValues</span><span class="p">(</span><span class="s">&#34;identities&#34;</span><span class="p">,</span> <span class="nx">identities</span><span class="p">)</span>
 
-	<span class="c1">// If requested duration is larger than the maximum value, override with the
-</span><span class="c1"></span>	<span class="c1">// maxiumum value.
-</span><span class="c1"></span>	<span class="nx">duration</span> <span class="o">:=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Duration</span><span class="p">(</span><span class="nx">icr</span><span class="p">.</span><span class="nx">ValidityDuration</span><span class="p">)</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span>
-	<span class="k">if</span> <span class="nx">duration</span> <span class="p">&gt;</span> <span class="nx">s</span><span class="p">.</span><span class="nx">opts</span><span class="p">.</span><span class="nx">MaximumClientCertificateDuration</span> <span class="p">{</span>
-		<span class="nx">duration</span> <span class="p">=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">opts</span><span class="p">.</span><span class="nx">MaximumClientCertificateDuration</span>
-	<span class="p">}</span>
+  <span class="c1">// If requested duration is larger than the maximum value, override with the
+</span><span class="c1"></span>  <span class="c1">// maxiumum value.
+</span><span class="c1"></span>  <span class="nx">duration</span> <span class="o">:=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Duration</span><span class="p">(</span><span class="nx">icr</span><span class="p">.</span><span class="nx">ValidityDuration</span><span class="p">)</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span>
+  <span class="k">if</span> <span class="nx">duration</span> <span class="p">&gt;</span> <span class="nx">s</span><span class="p">.</span><span class="nx">opts</span><span class="p">.</span><span class="nx">MaximumClientCertificateDuration</span> <span class="p">{</span>
+    <span class="nx">duration</span> <span class="p">=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">opts</span><span class="p">.</span><span class="nx">MaximumClientCertificateDuration</span>
+  <span class="p">}</span>
 
-	<span class="nx">bundle</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">cm</span><span class="p">.</span><span class="nf">Sign</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">identities</span><span class="p">,</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">icr</span><span class="p">.</span><span class="nx">Csr</span><span class="p">),</span> <span class="nx">duration</span><span class="p">,</span> <span class="p">[]</span><span class="nx">cmapi</span><span class="p">.</span><span class="nx">KeyUsage</span><span class="p">{</span><span class="nx">cmapi</span><span class="p">.</span><span class="nx">UsageClientAuth</span><span class="p">,</span> <span class="nx">cmapi</span><span class="p">.</span><span class="nx">UsageServerAuth</span><span class="p">})</span>
-	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-		<span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;failed to sign incoming client certificate signing request&#34;</span><span class="p">)</span>
-		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">status</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">codes</span><span class="p">.</span><span class="nx">Internal</span><span class="p">,</span> <span class="s">&#34;failed to sign certificate request&#34;</span><span class="p">)</span>
-	<span class="p">}</span>
+  <span class="nx">bundle</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">cm</span><span class="p">.</span><span class="nf">Sign</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">identities</span><span class="p">,</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">icr</span><span class="p">.</span><span class="nx">Csr</span><span class="p">),</span> <span class="nx">duration</span><span class="p">,</span> <span class="p">[]</span><span class="nx">cmapi</span><span class="p">.</span><span class="nx">KeyUsage</span><span class="p">{</span><span class="nx">cmapi</span><span class="p">.</span><span class="nx">UsageClientAuth</span><span class="p">,</span> <span class="nx">cmapi</span><span class="p">.</span><span class="nx">UsageServerAuth</span><span class="p">})</span>
+  <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;failed to sign incoming client certificate signing request&#34;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">status</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">codes</span><span class="p">.</span><span class="nx">Internal</span><span class="p">,</span> <span class="s">&#34;failed to sign certificate request&#34;</span><span class="p">)</span>
+  <span class="p">}</span>
 
-	<span class="nx">certChain</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nf">parseCertificateBundle</span><span class="p">(</span><span class="nx">bundle</span><span class="p">)</span>
-	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-		<span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;failed to parse and verify signed certificate chain from issuer&#34;</span><span class="p">)</span>
-		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">status</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">codes</span><span class="p">.</span><span class="nx">Internal</span><span class="p">,</span> <span class="s">&#34;failed to parse and verify signed certificate from issuer&#34;</span><span class="p">)</span>
-	<span class="p">}</span>
+  <span class="nx">certChain</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nf">parseCertificateBundle</span><span class="p">(</span><span class="nx">bundle</span><span class="p">)</span>
+  <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;failed to parse and verify signed certificate chain from issuer&#34;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">status</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">codes</span><span class="p">.</span><span class="nx">Internal</span><span class="p">,</span> <span class="s">&#34;failed to parse and verify signed certificate from issuer&#34;</span><span class="p">)</span>
+  <span class="p">}</span>
 
-	<span class="c1">// Build client response object
-</span><span class="c1"></span>	<span class="nx">response</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">securityapi</span><span class="p">.</span><span class="nx">IstioCertificateResponse</span><span class="p">{</span>
-		<span class="nx">CertChain</span><span class="p">:</span> <span class="nx">certChain</span><span class="p">,</span>
-	<span class="p">}</span>
+  <span class="c1">// Build client response object
+</span><span class="c1"></span>  <span class="nx">response</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">securityapi</span><span class="p">.</span><span class="nx">IstioCertificateResponse</span><span class="p">{</span>
+    <span class="nx">CertChain</span><span class="p">:</span> <span class="nx">certChain</span><span class="p">,</span>
+  <span class="p">}</span>
 
-	<span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;workload CertificateRequest signed&#34;</span><span class="p">)</span>
+  <span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;workload CertificateRequest signed&#34;</span><span class="p">)</span>
 
-	<span class="c1">// Return response to the client
-</span><span class="c1"></span>	<span class="k">return</span> <span class="nx">response</span><span class="p">,</span> <span class="kc">nil</span>
+  <span class="c1">// Return response to the client
+</span><span class="c1"></span>  <span class="k">return</span> <span class="nx">response</span><span class="p">,</span> <span class="kc">nil</span>
 <span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
@@ -1030,16 +1185,16 @@ I1023 06:58:52.383236       <span class="m">1</span> controller.go:174<span clas
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// grpc.ServiceDesc 用来描述 istio 的证书服务
 </span><span class="c1"></span><span class="kd">var</span> <span class="nx">IstioCertificateService_ServiceDesc</span> <span class="p">=</span> <span class="nx">grpc</span><span class="p">.</span><span class="nx">ServiceDesc</span><span class="p">{</span>
-	<span class="nx">ServiceName</span><span class="p">:</span> <span class="s">&#34;istio.v1.auth.IstioCertificateService&#34;</span><span class="p">,</span>
-	<span class="nx">HandlerType</span><span class="p">:</span> <span class="p">(</span><span class="o">*</span><span class="nx">IstioCertificateServiceServer</span><span class="p">)(</span><span class="kc">nil</span><span class="p">),</span>
-	<span class="nx">Methods</span><span class="p">:</span> <span class="p">[]</span><span class="nx">grpc</span><span class="p">.</span><span class="nx">MethodDesc</span><span class="p">{</span>
-		<span class="p">{</span>
-			<span class="nx">MethodName</span><span class="p">:</span> <span class="s">&#34;CreateCertificate&#34;</span><span class="p">,</span>
-			<span class="nx">Handler</span><span class="p">:</span>    <span class="nx">_IstioCertificateService_CreateCertificate_Handler</span><span class="p">,</span>
-		<span class="p">},</span>
-	<span class="p">},</span>
-	<span class="nx">Streams</span><span class="p">:</span>  <span class="p">[]</span><span class="nx">grpc</span><span class="p">.</span><span class="nx">StreamDesc</span><span class="p">{},</span>
-	<span class="nx">Metadata</span><span class="p">:</span> <span class="s">&#34;security/v1alpha1/ca.proto&#34;</span><span class="p">,</span>
+  <span class="nx">ServiceName</span><span class="p">:</span> <span class="s">&#34;istio.v1.auth.IstioCertificateService&#34;</span><span class="p">,</span>
+  <span class="nx">HandlerType</span><span class="p">:</span> <span class="p">(</span><span class="o">*</span><span class="nx">IstioCertificateServiceServer</span><span class="p">)(</span><span class="kc">nil</span><span class="p">),</span>
+  <span class="nx">Methods</span><span class="p">:</span> <span class="p">[]</span><span class="nx">grpc</span><span class="p">.</span><span class="nx">MethodDesc</span><span class="p">{</span>
+    <span class="p">{</span>
+      <span class="nx">MethodName</span><span class="p">:</span> <span class="s">&#34;CreateCertificate&#34;</span><span class="p">,</span>
+      <span class="nx">Handler</span><span class="p">:</span>    <span class="nx">_IstioCertificateService_CreateCertificate_Handler</span><span class="p">,</span>
+    <span class="p">},</span>
+  <span class="p">},</span>
+  <span class="nx">Streams</span><span class="p">:</span>  <span class="p">[]</span><span class="nx">grpc</span><span class="p">.</span><span class="nx">StreamDesc</span><span class="p">{},</span>
+  <span class="nx">Metadata</span><span class="p">:</span> <span class="s">&#34;security/v1alpha1/ca.proto&#34;</span><span class="p">,</span>
 <span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
@@ -1068,19 +1223,19 @@ I1023 06:58:52.383236       <span class="m">1</span> controller.go:174<span clas
 <pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">// pkg/client/clientset/versioned/typed/certmanager/v1/certmanager_client.go
 // istio-csr 中调用 <span class="s2">&#34;client.CertmanagerV1().CertificateRequests(opts.Namespace)&#34;</span>
 func NewForConfigAndClient<span class="o">(</span>c *rest.Config, h *http.Client<span class="o">)</span> <span class="o">(</span>*CertmanagerV1Client, error<span class="o">)</span> <span class="o">{</span>
-	config :<span class="o">=</span> *c
-	<span class="k">if</span> err :<span class="o">=</span> setConfigDefaults<span class="o">(</span><span class="p">&amp;</span>config<span class="o">)</span><span class="p">;</span> err !<span class="o">=</span> nil <span class="o">{</span>
-		<span class="k">return</span> nil, err
-	<span class="o">}</span>
-	client, err :<span class="o">=</span> rest.RESTClientForConfigAndClient<span class="o">(</span><span class="p">&amp;</span>config, h<span class="o">)</span>
-	<span class="k">if</span> err !<span class="o">=</span> nil <span class="o">{</span>
-		<span class="k">return</span> nil, err
-	<span class="o">}</span>
-	<span class="k">return</span> <span class="p">&amp;</span>CertmanagerV1Client<span class="o">{</span>client<span class="o">}</span>, nil
+  config :<span class="o">=</span> *c
+  <span class="k">if</span> err :<span class="o">=</span> setConfigDefaults<span class="o">(</span><span class="p">&amp;</span>config<span class="o">)</span><span class="p">;</span> err !<span class="o">=</span> nil <span class="o">{</span>
+    <span class="k">return</span> nil, err
+  <span class="o">}</span>
+  client, err :<span class="o">=</span> rest.RESTClientForConfigAndClient<span class="o">(</span><span class="p">&amp;</span>config, h<span class="o">)</span>
+  <span class="k">if</span> err !<span class="o">=</span> nil <span class="o">{</span>
+    <span class="k">return</span> nil, err
+  <span class="o">}</span>
+  <span class="k">return</span> <span class="p">&amp;</span>CertmanagerV1Client<span class="o">{</span>client<span class="o">}</span>, nil
 <span class="o">}</span>
 
 func <span class="o">(</span>c *CertmanagerV1Client<span class="o">)</span> CertificateRequests<span class="o">(</span>namespace string<span class="o">)</span> CertificateRequestInterface <span class="o">{</span>
-	<span class="k">return</span> newCertificateRequests<span class="o">(</span>c, namespace<span class="o">)</span>
+  <span class="k">return</span> newCertificateRequests<span class="o">(</span>c, namespace<span class="o">)</span>
 <span class="o">}</span>
 </code></pre></td></tr></table>
 </div>
@@ -1113,23 +1268,23 @@ func <span class="o">(</span>c *CertmanagerV1Client<span class="o">)</span> Cert
 <pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// pkg/client/clientset/versioned/typed/certmanager/v1/certificaterequest.go
 </span><span class="c1">// newCertificateRequests returns a CertificateRequests
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">newCertificateRequests</span><span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">CertmanagerV1Client</span><span class="p">,</span> <span class="nx">namespace</span> <span class="kt">string</span><span class="p">)</span> <span class="o">*</span><span class="nx">certificateRequests</span> <span class="p">{</span>
-	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">certificateRequests</span><span class="p">{</span>
-		<span class="nx">client</span><span class="p">:</span> <span class="nx">c</span><span class="p">.</span><span class="nf">RESTClient</span><span class="p">(),</span>
-		<span class="nx">ns</span><span class="p">:</span>     <span class="nx">namespace</span><span class="p">,</span>
-	<span class="p">}</span>
+  <span class="k">return</span> <span class="o">&amp;</span><span class="nx">certificateRequests</span><span class="p">{</span>
+    <span class="nx">client</span><span class="p">:</span> <span class="nx">c</span><span class="p">.</span><span class="nf">RESTClient</span><span class="p">(),</span>
+    <span class="nx">ns</span><span class="p">:</span>     <span class="nx">namespace</span><span class="p">,</span>
+  <span class="p">}</span>
 <span class="p">}</span>
 
 <span class="c1">// 接受一个 certificateRequest 的资源并创建
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">certificateRequests</span><span class="p">)</span> <span class="nf">Create</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">certificateRequest</span> <span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">CertificateRequest</span><span class="p">,</span> <span class="nx">opts</span> <span class="nx">metav1</span><span class="p">.</span><span class="nx">CreateOptions</span><span class="p">)</span> <span class="p">(</span><span class="nx">result</span> <span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">CertificateRequest</span><span class="p">,</span> <span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
-	<span class="nx">result</span> <span class="p">=</span> <span class="o">&amp;</span><span class="nx">v1</span><span class="p">.</span><span class="nx">CertificateRequest</span><span class="p">{}</span>
-	<span class="nx">err</span> <span class="p">=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">client</span><span class="p">.</span><span class="nf">Post</span><span class="p">().</span>
-		<span class="nf">Namespace</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">ns</span><span class="p">).</span>
-		<span class="nf">Resource</span><span class="p">(</span><span class="s">&#34;certificaterequests&#34;</span><span class="p">).</span>
-		<span class="nf">VersionedParams</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">opts</span><span class="p">,</span> <span class="nx">scheme</span><span class="p">.</span><span class="nx">ParameterCodec</span><span class="p">).</span>
-		<span class="nf">Body</span><span class="p">(</span><span class="nx">certificateRequest</span><span class="p">).</span>
-		<span class="nf">Do</span><span class="p">(</span><span class="nx">ctx</span><span class="p">).</span>
-		<span class="nf">Into</span><span class="p">(</span><span class="nx">result</span><span class="p">)</span>
-	<span class="k">return</span>
+  <span class="nx">result</span> <span class="p">=</span> <span class="o">&amp;</span><span class="nx">v1</span><span class="p">.</span><span class="nx">CertificateRequest</span><span class="p">{}</span>
+  <span class="nx">err</span> <span class="p">=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">client</span><span class="p">.</span><span class="nf">Post</span><span class="p">().</span>
+    <span class="nf">Namespace</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">ns</span><span class="p">).</span>
+    <span class="nf">Resource</span><span class="p">(</span><span class="s">&#34;certificaterequests&#34;</span><span class="p">).</span>
+    <span class="nf">VersionedParams</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">opts</span><span class="p">,</span> <span class="nx">scheme</span><span class="p">.</span><span class="nx">ParameterCodec</span><span class="p">).</span>
+    <span class="nf">Body</span><span class="p">(</span><span class="nx">certificateRequest</span><span class="p">).</span>
+    <span class="nf">Do</span><span class="p">(</span><span class="nx">ctx</span><span class="p">).</span>
+    <span class="nf">Into</span><span class="p">(</span><span class="nx">result</span><span class="p">)</span>
+  <span class="k">return</span>
 <span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
@@ -1174,34 +1329,34 @@ func <span class="o">(</span>c *CertmanagerV1Client<span class="o">)</span> Cert
 <pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 这个控制器在 run 函数调用 worker 从 queueingController 获取的 queue 中循环拿到 obj，然后调用 queueingController 的 ProcessItem 进行处理
 </span><span class="c1">// pkg/controller/controller.go
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">controller</span><span class="p">)</span> <span class="nf">worker</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
-	<span class="nx">log</span> <span class="o">:=</span> <span class="nx">logf</span><span class="p">.</span><span class="nf">FromContext</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">ctx</span><span class="p">)</span>
+  <span class="nx">log</span> <span class="o">:=</span> <span class="nx">logf</span><span class="p">.</span><span class="nf">FromContext</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">ctx</span><span class="p">)</span>
 
-	<span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="nx">logf</span><span class="p">.</span><span class="nx">DebugLevel</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;starting worker&#34;</span><span class="p">)</span>
-	<span class="k">for</span> <span class="p">{</span>
-    	<span class="c1">// queue 即 queueingController 的 Register 获取的
-</span><span class="c1"></span>		<span class="nx">obj</span><span class="p">,</span> <span class="nx">shutdown</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">queue</span><span class="p">.</span><span class="nf">Get</span><span class="p">()</span>
-		<span class="k">if</span> <span class="nx">shutdown</span> <span class="p">{</span>
-			<span class="k">break</span>
-		<span class="p">}</span>
+  <span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="nx">logf</span><span class="p">.</span><span class="nx">DebugLevel</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;starting worker&#34;</span><span class="p">)</span>
+  <span class="k">for</span> <span class="p">{</span>
+      <span class="c1">// queue 即 queueingController 的 Register 获取的
+</span><span class="c1"></span>    <span class="nx">obj</span><span class="p">,</span> <span class="nx">shutdown</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">queue</span><span class="p">.</span><span class="nf">Get</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nx">shutdown</span> <span class="p">{</span>
+      <span class="k">break</span>
+    <span class="p">}</span>
 
-		<span class="kd">var</span> <span class="nx">key</span> <span class="kt">string</span>
-		<span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
-			<span class="k">defer</span> <span class="nx">c</span><span class="p">.</span><span class="nx">queue</span><span class="p">.</span><span class="nf">Done</span><span class="p">(</span><span class="nx">obj</span><span class="p">)</span>
-			<span class="kd">var</span> <span class="nx">ok</span> <span class="kt">bool</span>
-			<span class="k">if</span> <span class="nx">key</span><span class="p">,</span> <span class="nx">ok</span> <span class="p">=</span> <span class="nx">obj</span><span class="p">.(</span><span class="kt">string</span><span class="p">);</span> <span class="p">!</span><span class="nx">ok</span> <span class="p">{</span>
-				<span class="k">return</span>
-			<span class="p">}</span>
-			<span class="nx">log</span> <span class="o">:=</span> <span class="nx">log</span><span class="p">.</span><span class="nf">WithValues</span><span class="p">(</span><span class="s">&#34;key&#34;</span><span class="p">,</span> <span class="nx">key</span><span class="p">)</span>
-			<span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="nx">logf</span><span class="p">.</span><span class="nx">DebugLevel</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;syncing item&#34;</span><span class="p">)</span>
+    <span class="kd">var</span> <span class="nx">key</span> <span class="kt">string</span>
+    <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+      <span class="k">defer</span> <span class="nx">c</span><span class="p">.</span><span class="nx">queue</span><span class="p">.</span><span class="nf">Done</span><span class="p">(</span><span class="nx">obj</span><span class="p">)</span>
+      <span class="kd">var</span> <span class="nx">ok</span> <span class="kt">bool</span>
+      <span class="k">if</span> <span class="nx">key</span><span class="p">,</span> <span class="nx">ok</span> <span class="p">=</span> <span class="nx">obj</span><span class="p">.(</span><span class="kt">string</span><span class="p">);</span> <span class="p">!</span><span class="nx">ok</span> <span class="p">{</span>
+        <span class="k">return</span>
+      <span class="p">}</span>
+      <span class="nx">log</span> <span class="o">:=</span> <span class="nx">log</span><span class="p">.</span><span class="nf">WithValues</span><span class="p">(</span><span class="s">&#34;key&#34;</span><span class="p">,</span> <span class="nx">key</span><span class="p">)</span>
+      <span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="nx">logf</span><span class="p">.</span><span class="nx">DebugLevel</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;syncing item&#34;</span><span class="p">)</span>
 
-      		<span class="c1">// 即 queueingController 的 ProcessItem
-</span><span class="c1"></span>			<span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">syncHandler</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">key</span><span class="p">)</span>
-      		<span class="c1">// ...
-</span><span class="c1"></span>			<span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="nx">logf</span><span class="p">.</span><span class="nx">DebugLevel</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;finished processing work item&#34;</span><span class="p">)</span>
-			<span class="nx">c</span><span class="p">.</span><span class="nx">queue</span><span class="p">.</span><span class="nf">Forget</span><span class="p">(</span><span class="nx">obj</span><span class="p">)</span>
-		<span class="p">}()</span>
-	<span class="p">}</span>
-	<span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="nx">logf</span><span class="p">.</span><span class="nx">DebugLevel</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;exiting worker loop&#34;</span><span class="p">)</span>
+          <span class="c1">// 即 queueingController 的 ProcessItem
+</span><span class="c1"></span>      <span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">syncHandler</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">key</span><span class="p">)</span>
+          <span class="c1">// ...
+</span><span class="c1"></span>      <span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="nx">logf</span><span class="p">.</span><span class="nx">DebugLevel</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;finished processing work item&#34;</span><span class="p">)</span>
+      <span class="nx">c</span><span class="p">.</span><span class="nx">queue</span><span class="p">.</span><span class="nf">Forget</span><span class="p">(</span><span class="nx">obj</span><span class="p">)</span>
+    <span class="p">}()</span>
+  <span class="p">}</span>
+  <span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="nx">logf</span><span class="p">.</span><span class="nx">DebugLevel</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;exiting worker loop&#34;</span><span class="p">)</span>
 <span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
@@ -1369,159 +1524,159 @@ func <span class="o">(</span>c *CertmanagerV1Client<span class="o">)</span> Cert
 <pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// pkg/controller/certificaterequests/controller.go
 </span><span class="c1">// Controller 实现了 queueingController 来实现证书请求
 </span><span class="c1"></span><span class="kd">type</span> <span class="nx">Controller</span> <span class="kd">struct</span> <span class="p">{</span>
-	<span class="nx">helper</span> <span class="nx">issuer</span><span class="p">.</span><span class="nx">Helper</span>
-	<span class="nx">cmClient</span> <span class="nx">cmclient</span><span class="p">.</span><span class="nx">Interface</span>
-	<span class="nx">fieldManager</span> <span class="nx">strin</span>
+  <span class="nx">helper</span> <span class="nx">issuer</span><span class="p">.</span><span class="nx">Helper</span>
+  <span class="nx">cmClient</span> <span class="nx">cmclient</span><span class="p">.</span><span class="nx">Interface</span>
+  <span class="nx">fieldManager</span> <span class="nx">strin</span>
 
-	<span class="nx">certificateRequestLister</span> <span class="nx">cmlisters</span><span class="p">.</span><span class="nx">CertificateRequestLister</span>
-	<span class="nx">secretLister</span> <span class="nx">internalinformers</span><span class="p">.</span><span class="nx">SecretLister</span>
+  <span class="nx">certificateRequestLister</span> <span class="nx">cmlisters</span><span class="p">.</span><span class="nx">CertificateRequestLister</span>
+  <span class="nx">secretLister</span> <span class="nx">internalinformers</span><span class="p">.</span><span class="nx">SecretLister</span>
 
-	<span class="nx">queue</span> <span class="nx">workqueue</span><span class="p">.</span><span class="nx">RateLimitingInterface</span>
-	<span class="nx">recorder</span> <span class="nx">record</span><span class="p">.</span><span class="nx">EventRecorder</span>
-	<span class="c1">// the issuer kind to react to when a certificate request is synced
-</span><span class="c1"></span>	<span class="nx">issuerType</span> <span class="kt">string</span>
-	<span class="nx">issuerLister</span>        <span class="nx">cmlisters</span><span class="p">.</span><span class="nx">IssuerLister</span>
-	<span class="nx">clusterIssuerLister</span> <span class="nx">cmlisters</span><span class="p">.</span><span class="nx">ClusterIssuerLister</span>
-	<span class="nx">registerExtraInformers</span> <span class="p">[]</span><span class="nx">RegisterExtraInformerFn</span>
+  <span class="nx">queue</span> <span class="nx">workqueue</span><span class="p">.</span><span class="nx">RateLimitingInterface</span>
+  <span class="nx">recorder</span> <span class="nx">record</span><span class="p">.</span><span class="nx">EventRecorder</span>
+  <span class="c1">// the issuer kind to react to when a certificate request is synced
+</span><span class="c1"></span>  <span class="nx">issuerType</span> <span class="kt">string</span>
+  <span class="nx">issuerLister</span>        <span class="nx">cmlisters</span><span class="p">.</span><span class="nx">IssuerLister</span>
+  <span class="nx">clusterIssuerLister</span> <span class="nx">cmlisters</span><span class="p">.</span><span class="nx">ClusterIssuerLister</span>
+  <span class="nx">registerExtraInformers</span> <span class="p">[]</span><span class="nx">RegisterExtraInformerFn</span>
 
-	<span class="c1">// Issuer to call sign function
-</span><span class="c1"></span>	<span class="nx">issuerConstructor</span> <span class="nx">IssuerConstructor</span>
-	<span class="nx">issuer</span>            <span class="nx">Issuer</span>
+  <span class="c1">// Issuer to call sign function
+</span><span class="c1"></span>  <span class="nx">issuerConstructor</span> <span class="nx">IssuerConstructor</span>
+  <span class="nx">issuer</span>            <span class="nx">Issuer</span>
 <span class="p">}</span>
 
 <span class="kd">func</span> <span class="nf">New</span><span class="p">(</span><span class="nx">issuerType</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">issuerConstructor</span> <span class="nx">IssuerConstructor</span><span class="p">,</span> <span class="nx">registerExtraInformers</span> <span class="o">...</span><span class="nx">RegisterExtraInformerFn</span><span class="p">)</span> <span class="o">*</span><span class="nx">Controller</span> <span class="p">{</span>
-	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">Controller</span><span class="p">{</span>
-		<span class="nx">issuerType</span><span class="p">:</span>             <span class="nx">issuerType</span><span class="p">,</span>
-		<span class="nx">issuerConstructor</span><span class="p">:</span>      <span class="nx">issuerConstructor</span><span class="p">,</span>
-		<span class="nx">registerExtraInformers</span><span class="p">:</span> <span class="nx">registerExtraInformers</span><span class="p">,</span>
-	<span class="p">}</span>
+  <span class="k">return</span> <span class="o">&amp;</span><span class="nx">Controller</span><span class="p">{</span>
+    <span class="nx">issuerType</span><span class="p">:</span>             <span class="nx">issuerType</span><span class="p">,</span>
+    <span class="nx">issuerConstructor</span><span class="p">:</span>      <span class="nx">issuerConstructor</span><span class="p">,</span>
+    <span class="nx">registerExtraInformers</span><span class="p">:</span> <span class="nx">registerExtraInformers</span><span class="p">,</span>
+  <span class="p">}</span>
 <span class="p">}</span>
 
 <span class="c1">// Register 初始化 controller，监听 CertificateRequest 并加入到 queue 中，并返回一组必须同步的函数
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Controller</span><span class="p">)</span> <span class="nf">Register</span><span class="p">(</span><span class="nx">ctx</span> <span class="o">*</span><span class="nx">controllerpkg</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">(</span><span class="nx">workqueue</span><span class="p">.</span><span class="nx">RateLimitingInterface</span><span class="p">,</span> <span class="p">[]</span><span class="nx">cache</span><span class="p">.</span><span class="nx">InformerSynced</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
-	<span class="nx">componentName</span> <span class="o">:=</span> <span class="s">&#34;certificaterequests-issuer-&#34;</span> <span class="o">+</span> <span class="nx">c</span><span class="p">.</span><span class="nx">issuerType</span>
+  <span class="nx">componentName</span> <span class="o">:=</span> <span class="s">&#34;certificaterequests-issuer-&#34;</span> <span class="o">+</span> <span class="nx">c</span><span class="p">.</span><span class="nx">issuerType</span>
 
-	<span class="c1">// construct a new named logger to be reused throughout the controller
-</span><span class="c1"></span>	<span class="nx">c</span><span class="p">.</span><span class="nx">log</span> <span class="p">=</span> <span class="nx">logf</span><span class="p">.</span><span class="nf">FromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">.</span><span class="nx">RootContext</span><span class="p">,</span> <span class="nx">componentName</span><span class="p">)</span>
+  <span class="c1">// construct a new named logger to be reused throughout the controller
+</span><span class="c1"></span>  <span class="nx">c</span><span class="p">.</span><span class="nx">log</span> <span class="p">=</span> <span class="nx">logf</span><span class="p">.</span><span class="nf">FromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">.</span><span class="nx">RootContext</span><span class="p">,</span> <span class="nx">componentName</span><span class="p">)</span>
 
-	<span class="c1">// create a queue used to queue up items to be processed
-</span><span class="c1"></span>	<span class="nx">c</span><span class="p">.</span><span class="nx">queue</span> <span class="p">=</span> <span class="nx">workqueue</span><span class="p">.</span><span class="nf">NewNamedRateLimitingQueue</span><span class="p">(</span><span class="nx">controllerpkg</span><span class="p">.</span><span class="nf">DefaultItemBasedRateLimiter</span><span class="p">(),</span> <span class="nx">componentName</span><span class="p">)</span>
+  <span class="c1">// create a queue used to queue up items to be processed
+</span><span class="c1"></span>  <span class="nx">c</span><span class="p">.</span><span class="nx">queue</span> <span class="p">=</span> <span class="nx">workqueue</span><span class="p">.</span><span class="nf">NewNamedRateLimitingQueue</span><span class="p">(</span><span class="nx">controllerpkg</span><span class="p">.</span><span class="nf">DefaultItemBasedRateLimiter</span><span class="p">(),</span> <span class="nx">componentName</span><span class="p">)</span>
 
-	<span class="nx">secretsInformer</span> <span class="o">:=</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">KubeSharedInformerFactory</span><span class="p">.</span><span class="nf">Secrets</span><span class="p">()</span>
-	<span class="nx">issuerInformer</span> <span class="o">:=</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">SharedInformerFactory</span><span class="p">.</span><span class="nf">Certmanager</span><span class="p">().</span><span class="nf">V1</span><span class="p">().</span><span class="nf">Issuers</span><span class="p">()</span>
-	<span class="nx">c</span><span class="p">.</span><span class="nx">issuerLister</span> <span class="p">=</span> <span class="nx">issuerInformer</span><span class="p">.</span><span class="nf">Lister</span><span class="p">()</span>
-	<span class="nx">c</span><span class="p">.</span><span class="nx">secretLister</span> <span class="p">=</span> <span class="nx">secretsInformer</span><span class="p">.</span><span class="nf">Lister</span><span class="p">()</span>
+  <span class="nx">secretsInformer</span> <span class="o">:=</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">KubeSharedInformerFactory</span><span class="p">.</span><span class="nf">Secrets</span><span class="p">()</span>
+  <span class="nx">issuerInformer</span> <span class="o">:=</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">SharedInformerFactory</span><span class="p">.</span><span class="nf">Certmanager</span><span class="p">().</span><span class="nf">V1</span><span class="p">().</span><span class="nf">Issuers</span><span class="p">()</span>
+  <span class="nx">c</span><span class="p">.</span><span class="nx">issuerLister</span> <span class="p">=</span> <span class="nx">issuerInformer</span><span class="p">.</span><span class="nf">Lister</span><span class="p">()</span>
+  <span class="nx">c</span><span class="p">.</span><span class="nx">secretLister</span> <span class="p">=</span> <span class="nx">secretsInformer</span><span class="p">.</span><span class="nf">Lister</span><span class="p">()</span>
 
-	<span class="c1">// obtain references to all the informers used by this controller
-</span><span class="c1"></span>	<span class="nx">certificateRequestInformer</span> <span class="o">:=</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">SharedInformerFactory</span><span class="p">.</span><span class="nf">Certmanager</span><span class="p">().</span><span class="nf">V1</span><span class="p">().</span><span class="nf">CertificateRequests</span><span class="p">()</span>
-	<span class="nx">mustSync</span> <span class="o">:=</span> <span class="p">[]</span><span class="nx">cache</span><span class="p">.</span><span class="nx">InformerSynced</span><span class="p">{</span>
-		<span class="nx">certificateRequestInformer</span><span class="p">.</span><span class="nf">Informer</span><span class="p">().</span><span class="nx">HasSynced</span><span class="p">,</span>
-		<span class="nx">issuerInformer</span><span class="p">.</span><span class="nf">Informer</span><span class="p">().</span><span class="nx">HasSynced</span><span class="p">,</span>
-		<span class="nx">secretsInformer</span><span class="p">.</span><span class="nf">Informer</span><span class="p">().</span><span class="nx">HasSynced</span><span class="p">,</span>
-	<span class="p">}</span>
-	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">reg</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">c</span><span class="p">.</span><span class="nx">registerExtraInformers</span> <span class="p">{</span>
-		<span class="nx">ms</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">reg</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">log</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">queue</span><span class="p">)</span>
-		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-			<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to register extra informer: %w&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
-		<span class="p">}</span>
-		<span class="nx">mustSync</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">mustSync</span><span class="p">,</span> <span class="nx">ms</span><span class="o">...</span><span class="p">)</span>
-	<span class="p">}</span>
-	<span class="c1">// ...
-</span><span class="c1"></span>	<span class="nx">c</span><span class="p">.</span><span class="nx">certificateRequestLister</span> <span class="p">=</span> <span class="nx">certificateRequestInformer</span><span class="p">.</span><span class="nf">Lister</span><span class="p">()</span>
-	<span class="c1">// 有证书请求事件时，加入到 queue 中
-</span><span class="c1"></span>	<span class="nx">certificateRequestInformer</span><span class="p">.</span><span class="nf">Informer</span><span class="p">().</span><span class="nf">AddEventHandler</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">controllerpkg</span><span class="p">.</span><span class="nx">QueuingEventHandler</span><span class="p">{</span><span class="nx">Queue</span><span class="p">:</span> <span class="nx">c</span><span class="p">.</span><span class="nx">queue</span><span class="p">})</span>
-	<span class="nx">issuerInformer</span><span class="p">.</span><span class="nf">Informer</span><span class="p">().</span><span class="nf">AddEventHandler</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">controllerpkg</span><span class="p">.</span><span class="nx">BlockingEventHandler</span><span class="p">{</span><span class="nx">WorkFunc</span><span class="p">:</span> <span class="nx">c</span><span class="p">.</span><span class="nx">handleGenericIssuer</span><span class="p">})</span>
-	<span class="c1">// create an issuer helper for reading generic issuers
-</span><span class="c1"></span>	<span class="nx">c</span><span class="p">.</span><span class="nx">helper</span> <span class="p">=</span> <span class="nx">issuer</span><span class="p">.</span><span class="nf">NewHelper</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">issuerLister</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">clusterIssuerLister</span><span class="p">)</span>
-	<span class="c1">// Construct the issuer implementation with the built component context.
-</span><span class="c1"></span>	<span class="nx">c</span><span class="p">.</span><span class="nx">issuer</span> <span class="p">=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">issuerConstructor</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+  <span class="c1">// obtain references to all the informers used by this controller
+</span><span class="c1"></span>  <span class="nx">certificateRequestInformer</span> <span class="o">:=</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">SharedInformerFactory</span><span class="p">.</span><span class="nf">Certmanager</span><span class="p">().</span><span class="nf">V1</span><span class="p">().</span><span class="nf">CertificateRequests</span><span class="p">()</span>
+  <span class="nx">mustSync</span> <span class="o">:=</span> <span class="p">[]</span><span class="nx">cache</span><span class="p">.</span><span class="nx">InformerSynced</span><span class="p">{</span>
+    <span class="nx">certificateRequestInformer</span><span class="p">.</span><span class="nf">Informer</span><span class="p">().</span><span class="nx">HasSynced</span><span class="p">,</span>
+    <span class="nx">issuerInformer</span><span class="p">.</span><span class="nf">Informer</span><span class="p">().</span><span class="nx">HasSynced</span><span class="p">,</span>
+    <span class="nx">secretsInformer</span><span class="p">.</span><span class="nf">Informer</span><span class="p">().</span><span class="nx">HasSynced</span><span class="p">,</span>
+  <span class="p">}</span>
+  <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">reg</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">c</span><span class="p">.</span><span class="nx">registerExtraInformers</span> <span class="p">{</span>
+    <span class="nx">ms</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">reg</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">log</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">queue</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to register extra informer: %w&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="nx">mustSync</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">mustSync</span><span class="p">,</span> <span class="nx">ms</span><span class="o">...</span><span class="p">)</span>
+  <span class="p">}</span>
+  <span class="c1">// ...
+</span><span class="c1"></span>  <span class="nx">c</span><span class="p">.</span><span class="nx">certificateRequestLister</span> <span class="p">=</span> <span class="nx">certificateRequestInformer</span><span class="p">.</span><span class="nf">Lister</span><span class="p">()</span>
+  <span class="c1">// 有证书请求事件时，加入到 queue 中
+</span><span class="c1"></span>  <span class="nx">certificateRequestInformer</span><span class="p">.</span><span class="nf">Informer</span><span class="p">().</span><span class="nf">AddEventHandler</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">controllerpkg</span><span class="p">.</span><span class="nx">QueuingEventHandler</span><span class="p">{</span><span class="nx">Queue</span><span class="p">:</span> <span class="nx">c</span><span class="p">.</span><span class="nx">queue</span><span class="p">})</span>
+  <span class="nx">issuerInformer</span><span class="p">.</span><span class="nf">Informer</span><span class="p">().</span><span class="nf">AddEventHandler</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">controllerpkg</span><span class="p">.</span><span class="nx">BlockingEventHandler</span><span class="p">{</span><span class="nx">WorkFunc</span><span class="p">:</span> <span class="nx">c</span><span class="p">.</span><span class="nx">handleGenericIssuer</span><span class="p">})</span>
+  <span class="c1">// create an issuer helper for reading generic issuers
+</span><span class="c1"></span>  <span class="nx">c</span><span class="p">.</span><span class="nx">helper</span> <span class="p">=</span> <span class="nx">issuer</span><span class="p">.</span><span class="nf">NewHelper</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">issuerLister</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">clusterIssuerLister</span><span class="p">)</span>
+  <span class="c1">// Construct the issuer implementation with the built component context.
+</span><span class="c1"></span>  <span class="nx">c</span><span class="p">.</span><span class="nx">issuer</span> <span class="p">=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">issuerConstructor</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
 
-	<span class="nx">c</span><span class="p">.</span><span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="nx">logf</span><span class="p">.</span><span class="nx">DebugLevel</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;new certificate request controller registered&#34;</span><span class="p">,</span>
-		<span class="s">&#34;type&#34;</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">issuerType</span><span class="p">)</span>
+  <span class="nx">c</span><span class="p">.</span><span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="nx">logf</span><span class="p">.</span><span class="nx">DebugLevel</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;new certificate request controller registered&#34;</span><span class="p">,</span>
+    <span class="s">&#34;type&#34;</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">issuerType</span><span class="p">)</span>
 
-	<span class="k">return</span> <span class="nx">c</span><span class="p">.</span><span class="nx">queue</span><span class="p">,</span> <span class="nx">mustSync</span><span class="p">,</span> <span class="kc">nil</span>
+  <span class="k">return</span> <span class="nx">c</span><span class="p">.</span><span class="nx">queue</span><span class="p">,</span> <span class="nx">mustSync</span><span class="p">,</span> <span class="kc">nil</span>
 <span class="p">}</span>
 
 <span class="c1">// ProcessItem 在上面的 worker 函数中调用，每当有新的证书请求时，即新的证书请求对象
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Controller</span><span class="p">)</span> <span class="nf">ProcessItem</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">key</span> <span class="kt">string</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
-	<span class="nx">log</span> <span class="o">:=</span> <span class="nx">logf</span><span class="p">.</span><span class="nf">FromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
-	<span class="nx">dbg</span> <span class="o">:=</span> <span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="nx">logf</span><span class="p">.</span><span class="nx">DebugLevel</span><span class="p">)</span>
+  <span class="nx">log</span> <span class="o">:=</span> <span class="nx">logf</span><span class="p">.</span><span class="nf">FromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+  <span class="nx">dbg</span> <span class="o">:=</span> <span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="nx">logf</span><span class="p">.</span><span class="nx">DebugLevel</span><span class="p">)</span>
 
-	<span class="nx">namespace</span><span class="p">,</span> <span class="nx">name</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">cache</span><span class="p">.</span><span class="nf">SplitMetaNamespaceKey</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span>
-	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-		<span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;invalid resource key&#34;</span><span class="p">)</span>
-		<span class="k">return</span> <span class="kc">nil</span>
-	<span class="p">}</span>
+  <span class="nx">namespace</span><span class="p">,</span> <span class="nx">name</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">cache</span><span class="p">.</span><span class="nf">SplitMetaNamespaceKey</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span>
+  <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;invalid resource key&#34;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">nil</span>
+  <span class="p">}</span>
 
-	<span class="nx">cr</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">certificateRequestLister</span><span class="p">.</span><span class="nf">CertificateRequests</span><span class="p">(</span><span class="nx">namespace</span><span class="p">).</span><span class="nf">Get</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span>
-	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-		<span class="k">if</span> <span class="nx">k8sErrors</span><span class="p">.</span><span class="nf">IsNotFound</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
-			<span class="nx">dbg</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;certificate request in work queue no longer exists: %s&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">))</span>
-			<span class="k">return</span> <span class="kc">nil</span>
-		<span class="p">}</span>
+  <span class="nx">cr</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">certificateRequestLister</span><span class="p">.</span><span class="nf">CertificateRequests</span><span class="p">(</span><span class="nx">namespace</span><span class="p">).</span><span class="nf">Get</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span>
+  <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="nx">k8sErrors</span><span class="p">.</span><span class="nf">IsNotFound</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">dbg</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;certificate request in work queue no longer exists: %s&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">))</span>
+      <span class="k">return</span> <span class="kc">nil</span>
+    <span class="p">}</span>
 
-		<span class="k">return</span> <span class="nx">err</span>
-	<span class="p">}</span>
+    <span class="k">return</span> <span class="nx">err</span>
+  <span class="p">}</span>
 
-	<span class="nx">ctx</span> <span class="p">=</span> <span class="nx">logf</span><span class="p">.</span><span class="nf">NewContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">logf</span><span class="p">.</span><span class="nf">WithResource</span><span class="p">(</span><span class="nx">log</span><span class="p">,</span> <span class="nx">cr</span><span class="p">))</span>
-	<span class="k">return</span> <span class="nx">c</span><span class="p">.</span><span class="nf">Sync</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">cr</span><span class="p">)</span>
+  <span class="nx">ctx</span> <span class="p">=</span> <span class="nx">logf</span><span class="p">.</span><span class="nf">NewContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">logf</span><span class="p">.</span><span class="nf">WithResource</span><span class="p">(</span><span class="nx">log</span><span class="p">,</span> <span class="nx">cr</span><span class="p">))</span>
+  <span class="k">return</span> <span class="nx">c</span><span class="p">.</span><span class="nf">Sync</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">cr</span><span class="p">)</span>
 <span class="p">}</span>
 
 <span class="c1">// pkg/controller/certificaterequests/sync.go
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Controller</span><span class="p">)</span> <span class="nf">Sync</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">cr</span> <span class="o">*</span><span class="nx">cmapi</span><span class="p">.</span><span class="nx">CertificateRequest</span><span class="p">)</span> <span class="p">(</span><span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
-	<span class="nx">crCopy</span> <span class="o">:=</span> <span class="nx">cr</span><span class="p">.</span><span class="nf">DeepCopy</span><span class="p">()</span>
-	<span class="k">defer</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
-		<span class="k">if</span> <span class="nx">saveErr</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">updateCertificateRequestStatusAndAnnotations</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">cr</span><span class="p">,</span> <span class="nx">crCopy</span><span class="p">);</span> <span class="nx">saveErr</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-			<span class="nx">err</span> <span class="p">=</span> <span class="nx">utilerrors</span><span class="p">.</span><span class="nf">NewAggregate</span><span class="p">([]</span><span class="kt">error</span><span class="p">{</span><span class="nx">saveErr</span><span class="p">,</span> <span class="nx">err</span><span class="p">})</span>
-		<span class="p">}</span>
-	<span class="p">}()</span>
+  <span class="nx">crCopy</span> <span class="o">:=</span> <span class="nx">cr</span><span class="p">.</span><span class="nf">DeepCopy</span><span class="p">()</span>
+  <span class="k">defer</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="nx">saveErr</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">updateCertificateRequestStatusAndAnnotations</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">cr</span><span class="p">,</span> <span class="nx">crCopy</span><span class="p">);</span> <span class="nx">saveErr</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="nx">err</span> <span class="p">=</span> <span class="nx">utilerrors</span><span class="p">.</span><span class="nf">NewAggregate</span><span class="p">([]</span><span class="kt">error</span><span class="p">{</span><span class="nx">saveErr</span><span class="p">,</span> <span class="nx">err</span><span class="p">})</span>
+    <span class="p">}</span>
+  <span class="p">}()</span>
     <span class="c1">// ...
-</span><span class="c1"></span>	<span class="nx">dbg</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;fetching issuer object referenced by CertificateRequest&#34;</span><span class="p">)</span>
+</span><span class="c1"></span>  <span class="nx">dbg</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;fetching issuer object referenced by CertificateRequest&#34;</span><span class="p">)</span>
 
-	<span class="nx">issuerObj</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">helper</span><span class="p">.</span><span class="nf">GetGenericIssuer</span><span class="p">(</span><span class="nx">crCopy</span><span class="p">.</span><span class="nx">Spec</span><span class="p">.</span><span class="nx">IssuerRef</span><span class="p">,</span> <span class="nx">crCopy</span><span class="p">.</span><span class="nx">Namespace</span><span class="p">)</span>
-	<span class="c1">// ...
-</span><span class="c1"></span>	<span class="nx">log</span> <span class="p">=</span> <span class="nx">logf</span><span class="p">.</span><span class="nf">WithRelatedResource</span><span class="p">(</span><span class="nx">log</span><span class="p">,</span> <span class="nx">issuerObj</span><span class="p">)</span>
-	<span class="nx">dbg</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;ensuring issuer type matches this controller&#34;</span><span class="p">)</span>
-	<span class="nx">issuerType</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">apiutil</span><span class="p">.</span><span class="nf">NameForIssuer</span><span class="p">(</span><span class="nx">issuerObj</span><span class="p">)</span>
-	<span class="c1">// ...
-</span><span class="c1"></span>	<span class="nx">dbg</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;validating CertificateRequest resource object&#34;</span><span class="p">)</span>
+  <span class="nx">issuerObj</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">helper</span><span class="p">.</span><span class="nf">GetGenericIssuer</span><span class="p">(</span><span class="nx">crCopy</span><span class="p">.</span><span class="nx">Spec</span><span class="p">.</span><span class="nx">IssuerRef</span><span class="p">,</span> <span class="nx">crCopy</span><span class="p">.</span><span class="nx">Namespace</span><span class="p">)</span>
+  <span class="c1">// ...
+</span><span class="c1"></span>  <span class="nx">log</span> <span class="p">=</span> <span class="nx">logf</span><span class="p">.</span><span class="nf">WithRelatedResource</span><span class="p">(</span><span class="nx">log</span><span class="p">,</span> <span class="nx">issuerObj</span><span class="p">)</span>
+  <span class="nx">dbg</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;ensuring issuer type matches this controller&#34;</span><span class="p">)</span>
+  <span class="nx">issuerType</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">apiutil</span><span class="p">.</span><span class="nf">NameForIssuer</span><span class="p">(</span><span class="nx">issuerObj</span><span class="p">)</span>
+  <span class="c1">// ...
+</span><span class="c1"></span>  <span class="nx">dbg</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;validating CertificateRequest resource object&#34;</span><span class="p">)</span>
 
-	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">crCopy</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">)</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="p">{</span>
-		<span class="nx">dbg</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;certificate field is already set in status so skipping processing&#34;</span><span class="p">)</span>
-		<span class="k">return</span> <span class="kc">nil</span>
-	<span class="p">}</span>
+  <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">crCopy</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">)</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="p">{</span>
+    <span class="nx">dbg</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;certificate field is already set in status so skipping processing&#34;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">nil</span>
+  <span class="p">}</span>
 
-	<span class="nx">dbg</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;invoking sign function as existing certificate does not exist&#34;</span><span class="p">)</span>
+  <span class="nx">dbg</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;invoking sign function as existing certificate does not exist&#34;</span><span class="p">)</span>
 
-	<span class="c1">// issuer 是调用 NewCA 创建的，
-</span><span class="c1"></span>	<span class="nx">resp</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">issuer</span><span class="p">.</span><span class="nf">Sign</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">crCopy</span><span class="p">,</span> <span class="nx">issuerObj</span><span class="p">)</span>
-	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-		<span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;error issuing certificate request&#34;</span><span class="p">)</span>
-		<span class="k">return</span> <span class="nx">err</span>
-	<span class="p">}</span>
+  <span class="c1">// issuer 是调用 NewCA 创建的，
+</span><span class="c1"></span>  <span class="nx">resp</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">issuer</span><span class="p">.</span><span class="nf">Sign</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">crCopy</span><span class="p">,</span> <span class="nx">issuerObj</span><span class="p">)</span>
+  <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;error issuing certificate request&#34;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nx">err</span>
+  <span class="p">}</span>
 
-	<span class="c1">// If the issuer has not returned any data we may be pending or failed. The
-</span><span class="c1"></span>	<span class="c1">// underlying issuer will have set the condition of pending or failed and we
-</span><span class="c1"></span>	<span class="c1">// should potentially wait for a re-sync.
-</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">resp</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
-		<span class="k">return</span> <span class="kc">nil</span>
-	<span class="p">}</span>
+  <span class="c1">// If the issuer has not returned any data we may be pending or failed. The
+</span><span class="c1"></span>  <span class="c1">// underlying issuer will have set the condition of pending or failed and we
+</span><span class="c1"></span>  <span class="c1">// should potentially wait for a re-sync.
+</span><span class="c1"></span>  <span class="k">if</span> <span class="nx">resp</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="kc">nil</span>
+  <span class="p">}</span>
 
-	<span class="c1">// Update to status with the new given response.
-</span><span class="c1"></span>	<span class="nx">crCopy</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">Certificate</span> <span class="p">=</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">Certificate</span>
-	<span class="nx">crCopy</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">CA</span> <span class="p">=</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">CA</span>
+  <span class="c1">// Update to status with the new given response.
+</span><span class="c1"></span>  <span class="nx">crCopy</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">Certificate</span> <span class="p">=</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">Certificate</span>
+  <span class="nx">crCopy</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">CA</span> <span class="p">=</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">CA</span>
 
-	<span class="c1">// invalid cert
-</span><span class="c1"></span>	<span class="nx">_</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">pki</span><span class="p">.</span><span class="nf">DecodeX509CertificateBytes</span><span class="p">(</span><span class="nx">crCopy</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">)</span>
-	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-		<span class="nx">c</span><span class="p">.</span><span class="nx">reporter</span><span class="p">.</span><span class="nf">Failed</span><span class="p">(</span><span class="nx">crCopy</span><span class="p">,</span> <span class="nx">err</span><span class="p">,</span> <span class="s">&#34;DecodeError&#34;</span><span class="p">,</span> <span class="s">&#34;Failed to decode returned certificate&#34;</span><span class="p">)</span>
-		<span class="k">return</span> <span class="kc">nil</span>
-	<span class="p">}</span>
+  <span class="c1">// invalid cert
+</span><span class="c1"></span>  <span class="nx">_</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">pki</span><span class="p">.</span><span class="nf">DecodeX509CertificateBytes</span><span class="p">(</span><span class="nx">crCopy</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">)</span>
+  <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="nx">c</span><span class="p">.</span><span class="nx">reporter</span><span class="p">.</span><span class="nf">Failed</span><span class="p">(</span><span class="nx">crCopy</span><span class="p">,</span> <span class="nx">err</span><span class="p">,</span> <span class="s">&#34;DecodeError&#34;</span><span class="p">,</span> <span class="s">&#34;Failed to decode returned certificate&#34;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">nil</span>
+  <span class="p">}</span>
 
-	<span class="c1">// Set condition to Ready.
-</span><span class="c1"></span>	<span class="nx">c</span><span class="p">.</span><span class="nx">reporter</span><span class="p">.</span><span class="nf">Ready</span><span class="p">(</span><span class="nx">crCopy</span><span class="p">)</span>
+  <span class="c1">// Set condition to Ready.
+</span><span class="c1"></span>  <span class="nx">c</span><span class="p">.</span><span class="nx">reporter</span><span class="p">.</span><span class="nf">Ready</span><span class="p">(</span><span class="nx">crCopy</span><span class="p">)</span>
 
-	<span class="k">return</span> <span class="nx">ni</span>
+  <span class="k">return</span> <span class="nx">ni</span>
 </code></pre></td></tr></table>
 </div>
 </div><p>其中证书请求控制器有以下几种类型：</p>
@@ -1597,61 +1752,61 @@ func <span class="o">(</span>c *CertmanagerV1Client<span class="o">)</span> Cert
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// pkg/controller/certificaterequests/ca/ca.go
 </span><span class="c1"></span><span class="kd">type</span> <span class="nx">CA</span> <span class="kd">struct</span> <span class="p">{</span>
-	<span class="nx">issuerOptions</span> <span class="nx">controllerpkg</span><span class="p">.</span><span class="nx">IssuerOptions</span>
-	<span class="nx">secretsLister</span> <span class="nx">internalinformers</span><span class="p">.</span><span class="nx">SecretLister</span>
+  <span class="nx">issuerOptions</span> <span class="nx">controllerpkg</span><span class="p">.</span><span class="nx">IssuerOptions</span>
+  <span class="nx">secretsLister</span> <span class="nx">internalinformers</span><span class="p">.</span><span class="nx">SecretLister</span>
 
-	<span class="nx">reporter</span> <span class="o">*</span><span class="nx">crutil</span><span class="p">.</span><span class="nx">Reporter</span>
+  <span class="nx">reporter</span> <span class="o">*</span><span class="nx">crutil</span><span class="p">.</span><span class="nx">Reporter</span>
 
-	<span class="c1">// Used for testing to get reproducible resulting certificates
-</span><span class="c1"></span>	<span class="nx">templateGenerator</span> <span class="nx">templateGenerator</span>
-	<span class="nx">signingFn</span>         <span class="nx">signingFn</span>
+  <span class="c1">// Used for testing to get reproducible resulting certificates
+</span><span class="c1"></span>  <span class="nx">templateGenerator</span> <span class="nx">templateGenerator</span>
+  <span class="nx">signingFn</span>         <span class="nx">signingFn</span>
 <span class="p">}</span>
 
 <span class="kd">func</span> <span class="nf">init</span><span class="p">()</span> <span class="p">{</span>
-	<span class="c1">// create certificate request controller for ca issuer
-</span><span class="c1"></span>	<span class="nx">controllerpkg</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span><span class="nx">CRControllerName</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span> <span class="o">*</span><span class="nx">controllerpkg</span><span class="p">.</span><span class="nx">ContextFactory</span><span class="p">)</span> <span class="p">(</span><span class="nx">controllerpkg</span><span class="p">.</span><span class="nx">Interface</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
-		<span class="k">return</span> <span class="nx">controllerpkg</span><span class="p">.</span><span class="nf">NewBuilder</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">CRControllerName</span><span class="p">).</span>
-			<span class="nf">For</span><span class="p">(</span><span class="nx">certificaterequests</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="nx">apiutil</span><span class="p">.</span><span class="nx">IssuerCA</span><span class="p">,</span> <span class="nx">NewCA</span><span class="p">)).</span>
-			<span class="nf">Complete</span><span class="p">()</span>
-	<span class="p">})</span>
+  <span class="c1">// create certificate request controller for ca issuer
+</span><span class="c1"></span>  <span class="nx">controllerpkg</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span><span class="nx">CRControllerName</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span> <span class="o">*</span><span class="nx">controllerpkg</span><span class="p">.</span><span class="nx">ContextFactory</span><span class="p">)</span> <span class="p">(</span><span class="nx">controllerpkg</span><span class="p">.</span><span class="nx">Interface</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">controllerpkg</span><span class="p">.</span><span class="nf">NewBuilder</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">CRControllerName</span><span class="p">).</span>
+      <span class="nf">For</span><span class="p">(</span><span class="nx">certificaterequests</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="nx">apiutil</span><span class="p">.</span><span class="nx">IssuerCA</span><span class="p">,</span> <span class="nx">NewCA</span><span class="p">)).</span>
+      <span class="nf">Complete</span><span class="p">()</span>
+  <span class="p">})</span>
 <span class="p">}</span>
 
 <span class="kd">func</span> <span class="nf">NewCA</span><span class="p">(</span><span class="nx">ctx</span> <span class="o">*</span><span class="nx">controllerpkg</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="nx">certificaterequests</span><span class="p">.</span><span class="nx">Issuer</span> <span class="p">{</span>
-	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">CA</span><span class="p">{</span>
-		<span class="nx">issuerOptions</span><span class="p">:</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">IssuerOptions</span><span class="p">,</span>
-		<span class="nx">secretsLister</span><span class="p">:</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">KubeSharedInformerFactory</span><span class="p">.</span><span class="nf">Secrets</span><span class="p">().</span><span class="nf">Lister</span><span class="p">(),</span>
-		<span class="nx">reporter</span><span class="p">:</span>      <span class="nx">crutil</span><span class="p">.</span><span class="nf">NewReporter</span><span class="p">(</span><span class="nx">ctx</span><span class="p">.</span><span class="nx">Clock</span><span class="p">,</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">Recorder</span><span class="p">),</span>
-		<span class="nx">templateGenerator</span><span class="p">:</span> <span class="kd">func</span><span class="p">(</span><span class="nx">cr</span> <span class="o">*</span><span class="nx">cmapi</span><span class="p">.</span><span class="nx">CertificateRequest</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">x509</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
-			<span class="k">if</span> <span class="p">!</span><span class="nx">utilfeature</span><span class="p">.</span><span class="nx">DefaultMutableFeatureGate</span><span class="p">.</span><span class="nf">Enabled</span><span class="p">(</span><span class="nx">feature</span><span class="p">.</span><span class="nx">DisallowInsecureCSRUsageDefinition</span><span class="p">)</span> <span class="p">{</span>
-				<span class="k">return</span> <span class="nx">pki</span><span class="p">.</span><span class="nf">DeprecatedCertificateTemplateFromCertificateRequestAndAllowInsecureCSRUsageDefinition</span><span class="p">(</span><span class="nx">cr</span><span class="p">)</span>
-			<span class="p">}</span>
+  <span class="k">return</span> <span class="o">&amp;</span><span class="nx">CA</span><span class="p">{</span>
+    <span class="nx">issuerOptions</span><span class="p">:</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">IssuerOptions</span><span class="p">,</span>
+    <span class="nx">secretsLister</span><span class="p">:</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">KubeSharedInformerFactory</span><span class="p">.</span><span class="nf">Secrets</span><span class="p">().</span><span class="nf">Lister</span><span class="p">(),</span>
+    <span class="nx">reporter</span><span class="p">:</span>      <span class="nx">crutil</span><span class="p">.</span><span class="nf">NewReporter</span><span class="p">(</span><span class="nx">ctx</span><span class="p">.</span><span class="nx">Clock</span><span class="p">,</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">Recorder</span><span class="p">),</span>
+    <span class="nx">templateGenerator</span><span class="p">:</span> <span class="kd">func</span><span class="p">(</span><span class="nx">cr</span> <span class="o">*</span><span class="nx">cmapi</span><span class="p">.</span><span class="nx">CertificateRequest</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">x509</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="p">!</span><span class="nx">utilfeature</span><span class="p">.</span><span class="nx">DefaultMutableFeatureGate</span><span class="p">.</span><span class="nf">Enabled</span><span class="p">(</span><span class="nx">feature</span><span class="p">.</span><span class="nx">DisallowInsecureCSRUsageDefinition</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">pki</span><span class="p">.</span><span class="nf">DeprecatedCertificateTemplateFromCertificateRequestAndAllowInsecureCSRUsageDefinition</span><span class="p">(</span><span class="nx">cr</span><span class="p">)</span>
+      <span class="p">}</span>
 
-			<span class="k">return</span> <span class="nx">pki</span><span class="p">.</span><span class="nf">CertificateTemplateFromCertificateRequest</span><span class="p">(</span><span class="nx">cr</span><span class="p">)</span>
-		<span class="p">},</span>
-		<span class="c1">// Sign 中使用，用来签名证书
-</span><span class="c1"></span>		<span class="nx">signingFn</span><span class="p">:</span> <span class="nx">pki</span><span class="p">.</span><span class="nx">SignCSRTemplate</span><span class="p">,</span>
-	<span class="p">}</span>
+      <span class="k">return</span> <span class="nx">pki</span><span class="p">.</span><span class="nf">CertificateTemplateFromCertificateRequest</span><span class="p">(</span><span class="nx">cr</span><span class="p">)</span>
+    <span class="p">},</span>
+    <span class="c1">// Sign 中使用，用来签名证书
+</span><span class="c1"></span>    <span class="nx">signingFn</span><span class="p">:</span> <span class="nx">pki</span><span class="p">.</span><span class="nx">SignCSRTemplate</span><span class="p">,</span>
+  <span class="p">}</span>
 <span class="p">}</span>
 
 <span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">CA</span><span class="p">)</span> <span class="nf">Sign</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">cr</span> <span class="o">*</span><span class="nx">cmapi</span><span class="p">.</span><span class="nx">CertificateRequest</span><span class="p">,</span> <span class="nx">issuerObj</span> <span class="nx">cmapi</span><span class="p">.</span><span class="nx">GenericIssuer</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">issuerpkg</span><span class="p">.</span><span class="nx">IssueResponse</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
-	<span class="nx">secretName</span> <span class="o">:=</span> <span class="nx">issuerObj</span><span class="p">.</span><span class="nf">GetSpec</span><span class="p">().</span><span class="nx">CA</span><span class="p">.</span><span class="nx">SecretName</span>
-	<span class="nx">resourceNamespace</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">issuerOptions</span><span class="p">.</span><span class="nf">ResourceNamespace</span><span class="p">(</span><span class="nx">issuerObj</span><span class="p">)</span>
+  <span class="nx">secretName</span> <span class="o">:=</span> <span class="nx">issuerObj</span><span class="p">.</span><span class="nf">GetSpec</span><span class="p">().</span><span class="nx">CA</span><span class="p">.</span><span class="nx">SecretName</span>
+  <span class="nx">resourceNamespace</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">issuerOptions</span><span class="p">.</span><span class="nf">ResourceNamespace</span><span class="p">(</span><span class="nx">issuerObj</span><span class="p">)</span>
 
-	<span class="c1">// get a copy of the CA certificate named on the Issuer
-</span><span class="c1"></span>	<span class="nx">caCerts</span><span class="p">,</span> <span class="nx">caKey</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">kube</span><span class="p">.</span><span class="nf">SecretTLSKeyPairAndCA</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">secretsLister</span><span class="p">,</span> <span class="nx">resourceNamespace</span><span class="p">,</span> <span class="nx">issuerObj</span><span class="p">.</span><span class="nf">GetSpec</span><span class="p">().</span><span class="nx">CA</span><span class="p">.</span><span class="nx">SecretName</span><span class="p">)</span>
-	<span class="c1">// ...
-</span><span class="c1"></span>	<span class="nx">template</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">templateGenerator</span><span class="p">(</span><span class="nx">cr</span><span class="p">)</span>
+  <span class="c1">// get a copy of the CA certificate named on the Issuer
+</span><span class="c1"></span>  <span class="nx">caCerts</span><span class="p">,</span> <span class="nx">caKey</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">kube</span><span class="p">.</span><span class="nf">SecretTLSKeyPairAndCA</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">secretsLister</span><span class="p">,</span> <span class="nx">resourceNamespace</span><span class="p">,</span> <span class="nx">issuerObj</span><span class="p">.</span><span class="nf">GetSpec</span><span class="p">().</span><span class="nx">CA</span><span class="p">.</span><span class="nx">SecretName</span><span class="p">)</span>
+  <span class="c1">// ...
+</span><span class="c1"></span>  <span class="nx">template</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">templateGenerator</span><span class="p">(</span><span class="nx">cr</span><span class="p">)</span>
 
-	<span class="nx">template</span><span class="p">.</span><span class="nx">CRLDistributionPoints</span> <span class="p">=</span> <span class="nx">issuerObj</span><span class="p">.</span><span class="nf">GetSpec</span><span class="p">().</span><span class="nx">CA</span><span class="p">.</span><span class="nx">CRLDistributionPoints</span>
-	<span class="nx">template</span><span class="p">.</span><span class="nx">OCSPServer</span> <span class="p">=</span> <span class="nx">issuerObj</span><span class="p">.</span><span class="nf">GetSpec</span><span class="p">().</span><span class="nx">CA</span><span class="p">.</span><span class="nx">OCSPServers</span>
+  <span class="nx">template</span><span class="p">.</span><span class="nx">CRLDistributionPoints</span> <span class="p">=</span> <span class="nx">issuerObj</span><span class="p">.</span><span class="nf">GetSpec</span><span class="p">().</span><span class="nx">CA</span><span class="p">.</span><span class="nx">CRLDistributionPoints</span>
+  <span class="nx">template</span><span class="p">.</span><span class="nx">OCSPServer</span> <span class="p">=</span> <span class="nx">issuerObj</span><span class="p">.</span><span class="nf">GetSpec</span><span class="p">().</span><span class="nx">CA</span><span class="p">.</span><span class="nx">OCSPServers</span>
 
-	<span class="nx">bundle</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">signingFn</span><span class="p">(</span><span class="nx">caCerts</span><span class="p">,</span> <span class="nx">caKey</span><span class="p">,</span> <span class="nx">template</span><span class="p">)</span>
-	<span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="nx">logf</span><span class="p">.</span><span class="nx">DebugLevel</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;certificate issued&#34;</span><span class="p">)</span>
+  <span class="nx">bundle</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">signingFn</span><span class="p">(</span><span class="nx">caCerts</span><span class="p">,</span> <span class="nx">caKey</span><span class="p">,</span> <span class="nx">template</span><span class="p">)</span>
+  <span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="nx">logf</span><span class="p">.</span><span class="nx">DebugLevel</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;certificate issued&#34;</span><span class="p">)</span>
 
-	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">issuerpkg</span><span class="p">.</span><span class="nx">IssueResponse</span><span class="p">{</span>
-		<span class="nx">Certificate</span><span class="p">:</span> <span class="nx">bundle</span><span class="p">.</span><span class="nx">ChainPEM</span><span class="p">,</span>
-		<span class="nx">CA</span><span class="p">:</span>          <span class="nx">bundle</span><span class="p">.</span><span class="nx">CAPEM</span><span class="p">,</span>
-	<span class="p">},</span> <span class="kc">nil</span>
+  <span class="k">return</span> <span class="o">&amp;</span><span class="nx">issuerpkg</span><span class="p">.</span><span class="nx">IssueResponse</span><span class="p">{</span>
+    <span class="nx">Certificate</span><span class="p">:</span> <span class="nx">bundle</span><span class="p">.</span><span class="nx">ChainPEM</span><span class="p">,</span>
+    <span class="nx">CA</span><span class="p">:</span>          <span class="nx">bundle</span><span class="p">.</span><span class="nx">CAPEM</span><span class="p">,</span>
+  <span class="p">},</span> <span class="kc">nil</span>
 <span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
@@ -1750,7 +1905,7 @@ func <span class="o">(</span>c *CertmanagerV1Client<span class="o">)</span> Cert
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="p">{</span>
     <span class="nt">&#34;filter_chain_match&#34;</span><span class="p">:</span> <span class="p">{</span>
-     <span class="nt">&#34;destination_port&#34;</span><span class="p">:</span> <span class="mi">5000</span><span class="p">,</span>	<span class="c1">// 对外监听的端口
+     <span class="nt">&#34;destination_port&#34;</span><span class="p">:</span> <span class="mi">5000</span><span class="p">,</span>  <span class="c1">// 对外监听的端口
 </span><span class="c1"></span>     <span class="nt">&#34;transport_protocol&#34;</span><span class="p">:</span> <span class="s2">&#34;tls&#34;</span><span class="p">,</span>
      <span class="nt">&#34;application_protocols&#34;</span><span class="p">:</span> <span class="p">[</span>
       <span class="s2">&#34;istio&#34;</span><span class="p">,</span>
@@ -1769,7 +1924,7 @@ func <span class="o">(</span>c *CertmanagerV1Client<span class="o">)</span> Cert
         <span class="nt">&#34;validate_clusters&#34;</span><span class="p">:</span> <span class="kc">false</span>
        <span class="p">}</span><span class="err">...</span><span class="p">}</span>
     <span class="p">],</span>
-    <span class="nt">&#34;transport_socket&#34;</span><span class="p">:</span> <span class="p">{</span>	<span class="c1">// 传输数据的底层套接字配置
+    <span class="nt">&#34;transport_socket&#34;</span><span class="p">:</span> <span class="p">{</span>  <span class="c1">// 传输数据的底层套接字配置
 </span><span class="c1"></span>     <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;envoy.transport_sockets.tls&#34;</span><span class="p">,</span>
      <span class="nt">&#34;typed_config&#34;</span><span class="p">:</span> <span class="p">{</span>
       <span class="nt">&#34;@type&#34;</span><span class="p">:</span> <span class="s2">&#34;type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext&#34;</span><span class="p">,</span>
@@ -1781,7 +1936,7 @@ func <span class="o">(</span>c *CertmanagerV1Client<span class="o">)</span> Cert
        <span class="p">],</span>
        <span class="nt">&#34;tls_certificate_sds_secret_configs&#34;</span><span class="p">:</span> <span class="p">[</span> <span class="c1">// 服务器端证书
 </span><span class="c1"></span>        <span class="p">{</span>
-         <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;default&#34;</span><span class="p">,</span>	<span class="c1">// 服务器证书名称
+         <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;default&#34;</span><span class="p">,</span>  <span class="c1">// 服务器证书名称
 </span><span class="c1"></span>         <span class="nt">&#34;sds_config&#34;</span><span class="p">:</span> <span class="p">{</span>
           <span class="nt">&#34;api_config_source&#34;</span><span class="p">:</span> <span class="p">{</span>
            <span class="nt">&#34;api_type&#34;</span><span class="p">:</span> <span class="s2">&#34;GRPC&#34;</span><span class="p">,</span>
@@ -1801,22 +1956,22 @@ func <span class="o">(</span>c *CertmanagerV1Client<span class="o">)</span> Cert
         <span class="p">}</span>
        <span class="p">],</span>
        <span class="nt">&#34;combined_validation_context&#34;</span><span class="p">:</span> <span class="p">{</span> <span class="c1">// 验证上下文，用于验证客户端，会合并默认和动态上下文的规则
-</span><span class="c1"></span>        <span class="nt">&#34;default_validation_context&#34;</span><span class="p">:</span> <span class="p">{</span>	<span class="c1">// 默认验证上下文
-</span><span class="c1"></span>         <span class="nt">&#34;match_subject_alt_names&#34;</span><span class="p">:</span> <span class="p">[</span>	<span class="c1">// 匹配的 SAN 规则，用于验证服务器或客户端的证书
+</span><span class="c1"></span>        <span class="nt">&#34;default_validation_context&#34;</span><span class="p">:</span> <span class="p">{</span>  <span class="c1">// 默认验证上下文
+</span><span class="c1"></span>         <span class="nt">&#34;match_subject_alt_names&#34;</span><span class="p">:</span> <span class="p">[</span>  <span class="c1">// 匹配的 SAN 规则，用于验证服务器或客户端的证书
 </span><span class="c1"></span>          <span class="p">{</span>
            <span class="nt">&#34;prefix&#34;</span><span class="p">:</span> <span class="s2">&#34;spiffe://cluster.local/&#34;</span>
           <span class="p">}</span>
          <span class="p">]</span>
         <span class="p">},</span>
         <span class="nt">&#34;validation_context_sds_secret_config&#34;</span><span class="p">:</span> <span class="p">{</span> <span class="c1">// 动态验证上下文
-</span><span class="c1"></span>         <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;ROOTCA&#34;</span><span class="p">,</span>	<span class="c1">// 根证书名称
+</span><span class="c1"></span>         <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;ROOTCA&#34;</span><span class="p">,</span>  <span class="c1">// 根证书名称
 </span><span class="c1"></span>         <span class="nt">&#34;sds_config&#34;</span><span class="p">:</span> <span class="p">{</span>
           <span class="nt">&#34;api_config_source&#34;</span><span class="p">:</span> <span class="p">{</span>
            <span class="nt">&#34;api_type&#34;</span><span class="p">:</span> <span class="s2">&#34;GRPC&#34;</span><span class="p">,</span>
            <span class="nt">&#34;grpc_services&#34;</span><span class="p">:</span> <span class="p">[</span>
             <span class="p">{</span>
              <span class="nt">&#34;envoy_grpc&#34;</span><span class="p">:</span> <span class="p">{</span>
-              <span class="nt">&#34;cluster_name&#34;</span><span class="p">:</span> <span class="s2">&#34;sds-grpc&#34;</span>	<span class="c1">// 获取根证书的 SDS 服务器
+              <span class="nt">&#34;cluster_name&#34;</span><span class="p">:</span> <span class="s2">&#34;sds-grpc&#34;</span>  <span class="c1">// 获取根证书的 SDS 服务器
 </span><span class="c1"></span>             <span class="p">}</span>
             <span class="p">}</span>
            <span class="p">],</span>
@@ -2094,6 +2249,7 @@ func <span class="o">(</span>c *CertmanagerV1Client<span class="o">)</span> Cert
 <li><a href="https://jimmysong.io/blog/understanding-the-tls-encryption-in-istio/">如何理解 Istio 中的 MTLS 流量加密</a></li>
 <li><a href="https://www.zhaohuabing.com/post/2020-05-25-istio-certificate/">Isito 中的证书工作机制</a></li>
 <li><a href="https://help.aliyun.com/zh/api-gateway/user-guide/mutual-tls-authentication">HTTPS 双向认证</a></li>
+<li><a href="https://www.cloudflare.com/zh-cn/learning/access-management/what-is-mutual-tls/">什么是mTLS</a></li>
 </ul>
 
     </div>

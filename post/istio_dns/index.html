@@ -287,10 +287,10 @@ options ndots:5
 </span></code></pre></td>
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@dubbo-sample-provider-6c84cbc484-6nq4r:/# nslookup org.apache.dubbo.samples.api.greetingservice
-Server:		10.43.0.10
-Address:	10.43.0.10#53
+Server:    10.43.0.10
+Address:  10.43.0.10#53
 
-Name:	org.apache.dubbo.samples.api.greetingservice
+Name:  org.apache.dubbo.samples.api.greetingservice
 Address: 240.240.0.20
 </code></pre></td></tr></table>
 </div>
@@ -313,15 +313,15 @@ Address: 240.240.0.20
 </span></code></pre></td>
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">root@dev:~# nslookup kube-dns.kube-system.svc.cluster.local 10.42.0.4
-Server:		10.42.0.4
-Address:	10.42.0.4#53
+Server:    10.42.0.4
+Address:  10.42.0.4#53
 
-Name:	kube-dns.kube-system.svc.cluster.local
+Name:  kube-dns.kube-system.svc.cluster.local
 Address: 10.43.0.10
 
 root@dev:~# nslookup org.apache.dubbo.samples.api.greetingservice 10.42.0.4
-Server:		10.42.0.4
-Address:	10.42.0.4#53
+Server:    10.42.0.4
+Address:  10.42.0.4#53
 
 ** server can<span class="err">&#39;</span>t find org.apache.dubbo.samples.api.greetingservice: NXDOMAIN
 </code></pre></td></tr></table>
@@ -638,42 +638,42 @@ num  target     prot opt <span class="nb">source</span>               destinatio
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// istio/tools/istio-iptables/pkg/cmd/root.go
 </span><span class="c1"></span><span class="kd">var</span> <span class="p">(</span>
-	<span class="c1">// 开启 dns 拦截
-</span><span class="c1"></span>	<span class="nx">dnsCaptureByAgent</span> <span class="p">=</span> <span class="nx">env</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span><span class="s">&#34;ISTIO_META_DNS_CAPTURE&#34;</span><span class="p">,</span> <span class="kc">false</span><span class="p">,</span>
-		<span class="s">&#34;If set to true, enable the capture of outgoing DNS packets on port 53, redirecting to istio-agent on :15053&#34;</span><span class="p">).</span><span class="nf">Get</span><span class="p">()</span>
+  <span class="c1">// 开启 dns 拦截
+</span><span class="c1"></span>  <span class="nx">dnsCaptureByAgent</span> <span class="p">=</span> <span class="nx">env</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span><span class="s">&#34;ISTIO_META_DNS_CAPTURE&#34;</span><span class="p">,</span> <span class="kc">false</span><span class="p">,</span>
+    <span class="s">&#34;If set to true, enable the capture of outgoing DNS packets on port 53, redirecting to istio-agent on :15053&#34;</span><span class="p">).</span><span class="nf">Get</span><span class="p">()</span>
 <span class="p">)</span>
 
 <span class="kd">func</span> <span class="nf">bindFlags</span><span class="p">(</span><span class="nx">cmd</span> <span class="o">*</span><span class="nx">cobra</span><span class="p">.</span><span class="nx">Command</span><span class="p">,</span> <span class="nx">args</span> <span class="p">[]</span><span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
-	<span class="c1">// 获取所有环境变量
-</span><span class="c1"></span>	<span class="nx">viper</span><span class="p">.</span><span class="nf">AutomaticEnv</span><span class="p">()</span>
-	<span class="nx">viper</span><span class="p">.</span><span class="nf">SetEnvKeyReplacer</span><span class="p">(</span><span class="nx">strings</span><span class="p">.</span><span class="nf">NewReplacer</span><span class="p">(</span><span class="s">&#34;-&#34;</span><span class="p">,</span> <span class="s">&#34;_&#34;</span><span class="p">))</span>
+  <span class="c1">// 获取所有环境变量
+</span><span class="c1"></span>  <span class="nx">viper</span><span class="p">.</span><span class="nf">AutomaticEnv</span><span class="p">()</span>
+  <span class="nx">viper</span><span class="p">.</span><span class="nf">SetEnvKeyReplacer</span><span class="p">(</span><span class="nx">strings</span><span class="p">.</span><span class="nf">NewReplacer</span><span class="p">(</span><span class="s">&#34;-&#34;</span><span class="p">,</span> <span class="s">&#34;_&#34;</span><span class="p">))</span>
 
-	<span class="nx">envoyPort</span> <span class="o">:=</span> <span class="s">&#34;15001&#34;</span>
-	<span class="nx">inboundPort</span> <span class="o">:=</span> <span class="s">&#34;15006&#34;</span>
-	<span class="nx">inboundTunnelPort</span> <span class="o">:=</span> <span class="s">&#34;15008&#34;</span>
+  <span class="nx">envoyPort</span> <span class="o">:=</span> <span class="s">&#34;15001&#34;</span>
+  <span class="nx">inboundPort</span> <span class="o">:=</span> <span class="s">&#34;15006&#34;</span>
+  <span class="nx">inboundTunnelPort</span> <span class="o">:=</span> <span class="s">&#34;15008&#34;</span>
     <span class="c1">// ...
-</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">viper</span><span class="p">.</span><span class="nf">BindPFlag</span><span class="p">(</span><span class="nx">constants</span><span class="p">.</span><span class="nx">RedirectDNS</span><span class="p">,</span> <span class="nx">cmd</span><span class="p">.</span><span class="nf">Flags</span><span class="p">().</span><span class="nf">Lookup</span><span class="p">(</span><span class="nx">constants</span><span class="p">.</span><span class="nx">RedirectDNS</span><span class="p">));</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-		<span class="nf">handleError</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
-	<span class="p">}</span>
-	<span class="nx">viper</span><span class="p">.</span><span class="nf">SetDefault</span><span class="p">(</span><span class="nx">constants</span><span class="p">.</span><span class="nx">RedirectDNS</span><span class="p">,</span> <span class="nx">dnsCaptureByAgent</span><span class="p">)</span>
+</span><span class="c1"></span>  <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">viper</span><span class="p">.</span><span class="nf">BindPFlag</span><span class="p">(</span><span class="nx">constants</span><span class="p">.</span><span class="nx">RedirectDNS</span><span class="p">,</span> <span class="nx">cmd</span><span class="p">.</span><span class="nf">Flags</span><span class="p">().</span><span class="nf">Lookup</span><span class="p">(</span><span class="nx">constants</span><span class="p">.</span><span class="nx">RedirectDNS</span><span class="p">));</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="nf">handleError</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+  <span class="p">}</span>
+  <span class="nx">viper</span><span class="p">.</span><span class="nf">SetDefault</span><span class="p">(</span><span class="nx">constants</span><span class="p">.</span><span class="nx">RedirectDNS</span><span class="p">,</span> <span class="nx">dnsCaptureByAgent</span><span class="p">)</span>
 <span class="p">}</span>
 
 <span class="kd">func</span> <span class="nf">constructConfig</span><span class="p">()</span> <span class="o">*</span><span class="nx">config</span><span class="p">.</span><span class="nx">Config</span> <span class="p">{</span>
-	<span class="nx">cfg</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">config</span><span class="p">.</span><span class="nx">Config</span><span class="p">{</span>
-		<span class="nx">RedirectDNS</span><span class="p">:</span>             <span class="nx">viper</span><span class="p">.</span><span class="nf">GetBool</span><span class="p">(</span><span class="nx">constants</span><span class="p">.</span><span class="nx">RedirectDNS</span><span class="p">),</span>
-		<span class="nx">CaptureAllDNS</span><span class="p">:</span>           <span class="nx">viper</span><span class="p">.</span><span class="nf">GetBool</span><span class="p">(</span><span class="nx">constants</span><span class="p">.</span><span class="nx">CaptureAllDNS</span><span class="p">),</span>
+  <span class="nx">cfg</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">config</span><span class="p">.</span><span class="nx">Config</span><span class="p">{</span>
+    <span class="nx">RedirectDNS</span><span class="p">:</span>             <span class="nx">viper</span><span class="p">.</span><span class="nf">GetBool</span><span class="p">(</span><span class="nx">constants</span><span class="p">.</span><span class="nx">RedirectDNS</span><span class="p">),</span>
+    <span class="nx">CaptureAllDNS</span><span class="p">:</span>           <span class="nx">viper</span><span class="p">.</span><span class="nf">GetBool</span><span class="p">(</span><span class="nx">constants</span><span class="p">.</span><span class="nx">CaptureAllDNS</span><span class="p">),</span>
         <span class="c1">// ...
-</span><span class="c1"></span>	<span class="p">}</span>
+</span><span class="c1"></span>  <span class="p">}</span>
     <span class="c1">// 查找 DNS 的域名服务器。只会在 dns 开启情况下，且出现一些理论上的隐蔽问题，比如读取/etc/resolv.conf 文件失败
 </span><span class="c1"></span>    <span class="c1">// 加入开启了捕获所有的 dns 请求，不需要读 dns 配置文件，所有到 53 端口的流量都会被捕获
-</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">RedirectDNS</span> <span class="o">&amp;&amp;</span> <span class="p">!</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">CaptureAllDNS</span> <span class="p">{</span>
-		<span class="nx">dnsConfig</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">dns</span><span class="p">.</span><span class="nf">ClientConfigFromFile</span><span class="p">(</span><span class="s">&#34;/etc/resolv.conf&#34;</span><span class="p">)</span>
-		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-			<span class="nb">panic</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;failed to load /etc/resolv.conf: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">))</span>
-		<span class="p">}</span>
-		<span class="nx">cfg</span><span class="p">.</span><span class="nx">DNSServersV4</span><span class="p">,</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">DNSServersV6</span> <span class="p">=</span> <span class="nx">netutil</span><span class="p">.</span><span class="nf">IPsSplitV4V6</span><span class="p">(</span><span class="nx">dnsConfig</span><span class="p">.</span><span class="nx">Servers</span><span class="p">)</span>
-	<span class="p">}</span>
-	<span class="k">return</span> <span class="nx">cfg</span>
+</span><span class="c1"></span>  <span class="k">if</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">RedirectDNS</span> <span class="o">&amp;&amp;</span> <span class="p">!</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">CaptureAllDNS</span> <span class="p">{</span>
+    <span class="nx">dnsConfig</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">dns</span><span class="p">.</span><span class="nf">ClientConfigFromFile</span><span class="p">(</span><span class="s">&#34;/etc/resolv.conf&#34;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="nb">panic</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;failed to load /etc/resolv.conf: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">))</span>
+    <span class="p">}</span>
+    <span class="nx">cfg</span><span class="p">.</span><span class="nx">DNSServersV4</span><span class="p">,</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">DNSServersV6</span> <span class="p">=</span> <span class="nx">netutil</span><span class="p">.</span><span class="nf">IPsSplitV4V6</span><span class="p">(</span><span class="nx">dnsConfig</span><span class="p">.</span><span class="nx">Servers</span><span class="p">)</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="nx">cfg</span>
 <span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
@@ -766,85 +766,85 @@ num  target     prot opt <span class="nb">source</span>               destinatio
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// istio/tools/istio-iptables/pkg/capture/run.go
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">cfg</span> <span class="o">*</span><span class="nx">IptablesConfigurator</span><span class="p">)</span> <span class="nf">Run</span><span class="p">()</span> <span class="p">{</span>
-	<span class="nx">redirectDNS</span> <span class="o">:=</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">RedirectDNS</span>
-	<span class="nx">cfg</span><span class="p">.</span><span class="nf">logConfig</span><span class="p">()</span>
+  <span class="nx">redirectDNS</span> <span class="o">:=</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">RedirectDNS</span>
+  <span class="nx">cfg</span><span class="p">.</span><span class="nf">logConfig</span><span class="p">()</span>
     <span class="c1">// ...
-</span><span class="c1"></span>	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">uid</span> <span class="o">:=</span> <span class="k">range</span> <span class="nf">split</span><span class="p">(</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">ProxyUID</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="c1"></span>  <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">uid</span> <span class="o">:=</span> <span class="k">range</span> <span class="nf">split</span><span class="p">(</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">ProxyUID</span><span class="p">)</span> <span class="p">{</span>
         <span class="c1">// 在使用 VIP 时，通过 Envoy 将应用程序的调用重定向到自身
 </span><span class="c1"></span>        <span class="c1">// 比如：appN =&gt; Envoy (client) =&gt; Envoy (server) =&gt; appN.
-</span><span class="c1"></span>		<span class="k">if</span> <span class="nx">redirectDNS</span> <span class="p">{</span>
+</span><span class="c1"></span>    <span class="k">if</span> <span class="nx">redirectDNS</span> <span class="p">{</span>
             <span class="c1">// 当 dns 捕获开启时，跳过端口 53，这可以保证不出现：app =&gt; istio-agent =&gt; Envoy inbound =&gt; dns server
 </span><span class="c1"></span>            <span class="c1">// 而保证流程为：app =&gt; istio-agent =&gt; dns server
-</span><span class="c1"></span>			<span class="c1">// 选择从本地 lo 网络接口发起的，且目的地址不为“127.0.0.1”
-</span><span class="c1"></span>			<span class="c1">// 指定是 tcp 规则，且目的端口不为 53
-</span><span class="c1"></span>			<span class="c1">// 匹配发起者用户为 uid，则转发到 ISTIOINREDIRECT 规则
-</span><span class="c1"></span>			<span class="c1">// 这条规则匹配 ISTIO_OUTPUT 中的第 2 条
-</span><span class="c1"></span>			<span class="c1">// 2    ISTIO_IN_REDIRECT  tcp  --  0.0.0.0/0           !127.0.0.1            tcp dpt:!53 owner UID match 1337
-</span><span class="c1"></span>			<span class="nx">cfg</span><span class="p">.</span><span class="nx">iptables</span><span class="p">.</span><span class="nf">AppendVersionedRule</span><span class="p">(</span><span class="s">&#34;127.0.0.1/32&#34;</span><span class="p">,</span> <span class="s">&#34;::1/128&#34;</span><span class="p">,</span> <span class="nx">iptableslog</span><span class="p">.</span><span class="nx">UndefinedCommand</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">ISTIOOUTPUT</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">NAT</span><span class="p">,</span>
-				<span class="s">&#34;-o&#34;</span><span class="p">,</span> <span class="s">&#34;lo&#34;</span><span class="p">,</span> <span class="s">&#34;!&#34;</span><span class="p">,</span> <span class="s">&#34;-d&#34;</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">IPVersionSpecific</span><span class="p">,</span>
-				<span class="s">&#34;-p&#34;</span><span class="p">,</span> <span class="s">&#34;tcp&#34;</span><span class="p">,</span> <span class="s">&#34;!&#34;</span><span class="p">,</span> <span class="s">&#34;--dport&#34;</span><span class="p">,</span> <span class="s">&#34;53&#34;</span><span class="p">,</span>
-				<span class="s">&#34;-m&#34;</span><span class="p">,</span> <span class="s">&#34;owner&#34;</span><span class="p">,</span> <span class="s">&#34;--uid-owner&#34;</span><span class="p">,</span> <span class="nx">uid</span><span class="p">,</span> <span class="s">&#34;-j&#34;</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">ISTIOINREDIRECT</span><span class="p">)</span>
-		<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-			<span class="nx">cfg</span><span class="p">.</span><span class="nx">iptables</span><span class="p">.</span><span class="nf">AppendVersionedRule</span><span class="p">(</span><span class="s">&#34;127.0.0.1/32&#34;</span><span class="p">,</span> <span class="s">&#34;::1/128&#34;</span><span class="p">,</span> <span class="nx">iptableslog</span><span class="p">.</span><span class="nx">UndefinedCommand</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">ISTIOOUTPUT</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">NAT</span><span class="p">,</span>
-				<span class="s">&#34;-o&#34;</span><span class="p">,</span> <span class="s">&#34;lo&#34;</span><span class="p">,</span> <span class="s">&#34;!&#34;</span><span class="p">,</span> <span class="s">&#34;-d&#34;</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">IPVersionSpecific</span><span class="p">,</span>
-				<span class="s">&#34;-m&#34;</span><span class="p">,</span> <span class="s">&#34;owner&#34;</span><span class="p">,</span> <span class="s">&#34;--uid-owner&#34;</span><span class="p">,</span> <span class="nx">uid</span><span class="p">,</span> <span class="s">&#34;-j&#34;</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">ISTIOINREDIRECT</span><span class="p">)</span>
-		<span class="p">}</span>
+</span><span class="c1"></span>      <span class="c1">// 选择从本地 lo 网络接口发起的，且目的地址不为“127.0.0.1”
+</span><span class="c1"></span>      <span class="c1">// 指定是 tcp 规则，且目的端口不为 53
+</span><span class="c1"></span>      <span class="c1">// 匹配发起者用户为 uid，则转发到 ISTIOINREDIRECT 规则
+</span><span class="c1"></span>      <span class="c1">// 这条规则匹配 ISTIO_OUTPUT 中的第 2 条
+</span><span class="c1"></span>      <span class="c1">// 2    ISTIO_IN_REDIRECT  tcp  --  0.0.0.0/0           !127.0.0.1            tcp dpt:!53 owner UID match 1337
+</span><span class="c1"></span>      <span class="nx">cfg</span><span class="p">.</span><span class="nx">iptables</span><span class="p">.</span><span class="nf">AppendVersionedRule</span><span class="p">(</span><span class="s">&#34;127.0.0.1/32&#34;</span><span class="p">,</span> <span class="s">&#34;::1/128&#34;</span><span class="p">,</span> <span class="nx">iptableslog</span><span class="p">.</span><span class="nx">UndefinedCommand</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">ISTIOOUTPUT</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">NAT</span><span class="p">,</span>
+        <span class="s">&#34;-o&#34;</span><span class="p">,</span> <span class="s">&#34;lo&#34;</span><span class="p">,</span> <span class="s">&#34;!&#34;</span><span class="p">,</span> <span class="s">&#34;-d&#34;</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">IPVersionSpecific</span><span class="p">,</span>
+        <span class="s">&#34;-p&#34;</span><span class="p">,</span> <span class="s">&#34;tcp&#34;</span><span class="p">,</span> <span class="s">&#34;!&#34;</span><span class="p">,</span> <span class="s">&#34;--dport&#34;</span><span class="p">,</span> <span class="s">&#34;53&#34;</span><span class="p">,</span>
+        <span class="s">&#34;-m&#34;</span><span class="p">,</span> <span class="s">&#34;owner&#34;</span><span class="p">,</span> <span class="s">&#34;--uid-owner&#34;</span><span class="p">,</span> <span class="nx">uid</span><span class="p">,</span> <span class="s">&#34;-j&#34;</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">ISTIOINREDIRECT</span><span class="p">)</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="nx">cfg</span><span class="p">.</span><span class="nx">iptables</span><span class="p">.</span><span class="nf">AppendVersionedRule</span><span class="p">(</span><span class="s">&#34;127.0.0.1/32&#34;</span><span class="p">,</span> <span class="s">&#34;::1/128&#34;</span><span class="p">,</span> <span class="nx">iptableslog</span><span class="p">.</span><span class="nx">UndefinedCommand</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">ISTIOOUTPUT</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">NAT</span><span class="p">,</span>
+        <span class="s">&#34;-o&#34;</span><span class="p">,</span> <span class="s">&#34;lo&#34;</span><span class="p">,</span> <span class="s">&#34;!&#34;</span><span class="p">,</span> <span class="s">&#34;-d&#34;</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">IPVersionSpecific</span><span class="p">,</span>
+        <span class="s">&#34;-m&#34;</span><span class="p">,</span> <span class="s">&#34;owner&#34;</span><span class="p">,</span> <span class="s">&#34;--uid-owner&#34;</span><span class="p">,</span> <span class="nx">uid</span><span class="p">,</span> <span class="s">&#34;-j&#34;</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">ISTIOINREDIRECT</span><span class="p">)</span>
+    <span class="p">}</span>
         <span class="c1">// 在使用 endpoint 地址时，不会通过 Envoy 将应用程序的调用重定向到自身
-</span><span class="c1"></span>		<span class="c1">// 比如：appN =&gt; appN by lo
+</span><span class="c1"></span>    <span class="c1">// 比如：appN =&gt; appN by lo
 </span><span class="c1"></span>        <span class="c1">// 如果通过 OutboundIPRangesInclude 明确设置了回环，那么就不要返回
-</span><span class="c1"></span>		<span class="k">if</span> <span class="p">!</span><span class="nx">ipv4RangesInclude</span><span class="p">.</span><span class="nx">HasLoopBackIP</span> <span class="o">&amp;&amp;</span> <span class="p">!</span><span class="nx">ipv6RangesInclude</span><span class="p">.</span><span class="nx">HasLoopBackIP</span> <span class="p">{</span>
-			<span class="k">if</span> <span class="nx">redirectDNS</span> <span class="p">{</span>
+</span><span class="c1"></span>    <span class="k">if</span> <span class="p">!</span><span class="nx">ipv4RangesInclude</span><span class="p">.</span><span class="nx">HasLoopBackIP</span> <span class="o">&amp;&amp;</span> <span class="p">!</span><span class="nx">ipv6RangesInclude</span><span class="p">.</span><span class="nx">HasLoopBackIP</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="nx">redirectDNS</span> <span class="p">{</span>
                 <span class="c1">// 用户可能在本地有一个 DNS 服务器，为了处理这种情况，从这条规则中排除了端口 53
-</span><span class="c1"></span>				<span class="c1">// 从本地接口请求，目的端口不为 53，且不是 uid 的用户发起的
-</span><span class="c1"></span>				<span class="c1">// 这条规则匹配 ISTIO_OUTPUT 中的第 3 条
-</span><span class="c1"></span>				<span class="c1">// 3    RETURN     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:!53 ! owner UID match 1337
-</span><span class="c1"></span>				<span class="nx">cfg</span><span class="p">.</span><span class="nx">iptables</span><span class="p">.</span><span class="nf">AppendRule</span><span class="p">(</span><span class="nx">iptableslog</span><span class="p">.</span><span class="nx">UndefinedCommand</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">ISTIOOUTPUT</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">NAT</span><span class="p">,</span> <span class="s">&#34;-o&#34;</span><span class="p">,</span> <span class="s">&#34;lo&#34;</span><span class="p">,</span> <span class="s">&#34;-p&#34;</span><span class="p">,</span> <span class="s">&#34;tcp&#34;</span><span class="p">,</span>
-					<span class="s">&#34;!&#34;</span><span class="p">,</span> <span class="s">&#34;--dport&#34;</span><span class="p">,</span> <span class="s">&#34;53&#34;</span><span class="p">,</span>
-					<span class="s">&#34;-m&#34;</span><span class="p">,</span> <span class="s">&#34;owner&#34;</span><span class="p">,</span> <span class="s">&#34;!&#34;</span><span class="p">,</span> <span class="s">&#34;--uid-owner&#34;</span><span class="p">,</span> <span class="nx">uid</span><span class="p">,</span> <span class="s">&#34;-j&#34;</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">RETURN</span><span class="p">)</span>
-			<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-				<span class="nx">cfg</span><span class="p">.</span><span class="nx">iptables</span><span class="p">.</span><span class="nf">AppendRule</span><span class="p">(</span><span class="nx">iptableslog</span><span class="p">.</span><span class="nx">UndefinedCommand</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">ISTIOOUTPUT</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">NAT</span><span class="p">,</span>
-					<span class="s">&#34;-o&#34;</span><span class="p">,</span> <span class="s">&#34;lo&#34;</span><span class="p">,</span> <span class="s">&#34;-m&#34;</span><span class="p">,</span> <span class="s">&#34;owner&#34;</span><span class="p">,</span> <span class="s">&#34;!&#34;</span><span class="p">,</span> <span class="s">&#34;--uid-owner&#34;</span><span class="p">,</span> <span class="nx">uid</span><span class="p">,</span> <span class="s">&#34;-j&#34;</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">RETURN</span><span class="p">)</span>
-			<span class="p">}</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
+</span><span class="c1"></span>        <span class="c1">// 从本地接口请求，目的端口不为 53，且不是 uid 的用户发起的
+</span><span class="c1"></span>        <span class="c1">// 这条规则匹配 ISTIO_OUTPUT 中的第 3 条
+</span><span class="c1"></span>        <span class="c1">// 3    RETURN     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:!53 ! owner UID match 1337
+</span><span class="c1"></span>        <span class="nx">cfg</span><span class="p">.</span><span class="nx">iptables</span><span class="p">.</span><span class="nf">AppendRule</span><span class="p">(</span><span class="nx">iptableslog</span><span class="p">.</span><span class="nx">UndefinedCommand</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">ISTIOOUTPUT</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">NAT</span><span class="p">,</span> <span class="s">&#34;-o&#34;</span><span class="p">,</span> <span class="s">&#34;lo&#34;</span><span class="p">,</span> <span class="s">&#34;-p&#34;</span><span class="p">,</span> <span class="s">&#34;tcp&#34;</span><span class="p">,</span>
+          <span class="s">&#34;!&#34;</span><span class="p">,</span> <span class="s">&#34;--dport&#34;</span><span class="p">,</span> <span class="s">&#34;53&#34;</span><span class="p">,</span>
+          <span class="s">&#34;-m&#34;</span><span class="p">,</span> <span class="s">&#34;owner&#34;</span><span class="p">,</span> <span class="s">&#34;!&#34;</span><span class="p">,</span> <span class="s">&#34;--uid-owner&#34;</span><span class="p">,</span> <span class="nx">uid</span><span class="p">,</span> <span class="s">&#34;-j&#34;</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">RETURN</span><span class="p">)</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="nx">cfg</span><span class="p">.</span><span class="nx">iptables</span><span class="p">.</span><span class="nf">AppendRule</span><span class="p">(</span><span class="nx">iptableslog</span><span class="p">.</span><span class="nx">UndefinedCommand</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">ISTIOOUTPUT</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">NAT</span><span class="p">,</span>
+          <span class="s">&#34;-o&#34;</span><span class="p">,</span> <span class="s">&#34;lo&#34;</span><span class="p">,</span> <span class="s">&#34;-m&#34;</span><span class="p">,</span> <span class="s">&#34;owner&#34;</span><span class="p">,</span> <span class="s">&#34;!&#34;</span><span class="p">,</span> <span class="s">&#34;--uid-owner&#34;</span><span class="p">,</span> <span class="nx">uid</span><span class="p">,</span> <span class="s">&#34;-j&#34;</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">RETURN</span><span class="p">)</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
     <span class="c1">// ...
-</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">redirectDNS</span> <span class="p">{</span>
-		<span class="k">if</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">CaptureAllDNS</span> <span class="p">{</span>
+</span><span class="c1"></span>  <span class="k">if</span> <span class="nx">redirectDNS</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">CaptureAllDNS</span> <span class="p">{</span>
             <span class="c1">// 重定向所有 53 端口上的 TCP dns 流量到 agent 的端口 15053 上，这在 CNI 场景下很有用，因为 pod 的 dns 服务器地址还不能确定
-</span><span class="c1"></span>			<span class="nx">cfg</span><span class="p">.</span><span class="nx">iptables</span><span class="p">.</span><span class="nf">AppendRule</span><span class="p">(</span><span class="nx">iptableslog</span><span class="p">.</span><span class="nx">UndefinedCommand</span><span class="p">,</span>
-				<span class="nx">constants</span><span class="p">.</span><span class="nx">ISTIOOUTPUT</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">NAT</span><span class="p">,</span>
-				<span class="s">&#34;-p&#34;</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">TCP</span><span class="p">,</span>
-				<span class="s">&#34;--dport&#34;</span><span class="p">,</span> <span class="s">&#34;53&#34;</span><span class="p">,</span>
-				<span class="s">&#34;-j&#34;</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">REDIRECT</span><span class="p">,</span>
-				<span class="s">&#34;--to-ports&#34;</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">IstioAgentDNSListenerPort</span><span class="p">)</span>
-		<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-			<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">s</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">DNSServersV4</span> <span class="p">{</span>
+</span><span class="c1"></span>      <span class="nx">cfg</span><span class="p">.</span><span class="nx">iptables</span><span class="p">.</span><span class="nf">AppendRule</span><span class="p">(</span><span class="nx">iptableslog</span><span class="p">.</span><span class="nx">UndefinedCommand</span><span class="p">,</span>
+        <span class="nx">constants</span><span class="p">.</span><span class="nx">ISTIOOUTPUT</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">NAT</span><span class="p">,</span>
+        <span class="s">&#34;-p&#34;</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">TCP</span><span class="p">,</span>
+        <span class="s">&#34;--dport&#34;</span><span class="p">,</span> <span class="s">&#34;53&#34;</span><span class="p">,</span>
+        <span class="s">&#34;-j&#34;</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">REDIRECT</span><span class="p">,</span>
+        <span class="s">&#34;--to-ports&#34;</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">IstioAgentDNSListenerPort</span><span class="p">)</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">s</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">DNSServersV4</span> <span class="p">{</span>
                 <span class="c1">// 将在端口 53 上请求/etc/resolv.conf 中所有服务器的 TCP dns 流量重定向到 agent 的 15053 端口
 </span><span class="c1"></span>                <span class="c1">// 避免重定向所有 IP 范围，来避免当有本地 dns 服务器时出现无限循环，比如：app -&gt; istio dns server -&gt; dnsmasq -&gt; upstream
 </span><span class="c1"></span>                <span class="c1">// 这保证了不会从 dnsmasq 获取请求，并发送回 agent 的 dns 服务器
-</span><span class="c1"></span>				<span class="c1">// 这条匹配 ISTIO_OUTPUT 的第 8 条，重定向到 agent 监听的 15053 端口
-</span><span class="c1"></span>				<span class="c1">// 8    REDIRECT   tcp  --  0.0.0.0/0            10.43.0.10           tcp dpt:53 redir ports 15053
-</span><span class="c1"></span>				<span class="nx">cfg</span><span class="p">.</span><span class="nx">iptables</span><span class="p">.</span><span class="nf">AppendRuleV4</span><span class="p">(</span><span class="nx">iptableslog</span><span class="p">.</span><span class="nx">UndefinedCommand</span><span class="p">,</span>
-					<span class="nx">constants</span><span class="p">.</span><span class="nx">ISTIOOUTPUT</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">NAT</span><span class="p">,</span>
-					<span class="s">&#34;-p&#34;</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">TCP</span><span class="p">,</span>
-					<span class="s">&#34;--dport&#34;</span><span class="p">,</span> <span class="s">&#34;53&#34;</span><span class="p">,</span>
-					<span class="s">&#34;-d&#34;</span><span class="p">,</span> <span class="nx">s</span><span class="o">+</span><span class="s">&#34;/32&#34;</span><span class="p">,</span>
-					<span class="s">&#34;-j&#34;</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">REDIRECT</span><span class="p">,</span>
-					<span class="s">&#34;--to-ports&#34;</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">IstioAgentDNSListenerPort</span><span class="p">)</span>
-			<span class="p">}</span>
+</span><span class="c1"></span>        <span class="c1">// 这条匹配 ISTIO_OUTPUT 的第 8 条，重定向到 agent 监听的 15053 端口
+</span><span class="c1"></span>        <span class="c1">// 8    REDIRECT   tcp  --  0.0.0.0/0            10.43.0.10           tcp dpt:53 redir ports 15053
+</span><span class="c1"></span>        <span class="nx">cfg</span><span class="p">.</span><span class="nx">iptables</span><span class="p">.</span><span class="nf">AppendRuleV4</span><span class="p">(</span><span class="nx">iptableslog</span><span class="p">.</span><span class="nx">UndefinedCommand</span><span class="p">,</span>
+          <span class="nx">constants</span><span class="p">.</span><span class="nx">ISTIOOUTPUT</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">NAT</span><span class="p">,</span>
+          <span class="s">&#34;-p&#34;</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">TCP</span><span class="p">,</span>
+          <span class="s">&#34;--dport&#34;</span><span class="p">,</span> <span class="s">&#34;53&#34;</span><span class="p">,</span>
+          <span class="s">&#34;-d&#34;</span><span class="p">,</span> <span class="nx">s</span><span class="o">+</span><span class="s">&#34;/32&#34;</span><span class="p">,</span>
+          <span class="s">&#34;-j&#34;</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">REDIRECT</span><span class="p">,</span>
+          <span class="s">&#34;--to-ports&#34;</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">IstioAgentDNSListenerPort</span><span class="p">)</span>
+      <span class="p">}</span>
             <span class="c1">// ...
-</span><span class="c1"></span>		<span class="p">}</span>
-	<span class="p">}</span>
+</span><span class="c1"></span>    <span class="p">}</span>
+  <span class="p">}</span>
 
-	<span class="k">if</span> <span class="nx">redirectDNS</span> <span class="p">{</span>
-		<span class="nf">HandleDNSUDP</span><span class="p">(</span>
-			<span class="nx">AppendOps</span><span class="p">,</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">iptables</span><span class="p">,</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">ext</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">,</span>
-			<span class="nx">cfg</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">ProxyUID</span><span class="p">,</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">ProxyGID</span><span class="p">,</span>
-			<span class="nx">cfg</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">DNSServersV4</span><span class="p">,</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">DNSServersV6</span><span class="p">,</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">CaptureAllDNS</span><span class="p">,</span>
-			<span class="nx">ownerGroupsFilter</span><span class="p">)</span>
-	<span class="p">}</span>
+  <span class="k">if</span> <span class="nx">redirectDNS</span> <span class="p">{</span>
+    <span class="nf">HandleDNSUDP</span><span class="p">(</span>
+      <span class="nx">AppendOps</span><span class="p">,</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">iptables</span><span class="p">,</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">ext</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">,</span>
+      <span class="nx">cfg</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">ProxyUID</span><span class="p">,</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">ProxyGID</span><span class="p">,</span>
+      <span class="nx">cfg</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">DNSServersV4</span><span class="p">,</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">DNSServersV6</span><span class="p">,</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">CaptureAllDNS</span><span class="p">,</span>
+      <span class="nx">ownerGroupsFilter</span><span class="p">)</span>
+  <span class="p">}</span>
     <span class="c1">// ...
-</span><span class="c1"></span>	<span class="nx">cfg</span><span class="p">.</span><span class="nf">executeCommands</span><span class="p">()</span>
+</span><span class="c1"></span>  <span class="nx">cfg</span><span class="p">.</span><span class="nf">executeCommands</span><span class="p">()</span>
 <span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
@@ -869,15 +869,15 @@ num  target     prot opt <span class="nb">source</span>               destinatio
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// istio/pilot/cmd/pilot-agent/options/agent.go
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewAgentOptions</span><span class="p">(</span><span class="nx">proxy</span> <span class="o">*</span><span class="nx">model</span><span class="p">.</span><span class="nx">Proxy</span><span class="p">,</span> <span class="nx">cfg</span> <span class="o">*</span><span class="nx">meshconfig</span><span class="p">.</span><span class="nx">ProxyConfig</span><span class="p">)</span> <span class="o">*</span><span class="nx">istioagent</span><span class="p">.</span><span class="nx">AgentOptions</span> <span class="p">{</span>
-	<span class="nx">o</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">istioagent</span><span class="p">.</span><span class="nx">AgentOptions</span><span class="p">{</span>
-		<span class="nx">XDSRootCerts</span><span class="p">:</span>             <span class="nx">xdsRootCA</span><span class="p">,</span>
-		<span class="nx">CARootCerts</span><span class="p">:</span>              <span class="nx">caRootCA</span><span class="p">,</span>
+  <span class="nx">o</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">istioagent</span><span class="p">.</span><span class="nx">AgentOptions</span><span class="p">{</span>
+    <span class="nx">XDSRootCerts</span><span class="p">:</span>             <span class="nx">xdsRootCA</span><span class="p">,</span>
+    <span class="nx">CARootCerts</span><span class="p">:</span>              <span class="nx">caRootCA</span><span class="p">,</span>
         <span class="c1">// ...
-</span><span class="c1"></span>		<span class="nx">DNSCapture</span><span class="p">:</span>                  <span class="nx">DNSCaptureByAgent</span><span class="p">.</span><span class="nf">Get</span><span class="p">(),</span> <span class="c1">// DNSCaptureByAgent 值是从环境变量“ISTIO_META_DNS_CAPTURE”获取的
-</span><span class="c1"></span>		<span class="nx">DNSForwardParallel</span><span class="p">:</span>          <span class="nx">DNSForwardParallel</span><span class="p">.</span><span class="nf">Get</span><span class="p">(),</span> <span class="c1">// 是否并行转发 dns 请求
-</span><span class="c1"></span>		<span class="nx">DNSAddr</span><span class="p">:</span>                     <span class="nx">DNSCaptureAddr</span><span class="p">.</span><span class="nf">Get</span><span class="p">(),</span>  <span class="c1">// DNSCaptureAddr 值是从环境变量获取的，默认为“localhost:15053”
-</span><span class="c1"></span>	<span class="p">}</span>
-	<span class="k">return</span> <span class="nx">o</span>
+</span><span class="c1"></span>    <span class="nx">DNSCapture</span><span class="p">:</span>                  <span class="nx">DNSCaptureByAgent</span><span class="p">.</span><span class="nf">Get</span><span class="p">(),</span> <span class="c1">// DNSCaptureByAgent 值是从环境变量“ISTIO_META_DNS_CAPTURE”获取的
+</span><span class="c1"></span>    <span class="nx">DNSForwardParallel</span><span class="p">:</span>          <span class="nx">DNSForwardParallel</span><span class="p">.</span><span class="nf">Get</span><span class="p">(),</span> <span class="c1">// 是否并行转发 dns 请求
+</span><span class="c1"></span>    <span class="nx">DNSAddr</span><span class="p">:</span>                     <span class="nx">DNSCaptureAddr</span><span class="p">.</span><span class="nf">Get</span><span class="p">(),</span>  <span class="c1">// DNSCaptureAddr 值是从环境变量获取的，默认为“localhost:15053”
+</span><span class="c1"></span>  <span class="p">}</span>
+  <span class="k">return</span> <span class="nx">o</span>
 <span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
@@ -908,23 +908,23 @@ num  target     prot opt <span class="nb">source</span>               destinatio
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// istio/pkg/istio-agent/agent.go
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">a</span> <span class="o">*</span><span class="nx">Agent</span><span class="p">)</span> <span class="nf">Run</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">(</span><span class="kd">func</span><span class="p">(),</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">err</span> <span class="kt">error</span>
-	<span class="k">if</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">a</span><span class="p">.</span><span class="nf">initLocalDNSServer</span><span class="p">();</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to start local DNS server: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
-	<span class="p">}</span>
+  <span class="kd">var</span> <span class="nx">err</span> <span class="kt">error</span>
+  <span class="k">if</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">a</span><span class="p">.</span><span class="nf">initLocalDNSServer</span><span class="p">();</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to start local DNS server: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+  <span class="p">}</span>
     <span class="c1">// ...
 </span><span class="c1"></span><span class="p">}</span>
 
 <span class="kd">func</span> <span class="p">(</span><span class="nx">a</span> <span class="o">*</span><span class="nx">Agent</span><span class="p">)</span> <span class="nf">initLocalDNSServer</span><span class="p">()</span> <span class="p">(</span><span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
-	<span class="c1">// 如果开启 dns 捕获，且是 sidecar 代理时，则启动本地 dns 服务器
-</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">a</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">DNSCapture</span> <span class="o">&amp;&amp;</span> <span class="nx">a</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">ProxyType</span> <span class="o">==</span> <span class="nx">model</span><span class="p">.</span><span class="nx">SidecarProxy</span> <span class="p">{</span>
-		<span class="k">if</span> <span class="nx">a</span><span class="p">.</span><span class="nx">localDNSServer</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">dnsClient</span><span class="p">.</span><span class="nf">NewLocalDNSServer</span><span class="p">(</span><span class="nx">a</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">ProxyNamespace</span><span class="p">,</span> <span class="nx">a</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">ProxyDomain</span><span class="p">,</span> <span class="nx">a</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">DNSAddr</span><span class="p">,</span>
-			<span class="nx">a</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">DNSForwardParallel</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-			<span class="k">return</span> <span class="nx">err</span>
-		<span class="p">}</span>
-		<span class="nx">a</span><span class="p">.</span><span class="nx">localDNSServer</span><span class="p">.</span><span class="nf">StartDNS</span><span class="p">()</span>
-	<span class="p">}</span>
-	<span class="k">return</span> <span class="kc">nil</span>
+  <span class="c1">// 如果开启 dns 捕获，且是 sidecar 代理时，则启动本地 dns 服务器
+</span><span class="c1"></span>  <span class="k">if</span> <span class="nx">a</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">DNSCapture</span> <span class="o">&amp;&amp;</span> <span class="nx">a</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">ProxyType</span> <span class="o">==</span> <span class="nx">model</span><span class="p">.</span><span class="nx">SidecarProxy</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="nx">a</span><span class="p">.</span><span class="nx">localDNSServer</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">dnsClient</span><span class="p">.</span><span class="nf">NewLocalDNSServer</span><span class="p">(</span><span class="nx">a</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">ProxyNamespace</span><span class="p">,</span> <span class="nx">a</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">ProxyDomain</span><span class="p">,</span> <span class="nx">a</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">DNSAddr</span><span class="p">,</span>
+      <span class="nx">a</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">DNSForwardParallel</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="nx">err</span>
+    <span class="p">}</span>
+    <span class="nx">a</span><span class="p">.</span><span class="nx">localDNSServer</span><span class="p">.</span><span class="nf">StartDNS</span><span class="p">()</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="kc">nil</span>
 <span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
@@ -1011,79 +1011,79 @@ num  target     prot opt <span class="nb">source</span>               destinatio
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// istio/pkg/dns/client/dns.go
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewLocalDNSServer</span><span class="p">(</span><span class="nx">proxyNamespace</span><span class="p">,</span> <span class="nx">proxyDomain</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">addr</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">forwardToUpstreamParallel</span> <span class="kt">bool</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">LocalDNSServer</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
-	<span class="nx">h</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">LocalDNSServer</span><span class="p">{</span>
-		<span class="nx">proxyNamespace</span><span class="p">:</span>            <span class="nx">proxyNamespace</span><span class="p">,</span>
-		<span class="nx">forwardToUpstreamParallel</span><span class="p">:</span> <span class="nx">forwardToUpstreamParallel</span><span class="p">,</span>
-	<span class="p">}</span>
+  <span class="nx">h</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">LocalDNSServer</span><span class="p">{</span>
+    <span class="nx">proxyNamespace</span><span class="p">:</span>            <span class="nx">proxyNamespace</span><span class="p">,</span>
+    <span class="nx">forwardToUpstreamParallel</span><span class="p">:</span> <span class="nx">forwardToUpstreamParallel</span><span class="p">,</span>
+  <span class="p">}</span>
 
-	<span class="nx">resolvConf</span> <span class="o">:=</span> <span class="s">&#34;/etc/resolv.conf&#34;</span>
+  <span class="nx">resolvConf</span> <span class="o">:=</span> <span class="s">&#34;/etc/resolv.conf&#34;</span>
     <span class="c1">// ...
 </span><span class="c1"></span>    <span class="c1">// 使用 resolv.conf 中的服务器解析不知道的域名
-</span><span class="c1"></span>	<span class="nx">dnsConfig</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">dns</span><span class="p">.</span><span class="nf">ClientConfigFromFile</span><span class="p">(</span><span class="nx">resolvConf</span><span class="p">)</span>
-	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-		<span class="nx">log</span><span class="p">.</span><span class="nf">Warnf</span><span class="p">(</span><span class="s">&#34;failed to load /etc/resolv.conf: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
-		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
-	<span class="p">}</span>
+</span><span class="c1"></span>  <span class="nx">dnsConfig</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">dns</span><span class="p">.</span><span class="nf">ClientConfigFromFile</span><span class="p">(</span><span class="nx">resolvConf</span><span class="p">)</span>
+  <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="nx">log</span><span class="p">.</span><span class="nf">Warnf</span><span class="p">(</span><span class="s">&#34;failed to load /etc/resolv.conf: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+  <span class="p">}</span>
 
     <span class="c1">// 不像传统的 dns 解析器，不需要附加搜索命名空间，因为 agent 是一个 dns 拦截器
 </span><span class="c1"></span>    <span class="c1">// 只需要检查域名在本地域名表中是否存在，如果没有，就将查询转发给上游解析器
-</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">dnsConfig</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-		<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">s</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">dnsConfig</span><span class="p">.</span><span class="nx">Servers</span> <span class="p">{</span>
-			<span class="nx">h</span><span class="p">.</span><span class="nx">resolvConfServers</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">h</span><span class="p">.</span><span class="nx">resolvConfServers</span><span class="p">,</span> <span class="nx">net</span><span class="p">.</span><span class="nf">JoinHostPort</span><span class="p">(</span><span class="nx">s</span><span class="p">,</span> <span class="nx">dnsConfig</span><span class="p">.</span><span class="nx">Port</span><span class="p">))</span>
-		<span class="p">}</span>
-		<span class="nx">h</span><span class="p">.</span><span class="nx">searchNamespaces</span> <span class="p">=</span> <span class="nx">dnsConfig</span><span class="p">.</span><span class="nx">Search</span>
-	<span class="p">}</span>
-	<span class="nx">addresses</span> <span class="o">:=</span> <span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="nx">addr</span><span class="p">}</span>
-	<span class="c1">// 分别启动 udp 和 tcp 的代理
-</span><span class="c1"></span>	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">ipAddr</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">addresses</span> <span class="p">{</span>
-		<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">proto</span> <span class="o">:=</span> <span class="k">range</span> <span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="s">&#34;udp&#34;</span><span class="p">,</span> <span class="s">&#34;tcp&#34;</span><span class="p">}</span> <span class="p">{</span>
-			<span class="nx">proxy</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">newDNSProxy</span><span class="p">(</span><span class="nx">proto</span><span class="p">,</span> <span class="nx">ipAddr</span><span class="p">,</span> <span class="nx">h</span><span class="p">)</span>
-			<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-				<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
-			<span class="p">}</span>
-			<span class="nx">h</span><span class="p">.</span><span class="nx">dnsProxies</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">h</span><span class="p">.</span><span class="nx">dnsProxies</span><span class="p">,</span> <span class="nx">proxy</span><span class="p">)</span>
+</span><span class="c1"></span>  <span class="k">if</span> <span class="nx">dnsConfig</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">s</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">dnsConfig</span><span class="p">.</span><span class="nx">Servers</span> <span class="p">{</span>
+      <span class="nx">h</span><span class="p">.</span><span class="nx">resolvConfServers</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">h</span><span class="p">.</span><span class="nx">resolvConfServers</span><span class="p">,</span> <span class="nx">net</span><span class="p">.</span><span class="nf">JoinHostPort</span><span class="p">(</span><span class="nx">s</span><span class="p">,</span> <span class="nx">dnsConfig</span><span class="p">.</span><span class="nx">Port</span><span class="p">))</span>
+    <span class="p">}</span>
+    <span class="nx">h</span><span class="p">.</span><span class="nx">searchNamespaces</span> <span class="p">=</span> <span class="nx">dnsConfig</span><span class="p">.</span><span class="nx">Search</span>
+  <span class="p">}</span>
+  <span class="nx">addresses</span> <span class="o">:=</span> <span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="nx">addr</span><span class="p">}</span>
+  <span class="c1">// 分别启动 udp 和 tcp 的代理
+</span><span class="c1"></span>  <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">ipAddr</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">addresses</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">proto</span> <span class="o">:=</span> <span class="k">range</span> <span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="s">&#34;udp&#34;</span><span class="p">,</span> <span class="s">&#34;tcp&#34;</span><span class="p">}</span> <span class="p">{</span>
+      <span class="nx">proxy</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">newDNSProxy</span><span class="p">(</span><span class="nx">proto</span><span class="p">,</span> <span class="nx">ipAddr</span><span class="p">,</span> <span class="nx">h</span><span class="p">)</span>
+      <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+      <span class="p">}</span>
+      <span class="nx">h</span><span class="p">.</span><span class="nx">dnsProxies</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">h</span><span class="p">.</span><span class="nx">dnsProxies</span><span class="p">,</span> <span class="nx">proxy</span><span class="p">)</span>
 
-		<span class="p">}</span>
-	<span class="p">}</span>
-	<span class="k">return</span> <span class="nx">h</span><span class="p">,</span> <span class="kc">nil</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="nx">h</span><span class="p">,</span> <span class="kc">nil</span>
 <span class="p">}</span>
 
 <span class="c1">// 启动 dns 代理
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">h</span> <span class="o">*</span><span class="nx">LocalDNSServer</span><span class="p">)</span> <span class="nf">StartDNS</span><span class="p">()</span> <span class="p">{</span>
-	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">p</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">h</span><span class="p">.</span><span class="nx">dnsProxies</span> <span class="p">{</span>
-		<span class="k">go</span> <span class="nx">p</span><span class="p">.</span><span class="nf">start</span><span class="p">()</span>
-	<span class="p">}</span>
+  <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">p</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">h</span><span class="p">.</span><span class="nx">dnsProxies</span> <span class="p">{</span>
+    <span class="k">go</span> <span class="nx">p</span><span class="p">.</span><span class="nf">start</span><span class="p">()</span>
+  <span class="p">}</span>
 <span class="p">}</span>
 
 <span class="c1">// 使用的“github.com/miekg/dns”库，需实现 ServeDNS 这个 Handler 接口
 </span><span class="c1">// 里面会 dnsProxies.ServeDNS 函数，然后调用到 LocalDNSServer.ServeDNS 函数
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">h</span> <span class="o">*</span><span class="nx">LocalDNSServer</span><span class="p">)</span> <span class="nf">ServeDNS</span><span class="p">(</span><span class="nx">proxy</span> <span class="o">*</span><span class="nx">dnsProxy</span><span class="p">,</span> <span class="nx">w</span> <span class="nx">dns</span><span class="p">.</span><span class="nx">ResponseWriter</span><span class="p">,</span> <span class="nx">req</span> <span class="o">*</span><span class="nx">dns</span><span class="p">.</span><span class="nx">Msg</span><span class="p">)</span> <span class="p">{</span>
-	<span class="nx">requests</span><span class="p">.</span><span class="nf">Increment</span><span class="p">()</span>
-	<span class="kd">var</span> <span class="nx">response</span> <span class="o">*</span><span class="nx">dns</span><span class="p">.</span><span class="nx">Msg</span>
-	<span class="c1">// dns 查询表
-</span><span class="c1"></span>	<span class="nx">lp</span> <span class="o">:=</span> <span class="nx">h</span><span class="p">.</span><span class="nx">lookupTable</span><span class="p">.</span><span class="nf">Load</span><span class="p">()</span>
-	<span class="nx">hostname</span> <span class="o">:=</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">ToLower</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">Question</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">Name</span><span class="p">)</span>
-	<span class="c1">// ...
-</span><span class="c1"></span>	<span class="nx">lookupTable</span> <span class="o">:=</span> <span class="nx">lp</span><span class="p">.(</span><span class="o">*</span><span class="nx">LookupTable</span><span class="p">)</span>
-	<span class="kd">var</span> <span class="nx">answers</span> <span class="p">[]</span><span class="nx">dns</span><span class="p">.</span><span class="nx">RR</span>
-	<span class="c1">// 名称总会以“.”结束，期望每个请求只有一个域名
-</span><span class="c1"></span>	<span class="nx">answers</span><span class="p">,</span> <span class="nx">hostFound</span> <span class="o">:=</span> <span class="nx">lookupTable</span><span class="p">.</span><span class="nf">lookupHost</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">Question</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">Qtype</span><span class="p">,</span> <span class="nx">hostname</span><span class="p">)</span>
-	<span class="k">if</span> <span class="nx">hostFound</span> <span class="p">{</span>
-		<span class="nx">response</span> <span class="p">=</span> <span class="nb">new</span><span class="p">(</span><span class="nx">dns</span><span class="p">.</span><span class="nx">Msg</span><span class="p">)</span>
-		<span class="nx">response</span><span class="p">.</span><span class="nf">SetReply</span><span class="p">(</span><span class="nx">req</span><span class="p">)</span>
-		<span class="nx">response</span><span class="p">.</span><span class="nx">Authoritative</span> <span class="p">=</span> <span class="kc">true</span>
-		<span class="nx">response</span><span class="p">.</span><span class="nx">Answer</span> <span class="p">=</span> <span class="nx">answers</span>
-		<span class="c1">// 打乱回复，保证能做到 DNS 负载均衡，比如 headless 服务需要，也和 kube-dns 的行为一致
-</span><span class="c1"></span>		<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">answers</span><span class="p">)</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="p">{</span>
-			<span class="nf">roundRobinResponse</span><span class="p">(</span><span class="nx">response</span><span class="p">)</span>
-		<span class="p">}</span>
-		<span class="nx">log</span><span class="p">.</span><span class="nf">Debugf</span><span class="p">(</span><span class="s">&#34;response for hostname %q (found=true): %v&#34;</span><span class="p">,</span> <span class="nx">hostname</span><span class="p">,</span> <span class="nx">response</span><span class="p">)</span>
-	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-		<span class="c1">// 缓存没找到，去上游 dns 服务器请求
-</span><span class="c1"></span>		<span class="nx">response</span> <span class="p">=</span> <span class="nx">h</span><span class="p">.</span><span class="nf">upstream</span><span class="p">(</span><span class="nx">proxy</span><span class="p">,</span> <span class="nx">req</span><span class="p">,</span> <span class="nx">hostname</span><span class="p">)</span>
-	<span class="p">}</span>
-	<span class="nx">response</span><span class="p">.</span><span class="nf">Truncate</span><span class="p">(</span><span class="nf">size</span><span class="p">(</span><span class="nx">proxy</span><span class="p">.</span><span class="nx">protocol</span><span class="p">,</span> <span class="nx">req</span><span class="p">))</span>
-	<span class="nx">_</span> <span class="p">=</span> <span class="nx">w</span><span class="p">.</span><span class="nf">WriteMsg</span><span class="p">(</span><span class="nx">response</span><span class="p">)</span>
+  <span class="nx">requests</span><span class="p">.</span><span class="nf">Increment</span><span class="p">()</span>
+  <span class="kd">var</span> <span class="nx">response</span> <span class="o">*</span><span class="nx">dns</span><span class="p">.</span><span class="nx">Msg</span>
+  <span class="c1">// dns 查询表
+</span><span class="c1"></span>  <span class="nx">lp</span> <span class="o">:=</span> <span class="nx">h</span><span class="p">.</span><span class="nx">lookupTable</span><span class="p">.</span><span class="nf">Load</span><span class="p">()</span>
+  <span class="nx">hostname</span> <span class="o">:=</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">ToLower</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">Question</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">Name</span><span class="p">)</span>
+  <span class="c1">// ...
+</span><span class="c1"></span>  <span class="nx">lookupTable</span> <span class="o">:=</span> <span class="nx">lp</span><span class="p">.(</span><span class="o">*</span><span class="nx">LookupTable</span><span class="p">)</span>
+  <span class="kd">var</span> <span class="nx">answers</span> <span class="p">[]</span><span class="nx">dns</span><span class="p">.</span><span class="nx">RR</span>
+  <span class="c1">// 名称总会以“.”结束，期望每个请求只有一个域名
+</span><span class="c1"></span>  <span class="nx">answers</span><span class="p">,</span> <span class="nx">hostFound</span> <span class="o">:=</span> <span class="nx">lookupTable</span><span class="p">.</span><span class="nf">lookupHost</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">Question</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">Qtype</span><span class="p">,</span> <span class="nx">hostname</span><span class="p">)</span>
+  <span class="k">if</span> <span class="nx">hostFound</span> <span class="p">{</span>
+    <span class="nx">response</span> <span class="p">=</span> <span class="nb">new</span><span class="p">(</span><span class="nx">dns</span><span class="p">.</span><span class="nx">Msg</span><span class="p">)</span>
+    <span class="nx">response</span><span class="p">.</span><span class="nf">SetReply</span><span class="p">(</span><span class="nx">req</span><span class="p">)</span>
+    <span class="nx">response</span><span class="p">.</span><span class="nx">Authoritative</span> <span class="p">=</span> <span class="kc">true</span>
+    <span class="nx">response</span><span class="p">.</span><span class="nx">Answer</span> <span class="p">=</span> <span class="nx">answers</span>
+    <span class="c1">// 打乱回复，保证能做到 DNS 负载均衡，比如 headless 服务需要，也和 kube-dns 的行为一致
+</span><span class="c1"></span>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">answers</span><span class="p">)</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="p">{</span>
+      <span class="nf">roundRobinResponse</span><span class="p">(</span><span class="nx">response</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="nx">log</span><span class="p">.</span><span class="nf">Debugf</span><span class="p">(</span><span class="s">&#34;response for hostname %q (found=true): %v&#34;</span><span class="p">,</span> <span class="nx">hostname</span><span class="p">,</span> <span class="nx">response</span><span class="p">)</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="c1">// 缓存没找到，去上游 dns 服务器请求
+</span><span class="c1"></span>    <span class="nx">response</span> <span class="p">=</span> <span class="nx">h</span><span class="p">.</span><span class="nf">upstream</span><span class="p">(</span><span class="nx">proxy</span><span class="p">,</span> <span class="nx">req</span><span class="p">,</span> <span class="nx">hostname</span><span class="p">)</span>
+  <span class="p">}</span>
+  <span class="nx">response</span><span class="p">.</span><span class="nf">Truncate</span><span class="p">(</span><span class="nf">size</span><span class="p">(</span><span class="nx">proxy</span><span class="p">.</span><span class="nx">protocol</span><span class="p">,</span> <span class="nx">req</span><span class="p">))</span>
+  <span class="nx">_</span> <span class="p">=</span> <span class="nx">w</span><span class="p">.</span><span class="nf">WriteMsg</span><span class="p">(</span><span class="nx">response</span><span class="p">)</span>
 <span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
@@ -1106,17 +1106,17 @@ num  target     prot opt <span class="nb">source</span>               destinatio
 </span></code></pre></td>
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nx">initXdsProxy</span> <span class="nx">函数</span> <span class="p">(</span><span class="nx">ia</span> <span class="o">*</span><span class="nx">Agent</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">XdsProxy</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
-	<span class="k">if</span> <span class="nx">ia</span><span class="p">.</span><span class="nx">localDNSServer</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-		<span class="nx">proxy</span><span class="p">.</span><span class="nx">handlers</span><span class="p">[</span><span class="nx">v3</span><span class="p">.</span><span class="nx">NameTableType</span><span class="p">]</span> <span class="p">=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">resp</span> <span class="o">*</span><span class="nx">anypb</span><span class="p">.</span><span class="nx">Any</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
-			<span class="kd">var</span> <span class="nx">nt</span> <span class="nx">dnsProto</span><span class="p">.</span><span class="nx">NameTable</span>
-			<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">resp</span><span class="p">.</span><span class="nf">UnmarshalTo</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">nt</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-				<span class="nx">log</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to unmarshal name table: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
-				<span class="k">return</span> <span class="nx">err</span>
-			<span class="p">}</span>
-			<span class="nx">ia</span><span class="p">.</span><span class="nx">localDNSServer</span><span class="p">.</span><span class="nf">UpdateLookupTable</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">nt</span><span class="p">)</span>
-			<span class="k">return</span> <span class="kc">nil</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
+  <span class="k">if</span> <span class="nx">ia</span><span class="p">.</span><span class="nx">localDNSServer</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="nx">proxy</span><span class="p">.</span><span class="nx">handlers</span><span class="p">[</span><span class="nx">v3</span><span class="p">.</span><span class="nx">NameTableType</span><span class="p">]</span> <span class="p">=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">resp</span> <span class="o">*</span><span class="nx">anypb</span><span class="p">.</span><span class="nx">Any</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">nt</span> <span class="nx">dnsProto</span><span class="p">.</span><span class="nx">NameTable</span>
+      <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">resp</span><span class="p">.</span><span class="nf">UnmarshalTo</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">nt</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">log</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to unmarshal name table: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nx">err</span>
+      <span class="p">}</span>
+      <span class="nx">ia</span><span class="p">.</span><span class="nx">localDNSServer</span><span class="p">.</span><span class="nf">UpdateLookupTable</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">nt</span><span class="p">)</span>
+      <span class="k">return</span> <span class="kc">nil</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
 <span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
@@ -1232,76 +1232,76 @@ num  target     prot opt <span class="nb">source</span>               destinatio
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// istio/pkg/dns/server/name_table.go
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">BuildNameTable</span><span class="p">(</span><span class="nx">cfg</span> <span class="nx">Config</span><span class="p">)</span> <span class="o">*</span><span class="nx">dnsProto</span><span class="p">.</span><span class="nx">NameTable</span> <span class="p">{</span>
-	<span class="k">if</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">Node</span><span class="p">.</span><span class="nx">Type</span> <span class="o">!=</span> <span class="nx">model</span><span class="p">.</span><span class="nx">SidecarProxy</span> <span class="p">{</span>
-		<span class="k">return</span> <span class="kc">nil</span>
-	<span class="p">}</span>
+  <span class="k">if</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">Node</span><span class="p">.</span><span class="nx">Type</span> <span class="o">!=</span> <span class="nx">model</span><span class="p">.</span><span class="nx">SidecarProxy</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="kc">nil</span>
+  <span class="p">}</span>
 
-	<span class="nx">out</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">dnsProto</span><span class="p">.</span><span class="nx">NameTable</span><span class="p">{</span>
-		<span class="nx">Table</span><span class="p">:</span> <span class="nb">make</span><span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="o">*</span><span class="nx">dnsProto</span><span class="p">.</span><span class="nx">NameTable_NameInfo</span><span class="p">),</span>
-	<span class="p">}</span>
-	<span class="c1">// 将 sidecar 可见的所有 service 返回
-</span><span class="c1"></span>	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">svc</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">Node</span><span class="p">.</span><span class="nx">SidecarScope</span><span class="p">.</span><span class="nf">Services</span><span class="p">()</span> <span class="p">{</span>
-		<span class="c1">// 返回服务器地址，具体到该节点所在的集群
-</span><span class="c1"></span>		<span class="nx">svcAddress</span> <span class="o">:=</span> <span class="nx">svc</span><span class="p">.</span><span class="nf">GetAddressForProxy</span><span class="p">(</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">Node</span><span class="p">)</span>
-		<span class="kd">var</span> <span class="nx">addressList</span> <span class="p">[]</span><span class="kt">string</span>
-		<span class="nx">hostName</span> <span class="o">:=</span> <span class="nx">svc</span><span class="p">.</span><span class="nx">Hostname</span>
-		<span class="k">if</span> <span class="nx">svcAddress</span> <span class="o">!=</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">UnspecifiedIP</span> <span class="p">{</span>
-			<span class="k">if</span> <span class="p">!</span><span class="nx">netutil</span><span class="p">.</span><span class="nf">IsValidIPAddress</span><span class="p">(</span><span class="nx">svcAddress</span><span class="p">)</span> <span class="p">{</span>
-				<span class="k">continue</span>
-			<span class="p">}</span>
-			<span class="nx">addressList</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">addressList</span><span class="p">,</span> <span class="nx">svcAddress</span><span class="p">)</span>
-		<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-			<span class="c1">// 两种情况会走这，headless 服务，或者 ServiceEntry 自动分配 ip 逻辑无法分配 ip
-</span><span class="c1"></span>			<span class="k">if</span> <span class="nx">svc</span><span class="p">.</span><span class="nx">Resolution</span> <span class="o">==</span> <span class="nx">model</span><span class="p">.</span><span class="nx">Passthrough</span> <span class="o">&amp;&amp;</span> <span class="nb">len</span><span class="p">(</span><span class="nx">svc</span><span class="p">.</span><span class="nx">Ports</span><span class="p">)</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="p">{</span>
-				<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">instance</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">Push</span><span class="p">.</span><span class="nf">ServiceInstancesByPort</span><span class="p">(</span><span class="nx">svc</span><span class="p">,</span> <span class="nx">svc</span><span class="p">.</span><span class="nx">Ports</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">Port</span><span class="p">,</span> <span class="kc">nil</span><span class="p">)</span> <span class="p">{</span>
-					<span class="nx">sameNetwork</span> <span class="o">:=</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">Node</span><span class="p">.</span><span class="nf">InNetwork</span><span class="p">(</span><span class="nx">instance</span><span class="p">.</span><span class="nx">Endpoint</span><span class="p">.</span><span class="nx">Network</span><span class="p">)</span>
-					<span class="nx">sameCluster</span> <span class="o">:=</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">Node</span><span class="p">.</span><span class="nf">InCluster</span><span class="p">(</span><span class="nx">instance</span><span class="p">.</span><span class="nx">Endpoint</span><span class="p">.</span><span class="nx">Locality</span><span class="p">.</span><span class="nx">ClusterID</span><span class="p">)</span>
-					<span class="c1">// 对于 headless 服务，用 pods ip 填充 dns 表
-</span><span class="c1"></span>					<span class="k">if</span> <span class="nx">instance</span><span class="p">.</span><span class="nx">Endpoint</span><span class="p">.</span><span class="nx">SubDomain</span> <span class="o">!=</span> <span class="s">&#34;&#34;</span> <span class="o">&amp;&amp;</span> <span class="nx">sameNetwork</span> <span class="p">{</span>
-						<span class="c1">// 示例：mysql-0.mysql.default.svc.cluster.local
-</span><span class="c1"></span>						<span class="nx">parts</span> <span class="o">:=</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">SplitN</span><span class="p">(</span><span class="nx">hostName</span><span class="p">.</span><span class="nf">String</span><span class="p">(),</span> <span class="s">&#34;.&#34;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-						<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">parts</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span> <span class="p">{</span>
-							<span class="k">continue</span>
-						<span class="p">}</span>
-						<span class="nx">address</span> <span class="o">:=</span> <span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="nx">instance</span><span class="p">.</span><span class="nx">Endpoint</span><span class="p">.</span><span class="nx">Address</span><span class="p">}</span>
-						<span class="nx">shortName</span> <span class="o">:=</span> <span class="nx">instance</span><span class="p">.</span><span class="nx">Endpoint</span><span class="p">.</span><span class="nx">HostName</span> <span class="o">+</span> <span class="s">&#34;.&#34;</span> <span class="o">+</span> <span class="nx">instance</span><span class="p">.</span><span class="nx">Endpoint</span><span class="p">.</span><span class="nx">SubDomain</span>
-						<span class="nx">host</span> <span class="o">:=</span> <span class="nx">shortName</span> <span class="o">+</span> <span class="s">&#34;.&#34;</span> <span class="o">+</span> <span class="nx">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="c1">// Add cluster domain.
-</span><span class="c1"></span>						<span class="nx">nameInfo</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">dnsProto</span><span class="p">.</span><span class="nx">NameTable_NameInfo</span><span class="p">{</span>
-							<span class="nx">Ips</span><span class="p">:</span>       <span class="nx">address</span><span class="p">,</span>
-							<span class="nx">Registry</span><span class="p">:</span>  <span class="nb">string</span><span class="p">(</span><span class="nx">svc</span><span class="p">.</span><span class="nx">Attributes</span><span class="p">.</span><span class="nx">ServiceRegistry</span><span class="p">),</span>
-							<span class="nx">Namespace</span><span class="p">:</span> <span class="nx">svc</span><span class="p">.</span><span class="nx">Attributes</span><span class="p">.</span><span class="nx">Namespace</span><span class="p">,</span>
-							<span class="nx">Shortname</span><span class="p">:</span> <span class="nx">shortName</span><span class="p">,</span>
-						<span class="p">}</span>
+  <span class="nx">out</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">dnsProto</span><span class="p">.</span><span class="nx">NameTable</span><span class="p">{</span>
+    <span class="nx">Table</span><span class="p">:</span> <span class="nb">make</span><span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="o">*</span><span class="nx">dnsProto</span><span class="p">.</span><span class="nx">NameTable_NameInfo</span><span class="p">),</span>
+  <span class="p">}</span>
+  <span class="c1">// 将 sidecar 可见的所有 service 返回
+</span><span class="c1"></span>  <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">svc</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">Node</span><span class="p">.</span><span class="nx">SidecarScope</span><span class="p">.</span><span class="nf">Services</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// 返回服务器地址，具体到该节点所在的集群
+</span><span class="c1"></span>    <span class="nx">svcAddress</span> <span class="o">:=</span> <span class="nx">svc</span><span class="p">.</span><span class="nf">GetAddressForProxy</span><span class="p">(</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">Node</span><span class="p">)</span>
+    <span class="kd">var</span> <span class="nx">addressList</span> <span class="p">[]</span><span class="kt">string</span>
+    <span class="nx">hostName</span> <span class="o">:=</span> <span class="nx">svc</span><span class="p">.</span><span class="nx">Hostname</span>
+    <span class="k">if</span> <span class="nx">svcAddress</span> <span class="o">!=</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">UnspecifiedIP</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="p">!</span><span class="nx">netutil</span><span class="p">.</span><span class="nf">IsValidIPAddress</span><span class="p">(</span><span class="nx">svcAddress</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">continue</span>
+      <span class="p">}</span>
+      <span class="nx">addressList</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">addressList</span><span class="p">,</span> <span class="nx">svcAddress</span><span class="p">)</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="c1">// 两种情况会走这，headless 服务，或者 ServiceEntry 自动分配 ip 逻辑无法分配 ip
+</span><span class="c1"></span>      <span class="k">if</span> <span class="nx">svc</span><span class="p">.</span><span class="nx">Resolution</span> <span class="o">==</span> <span class="nx">model</span><span class="p">.</span><span class="nx">Passthrough</span> <span class="o">&amp;&amp;</span> <span class="nb">len</span><span class="p">(</span><span class="nx">svc</span><span class="p">.</span><span class="nx">Ports</span><span class="p">)</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="p">{</span>
+        <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">instance</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">Push</span><span class="p">.</span><span class="nf">ServiceInstancesByPort</span><span class="p">(</span><span class="nx">svc</span><span class="p">,</span> <span class="nx">svc</span><span class="p">.</span><span class="nx">Ports</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">Port</span><span class="p">,</span> <span class="kc">nil</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">sameNetwork</span> <span class="o">:=</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">Node</span><span class="p">.</span><span class="nf">InNetwork</span><span class="p">(</span><span class="nx">instance</span><span class="p">.</span><span class="nx">Endpoint</span><span class="p">.</span><span class="nx">Network</span><span class="p">)</span>
+          <span class="nx">sameCluster</span> <span class="o">:=</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">Node</span><span class="p">.</span><span class="nf">InCluster</span><span class="p">(</span><span class="nx">instance</span><span class="p">.</span><span class="nx">Endpoint</span><span class="p">.</span><span class="nx">Locality</span><span class="p">.</span><span class="nx">ClusterID</span><span class="p">)</span>
+          <span class="c1">// 对于 headless 服务，用 pods ip 填充 dns 表
+</span><span class="c1"></span>          <span class="k">if</span> <span class="nx">instance</span><span class="p">.</span><span class="nx">Endpoint</span><span class="p">.</span><span class="nx">SubDomain</span> <span class="o">!=</span> <span class="s">&#34;&#34;</span> <span class="o">&amp;&amp;</span> <span class="nx">sameNetwork</span> <span class="p">{</span>
+            <span class="c1">// 示例：mysql-0.mysql.default.svc.cluster.local
+</span><span class="c1"></span>            <span class="nx">parts</span> <span class="o">:=</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">SplitN</span><span class="p">(</span><span class="nx">hostName</span><span class="p">.</span><span class="nf">String</span><span class="p">(),</span> <span class="s">&#34;.&#34;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">parts</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span> <span class="p">{</span>
+              <span class="k">continue</span>
+            <span class="p">}</span>
+            <span class="nx">address</span> <span class="o">:=</span> <span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="nx">instance</span><span class="p">.</span><span class="nx">Endpoint</span><span class="p">.</span><span class="nx">Address</span><span class="p">}</span>
+            <span class="nx">shortName</span> <span class="o">:=</span> <span class="nx">instance</span><span class="p">.</span><span class="nx">Endpoint</span><span class="p">.</span><span class="nx">HostName</span> <span class="o">+</span> <span class="s">&#34;.&#34;</span> <span class="o">+</span> <span class="nx">instance</span><span class="p">.</span><span class="nx">Endpoint</span><span class="p">.</span><span class="nx">SubDomain</span>
+            <span class="nx">host</span> <span class="o">:=</span> <span class="nx">shortName</span> <span class="o">+</span> <span class="s">&#34;.&#34;</span> <span class="o">+</span> <span class="nx">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="c1">// Add cluster domain.
+</span><span class="c1"></span>            <span class="nx">nameInfo</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">dnsProto</span><span class="p">.</span><span class="nx">NameTable_NameInfo</span><span class="p">{</span>
+              <span class="nx">Ips</span><span class="p">:</span>       <span class="nx">address</span><span class="p">,</span>
+              <span class="nx">Registry</span><span class="p">:</span>  <span class="nb">string</span><span class="p">(</span><span class="nx">svc</span><span class="p">.</span><span class="nx">Attributes</span><span class="p">.</span><span class="nx">ServiceRegistry</span><span class="p">),</span>
+              <span class="nx">Namespace</span><span class="p">:</span> <span class="nx">svc</span><span class="p">.</span><span class="nx">Attributes</span><span class="p">.</span><span class="nx">Namespace</span><span class="p">,</span>
+              <span class="nx">Shortname</span><span class="p">:</span> <span class="nx">shortName</span><span class="p">,</span>
+            <span class="p">}</span>
 
-						<span class="k">if</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">f</span> <span class="o">:=</span> <span class="nx">out</span><span class="p">.</span><span class="nx">Table</span><span class="p">[</span><span class="nx">host</span><span class="p">];</span> <span class="p">!</span><span class="nx">f</span> <span class="o">||</span> <span class="nx">sameCluster</span> <span class="p">{</span>
-							<span class="nx">out</span><span class="p">.</span><span class="nx">Table</span><span class="p">[</span><span class="nx">host</span><span class="p">]</span> <span class="p">=</span> <span class="nx">nameInfo</span>
-						<span class="p">}</span>
-					<span class="p">}</span>
-					<span class="nx">skipForMulticluster</span> <span class="o">:=</span> <span class="p">!</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">MulticlusterHeadlessEnabled</span> <span class="o">&amp;&amp;</span> <span class="p">!</span><span class="nx">sameCluster</span>
-					<span class="k">if</span> <span class="nx">skipForMulticluster</span> <span class="o">||</span> <span class="p">!</span><span class="nx">sameNetwork</span> <span class="p">{</span>
-						<span class="c1">// 只处理本地集群的 endpoints，因为如果返回跨集群的 pods ip 了，就绕过网关
-</span><span class="c1"></span>						<span class="k">continue</span>
-					<span class="p">}</span>
-					<span class="nx">addressList</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">addressList</span><span class="p">,</span> <span class="nx">instance</span><span class="p">.</span><span class="nx">Endpoint</span><span class="p">.</span><span class="nx">Address</span><span class="p">)</span>
-				<span class="p">}</span>
-			<span class="p">}</span>
-			<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">addressList</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
-				<span class="k">continue</span>
-			<span class="p">}</span>
-		<span class="p">}</span>
+            <span class="k">if</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">f</span> <span class="o">:=</span> <span class="nx">out</span><span class="p">.</span><span class="nx">Table</span><span class="p">[</span><span class="nx">host</span><span class="p">];</span> <span class="p">!</span><span class="nx">f</span> <span class="o">||</span> <span class="nx">sameCluster</span> <span class="p">{</span>
+              <span class="nx">out</span><span class="p">.</span><span class="nx">Table</span><span class="p">[</span><span class="nx">host</span><span class="p">]</span> <span class="p">=</span> <span class="nx">nameInfo</span>
+            <span class="p">}</span>
+          <span class="p">}</span>
+          <span class="nx">skipForMulticluster</span> <span class="o">:=</span> <span class="p">!</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">MulticlusterHeadlessEnabled</span> <span class="o">&amp;&amp;</span> <span class="p">!</span><span class="nx">sameCluster</span>
+          <span class="k">if</span> <span class="nx">skipForMulticluster</span> <span class="o">||</span> <span class="p">!</span><span class="nx">sameNetwork</span> <span class="p">{</span>
+            <span class="c1">// 只处理本地集群的 endpoints，因为如果返回跨集群的 pods ip 了，就绕过网关
+</span><span class="c1"></span>            <span class="k">continue</span>
+          <span class="p">}</span>
+          <span class="nx">addressList</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">addressList</span><span class="p">,</span> <span class="nx">instance</span><span class="p">.</span><span class="nx">Endpoint</span><span class="p">.</span><span class="nx">Address</span><span class="p">)</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+      <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">addressList</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+        <span class="k">continue</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
 
-		<span class="nx">nameInfo</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">dnsProto</span><span class="p">.</span><span class="nx">NameTable_NameInfo</span><span class="p">{</span>
-			<span class="nx">Ips</span><span class="p">:</span>      <span class="nx">addressList</span><span class="p">,</span>
-			<span class="nx">Registry</span><span class="p">:</span> <span class="nb">string</span><span class="p">(</span><span class="nx">svc</span><span class="p">.</span><span class="nx">Attributes</span><span class="p">.</span><span class="nx">ServiceRegistry</span><span class="p">),</span>
-		<span class="p">}</span>
-		<span class="k">if</span> <span class="nx">svc</span><span class="p">.</span><span class="nx">Attributes</span><span class="p">.</span><span class="nx">ServiceRegistry</span> <span class="o">==</span> <span class="nx">provider</span><span class="p">.</span><span class="nx">Kubernetes</span> <span class="o">&amp;&amp;</span>
-			<span class="p">!</span><span class="nx">strings</span><span class="p">.</span><span class="nf">HasSuffix</span><span class="p">(</span><span class="nx">hostName</span><span class="p">.</span><span class="nf">String</span><span class="p">(),</span> <span class="s">&#34;.&#34;</span><span class="o">+</span><span class="nx">constants</span><span class="p">.</span><span class="nx">DefaultClusterSetLocalDomain</span><span class="p">)</span> <span class="p">{</span>
-			<span class="nx">nameInfo</span><span class="p">.</span><span class="nx">Namespace</span> <span class="p">=</span> <span class="nx">svc</span><span class="p">.</span><span class="nx">Attributes</span><span class="p">.</span><span class="nx">Namespace</span>
-			<span class="nx">nameInfo</span><span class="p">.</span><span class="nx">Shortname</span> <span class="p">=</span> <span class="nx">svc</span><span class="p">.</span><span class="nx">Attributes</span><span class="p">.</span><span class="nx">Name</span>
-		<span class="p">}</span>
-		<span class="nx">out</span><span class="p">.</span><span class="nx">Table</span><span class="p">[</span><span class="nx">hostName</span><span class="p">.</span><span class="nf">String</span><span class="p">()]</span> <span class="p">=</span> <span class="nx">nameInfo</span>
-	<span class="p">}</span>
-	<span class="k">return</span> <span class="nx">out</span>
+    <span class="nx">nameInfo</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">dnsProto</span><span class="p">.</span><span class="nx">NameTable_NameInfo</span><span class="p">{</span>
+      <span class="nx">Ips</span><span class="p">:</span>      <span class="nx">addressList</span><span class="p">,</span>
+      <span class="nx">Registry</span><span class="p">:</span> <span class="nb">string</span><span class="p">(</span><span class="nx">svc</span><span class="p">.</span><span class="nx">Attributes</span><span class="p">.</span><span class="nx">ServiceRegistry</span><span class="p">),</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="nx">svc</span><span class="p">.</span><span class="nx">Attributes</span><span class="p">.</span><span class="nx">ServiceRegistry</span> <span class="o">==</span> <span class="nx">provider</span><span class="p">.</span><span class="nx">Kubernetes</span> <span class="o">&amp;&amp;</span>
+      <span class="p">!</span><span class="nx">strings</span><span class="p">.</span><span class="nf">HasSuffix</span><span class="p">(</span><span class="nx">hostName</span><span class="p">.</span><span class="nf">String</span><span class="p">(),</span> <span class="s">&#34;.&#34;</span><span class="o">+</span><span class="nx">constants</span><span class="p">.</span><span class="nx">DefaultClusterSetLocalDomain</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">nameInfo</span><span class="p">.</span><span class="nx">Namespace</span> <span class="p">=</span> <span class="nx">svc</span><span class="p">.</span><span class="nx">Attributes</span><span class="p">.</span><span class="nx">Namespace</span>
+      <span class="nx">nameInfo</span><span class="p">.</span><span class="nx">Shortname</span> <span class="p">=</span> <span class="nx">svc</span><span class="p">.</span><span class="nx">Attributes</span><span class="p">.</span><span class="nx">Name</span>
+    <span class="p">}</span>
+    <span class="nx">out</span><span class="p">.</span><span class="nx">Table</span><span class="p">[</span><span class="nx">hostName</span><span class="p">.</span><span class="nf">String</span><span class="p">()]</span> <span class="p">=</span> <span class="nx">nameInfo</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="nx">out</span>
 <span class="p">}</span>
 </code></pre></td></tr></table>
 </div>

@@ -541,39 +541,39 @@ curl -sfL https://rancher-mirror.rancher.cn/k3s/k3s-install.sh <span class="p">|
 <span class="k">default</span> <span class="nx">allow</span> <span class="o">:=</span> <span class="kc">false</span>
 
 <span class="nx">allow</span> <span class="k">if</span> <span class="p">{</span>
-	<span class="nx">is_token_valid</span>
-	<span class="nx">action_allowed</span>
+  <span class="nx">is_token_valid</span>
+  <span class="nx">action_allowed</span>
 <span class="p">}</span>
 
 <span class="nx">is_token_valid</span> <span class="k">if</span> <span class="p">{</span>
-	<span class="nx">token</span><span class="p">.</span><span class="nx">valid</span>
-	<span class="nx">now</span> <span class="o">:=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">now_ns</span><span class="p">()</span> <span class="o">/</span> <span class="mi">1000000000</span>
-	<span class="nx">token</span><span class="p">.</span><span class="nx">payload</span><span class="p">.</span><span class="nx">nbf</span> <span class="o">&lt;=</span> <span class="nx">now</span>
-	<span class="nx">now</span> <span class="p">&lt;</span> <span class="nx">token</span><span class="p">.</span><span class="nx">payload</span><span class="p">.</span><span class="nx">exp</span>
+  <span class="nx">token</span><span class="p">.</span><span class="nx">valid</span>
+  <span class="nx">now</span> <span class="o">:=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">now_ns</span><span class="p">()</span> <span class="o">/</span> <span class="mi">1000000000</span>
+  <span class="nx">token</span><span class="p">.</span><span class="nx">payload</span><span class="p">.</span><span class="nx">nbf</span> <span class="o">&lt;=</span> <span class="nx">now</span>
+  <span class="nx">now</span> <span class="p">&lt;</span> <span class="nx">token</span><span class="p">.</span><span class="nx">payload</span><span class="p">.</span><span class="nx">exp</span>
 <span class="p">}</span>
 
 <span class="nx">action_allowed</span> <span class="k">if</span> <span class="p">{</span>
-	<span class="nx">http_request</span><span class="p">.</span><span class="nx">method</span> <span class="o">==</span> <span class="s">&#34;GET&#34;</span>
-	<span class="nx">token</span><span class="p">.</span><span class="nx">payload</span><span class="p">.</span><span class="nx">role</span> <span class="o">==</span> <span class="s">&#34;guest&#34;</span>
-	<span class="nx">glob</span><span class="p">.</span><span class="nf">match</span><span class="p">(</span><span class="s">&#34;/people&#34;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#34;/&#34;</span><span class="p">],</span> <span class="nx">http_request</span><span class="p">.</span><span class="nx">path</span><span class="p">)</span>
+  <span class="nx">http_request</span><span class="p">.</span><span class="nx">method</span> <span class="o">==</span> <span class="s">&#34;GET&#34;</span>
+  <span class="nx">token</span><span class="p">.</span><span class="nx">payload</span><span class="p">.</span><span class="nx">role</span> <span class="o">==</span> <span class="s">&#34;guest&#34;</span>
+  <span class="nx">glob</span><span class="p">.</span><span class="nf">match</span><span class="p">(</span><span class="s">&#34;/people&#34;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#34;/&#34;</span><span class="p">],</span> <span class="nx">http_request</span><span class="p">.</span><span class="nx">path</span><span class="p">)</span>
 <span class="p">}</span>
 
 <span class="nx">action_allowed</span> <span class="k">if</span> <span class="p">{</span>
-	<span class="nx">http_request</span><span class="p">.</span><span class="nx">method</span> <span class="o">==</span> <span class="s">&#34;GET&#34;</span>
-	<span class="nx">token</span><span class="p">.</span><span class="nx">payload</span><span class="p">.</span><span class="nx">role</span> <span class="o">==</span> <span class="s">&#34;admin&#34;</span>
-	<span class="nx">glob</span><span class="p">.</span><span class="nf">match</span><span class="p">(</span><span class="s">&#34;/people&#34;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#34;/&#34;</span><span class="p">],</span> <span class="nx">http_request</span><span class="p">.</span><span class="nx">path</span><span class="p">)</span>
+  <span class="nx">http_request</span><span class="p">.</span><span class="nx">method</span> <span class="o">==</span> <span class="s">&#34;GET&#34;</span>
+  <span class="nx">token</span><span class="p">.</span><span class="nx">payload</span><span class="p">.</span><span class="nx">role</span> <span class="o">==</span> <span class="s">&#34;admin&#34;</span>
+  <span class="nx">glob</span><span class="p">.</span><span class="nf">match</span><span class="p">(</span><span class="s">&#34;/people&#34;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#34;/&#34;</span><span class="p">],</span> <span class="nx">http_request</span><span class="p">.</span><span class="nx">path</span><span class="p">)</span>
 <span class="p">}</span>
 
 <span class="nx">action_allowed</span> <span class="k">if</span> <span class="p">{</span>
-	<span class="nx">http_request</span><span class="p">.</span><span class="nx">method</span> <span class="o">==</span> <span class="s">&#34;POST&#34;</span>
-	<span class="nx">token</span><span class="p">.</span><span class="nx">payload</span><span class="p">.</span><span class="nx">role</span> <span class="o">==</span> <span class="s">&#34;admin&#34;</span>
-	<span class="nx">glob</span><span class="p">.</span><span class="nf">match</span><span class="p">(</span><span class="s">&#34;/people&#34;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#34;/&#34;</span><span class="p">],</span> <span class="nx">http_request</span><span class="p">.</span><span class="nx">path</span><span class="p">)</span>
-	<span class="nf">lower</span><span class="p">(</span><span class="nx">input</span><span class="p">.</span><span class="nx">parsed_body</span><span class="p">.</span><span class="nx">firstname</span><span class="p">)</span> <span class="o">!=</span> <span class="nx">base64url</span><span class="p">.</span><span class="nf">decode</span><span class="p">(</span><span class="nx">token</span><span class="p">.</span><span class="nx">payload</span><span class="p">.</span><span class="nx">sub</span><span class="p">)</span>
+  <span class="nx">http_request</span><span class="p">.</span><span class="nx">method</span> <span class="o">==</span> <span class="s">&#34;POST&#34;</span>
+  <span class="nx">token</span><span class="p">.</span><span class="nx">payload</span><span class="p">.</span><span class="nx">role</span> <span class="o">==</span> <span class="s">&#34;admin&#34;</span>
+  <span class="nx">glob</span><span class="p">.</span><span class="nf">match</span><span class="p">(</span><span class="s">&#34;/people&#34;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#34;/&#34;</span><span class="p">],</span> <span class="nx">http_request</span><span class="p">.</span><span class="nx">path</span><span class="p">)</span>
+  <span class="nf">lower</span><span class="p">(</span><span class="nx">input</span><span class="p">.</span><span class="nx">parsed_body</span><span class="p">.</span><span class="nx">firstname</span><span class="p">)</span> <span class="o">!=</span> <span class="nx">base64url</span><span class="p">.</span><span class="nf">decode</span><span class="p">(</span><span class="nx">token</span><span class="p">.</span><span class="nx">payload</span><span class="p">.</span><span class="nx">sub</span><span class="p">)</span>
 <span class="p">}</span>
 
 <span class="nx">token</span> <span class="o">:=</span> <span class="p">{</span><span class="s">&#34;valid&#34;</span><span class="p">:</span> <span class="nx">valid</span><span class="p">,</span> <span class="s">&#34;payload&#34;</span><span class="p">:</span> <span class="nx">payload</span><span class="p">}</span> <span class="k">if</span> <span class="p">{</span>
-	<span class="p">[</span><span class="nx">_</span><span class="p">,</span> <span class="nx">encoded</span><span class="p">]</span> <span class="o">:=</span> <span class="nf">split</span><span class="p">(</span><span class="nx">http_request</span><span class="p">.</span><span class="nx">headers</span><span class="p">.</span><span class="nx">authorization</span><span class="p">,</span> <span class="s">&#34; &#34;</span><span class="p">)</span>
-	<span class="p">[</span><span class="nx">valid</span><span class="p">,</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">payload</span><span class="p">]</span> <span class="o">:=</span> <span class="nx">io</span><span class="p">.</span><span class="nx">jwt</span><span class="p">.</span><span class="nf">decode_verify</span><span class="p">(</span><span class="nx">encoded</span><span class="p">,</span> <span class="p">{</span><span class="s">&#34;secret&#34;</span><span class="p">:</span> <span class="s">&#34;secret&#34;</span><span class="p">})</span>
+  <span class="p">[</span><span class="nx">_</span><span class="p">,</span> <span class="nx">encoded</span><span class="p">]</span> <span class="o">:=</span> <span class="nf">split</span><span class="p">(</span><span class="nx">http_request</span><span class="p">.</span><span class="nx">headers</span><span class="p">.</span><span class="nx">authorization</span><span class="p">,</span> <span class="s">&#34; &#34;</span><span class="p">)</span>
+  <span class="p">[</span><span class="nx">valid</span><span class="p">,</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">payload</span><span class="p">]</span> <span class="o">:=</span> <span class="nx">io</span><span class="p">.</span><span class="nx">jwt</span><span class="p">.</span><span class="nf">decode_verify</span><span class="p">(</span><span class="nx">encoded</span><span class="p">,</span> <span class="p">{</span><span class="s">&#34;secret&#34;</span><span class="p">:</span> <span class="s">&#34;secret&#34;</span><span class="p">})</span>
 <span class="p">}</span>
 </code></pre></td></tr></table>
 </div>

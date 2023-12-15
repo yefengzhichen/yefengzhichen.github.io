@@ -22,7 +22,7 @@
       <pubDate>Thu, 26 Oct 2023 14:11:10 +0800</pubDate>
       
       <guid>https://yefengzhichen.github.io/post/istio_cert_manager_src/</guid>
-      <description>cert-manager 介绍 cert-manager 将证书和证书颁发者添加为 Kubernetes 集群中的资源类型，并简化了获取、更新和使用这些证书的过程。相比 istio 自带的 CA 管理，cert-manager 具有</description>
+      <description>cert-manager 和 mTLS 介绍 cert-manager 将证书和证书颁发者添加为 Kubernetes 集群中的资源类型，并简化了获取、更新和使用这些证书的过程。相比 istio 自带的 CA 管理，cert-manager</description>
     </item>
     
     <item>

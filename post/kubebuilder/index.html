@@ -495,17 +495,17 @@ guestbook-sample   4s
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// GuestbookSpec defines the desired state of Guestbook
 </span><span class="c1"></span><span class="kd">type</span> <span class="nx">GuestbookSpec</span> <span class="kd">struct</span> <span class="p">{</span>
-	<span class="c1">// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-</span><span class="c1"></span>	<span class="c1">// Important: Run &#34;make&#34; to regenerate code after modifying this file
+  <span class="c1">// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+</span><span class="c1"></span>  <span class="c1">// Important: Run &#34;make&#34; to regenerate code after modifying this file
 </span><span class="c1"></span>
-	<span class="c1">// Foo is an example field of Guestbook. Edit guestbook_types.go to remove/update
-</span><span class="c1"></span>	<span class="nx">Foo</span> <span class="kt">string</span> <span class="s">`json:&#34;foo,omitempty&#34;`</span>
+  <span class="c1">// Foo is an example field of Guestbook. Edit guestbook_types.go to remove/update
+</span><span class="c1"></span>  <span class="nx">Foo</span> <span class="kt">string</span> <span class="s">`json:&#34;foo,omitempty&#34;`</span>
 <span class="p">}</span>
 
 <span class="c1">// GuestbookStatus defines the observed state of Guestbook
 </span><span class="c1"></span><span class="kd">type</span> <span class="nx">GuestbookStatus</span> <span class="kd">struct</span> <span class="p">{</span>
-	<span class="c1">// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-</span><span class="c1"></span>	<span class="c1">// Important: Run &#34;make&#34; to regenerate code after modifying this file
+  <span class="c1">// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+</span><span class="c1"></span>  <span class="c1">// Important: Run &#34;make&#34; to regenerate code after modifying this file
 </span><span class="c1"></span><span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
@@ -524,11 +524,11 @@ guestbook-sample   4s
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.12.2/pkg/reconcile
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <span class="o">*</span><span class="nx">GuestbookReconciler</span><span class="p">)</span> <span class="nf">Reconcile</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">req</span> <span class="nx">ctrl</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span> <span class="p">(</span><span class="nx">ctrl</span><span class="p">.</span><span class="nx">Result</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
-	<span class="nx">_</span> <span class="p">=</span> <span class="nx">log</span><span class="p">.</span><span class="nf">FromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+  <span class="nx">_</span> <span class="p">=</span> <span class="nx">log</span><span class="p">.</span><span class="nf">FromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
 
-	<span class="c1">// TODO(user): your logic here
+  <span class="c1">// TODO(user): your logic here
 </span><span class="c1"></span>
-	<span class="k">return</span> <span class="nx">ctrl</span><span class="p">.</span><span class="nx">Result</span><span class="p">{},</span> <span class="kc">nil</span>
+  <span class="k">return</span> <span class="nx">ctrl</span><span class="p">.</span><span class="nx">Result</span><span class="p">{},</span> <span class="kc">nil</span>
 <span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
@@ -1201,7 +1201,7 @@ kubebuilder create api --group batch --version v1 --kind CronJob
 </span><span class="c1">// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.12.1/pkg/reconcile
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <span class="o">*</span><span class="nx">CronJobReconciler</span><span class="p">)</span> <span class="nf">Reconcile</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">req</span> <span class="nx">ctrl</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span> <span class="p">(</span><span class="nx">ctrl</span><span class="p">.</span><span class="nx">Result</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
     <span class="nx">log</span> <span class="o">:=</span> <span class="nx">log</span><span class="p">.</span><span class="nf">FromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
-	<span class="kd">var</span> <span class="nx">cronJob</span> <span class="nx">batchv1</span><span class="p">.</span><span class="nx">CronJob</span>
+  <span class="kd">var</span> <span class="nx">cronJob</span> <span class="nx">batchv1</span><span class="p">.</span><span class="nx">CronJob</span>
     <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">r</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">req</span><span class="p">.</span><span class="nx">NamespacedName</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">cronJob</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
         <span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;unable to fetch CronJob&#34;</span><span class="p">)</span>
         <span class="c1">// we&#39;ll ignore not-found errors, since they can&#39;t be fixed by an immediate
@@ -1466,7 +1466,7 @@ kubebuilder create api --group batch --version v1 --kind CronJob
     <span class="p">}</span>
 
     <span class="nx">log</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;created Job for CronJob run&#34;</span><span class="p">,</span> <span class="s">&#34;job&#34;</span><span class="p">,</span> <span class="nx">job</span><span class="p">)</span>
-	<span class="c1">// we&#39;ll requeue once we see the running job, and update our status
+  <span class="c1">// we&#39;ll requeue once we see the running job, and update our status
 </span><span class="c1"></span>    <span class="k">return</span> <span class="nx">scheduledResult</span><span class="p">,</span> <span class="kc">nil</span>
 <span class="p">}</span>
 

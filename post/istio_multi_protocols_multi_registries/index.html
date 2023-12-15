@@ -184,7 +184,7 @@
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">--registries &lt;stringSlice&gt;		Comma separated list of platform service registries to read from (choose one or more from {Kubernetes, Mock}) (default `[Kubernetes]`)
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">--registries &lt;stringSlice&gt;    Comma separated list of platform service registries to read from (choose one or more from {Kubernetes, Mock}) (default `[Kubernetes]`)
 </code></pre></td></tr></table>
 </div>
 </div><p>之前版本中还支持过 consul 注册中心，不过在后面中删除了，因为外部的服务注册中心将会通过 MCP-over-XDS 来支持，参考 <a href="https://github.com/istio/istio/pull/25833">删除 consul 注册中心提交</a>。目前最新版本的 istio 只支持 kubernetes 的注册中心，其它注册中心通过 MCP-over-XDS 来支持。</p>

@@ -824,45 +824,45 @@ kubectl apply --context<span class="o">=</span><span class="s2">&#34;</span><spa
 </span></code></pre></td>
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 创建 cluster1 的 service helloworld 产生的日志</span>
-2023-01-16T09:13:51.374303Z	info	ads	Incremental push, service helloworld.sample.svc.cluster.local at shard Kubernetes/cluster1 has no endpoints
-2023-01-16T09:13:51.474543Z	info	ads	Push debounce stable<span class="o">[</span>19<span class="o">]</span> <span class="m">2</span> <span class="k">for</span> config ServiceEntry/sample/helloworld.sample.svc.cluster.local: 100.177423ms since last change, 106.769424ms since last push, <span class="nv">full</span><span class="o">=</span><span class="nb">true</span>
-2023-01-16T09:13:51.475013Z	info	ads	XDS: Pushing:2023-01-16T09:13:51Z/12 Services:7 ConnectedEndpoints:1 Version:2023-01-16T09:13:51Z/12
-2023-01-16T09:13:51.475432Z	info	ads	CDS: PUSH <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:15 size:14.5kB cached:13/14
-2023-01-16T09:13:51.475475Z	info	ads	LDS: PUSH <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:0 size:0B
-2023-01-16T09:13:51.479356Z	info	ads	EDS: PUSH request <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:1 size:52B empty:1 cached:0/1 filtered:13
+2023-01-16T09:13:51.374303Z  info  ads  Incremental push, service helloworld.sample.svc.cluster.local at shard Kubernetes/cluster1 has no endpoints
+2023-01-16T09:13:51.474543Z  info  ads  Push debounce stable<span class="o">[</span>19<span class="o">]</span> <span class="m">2</span> <span class="k">for</span> config ServiceEntry/sample/helloworld.sample.svc.cluster.local: 100.177423ms since last change, 106.769424ms since last push, <span class="nv">full</span><span class="o">=</span><span class="nb">true</span>
+2023-01-16T09:13:51.475013Z  info  ads  XDS: Pushing:2023-01-16T09:13:51Z/12 Services:7 ConnectedEndpoints:1 Version:2023-01-16T09:13:51Z/12
+2023-01-16T09:13:51.475432Z  info  ads  CDS: PUSH <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:15 size:14.5kB cached:13/14
+2023-01-16T09:13:51.475475Z  info  ads  LDS: PUSH <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:0 size:0B
+2023-01-16T09:13:51.479356Z  info  ads  EDS: PUSH request <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:1 size:52B empty:1 cached:0/1 filtered:13
 <span class="c1"># 创建 cluster2 的 service helloworld 产生的日志</span>
-2023-01-16T09:15:26.712662Z	info	ads	Incremental push, service helloworld.sample.svc.cluster.local at shard Kubernetes/cluster2 has no endpoints
-2023-01-16T09:15:26.813742Z	info	ads	Push debounce stable<span class="o">[</span>20<span class="o">]</span> <span class="m">2</span> <span class="k">for</span> config ServiceEntry/sample/helloworld.sample.svc.cluster.local: 101.02765ms since last change, 104.914465ms since last push, <span class="nv">full</span><span class="o">=</span><span class="nb">true</span>
-2023-01-16T09:15:26.814195Z	info	ads	XDS: Pushing:2023-01-16T09:15:26Z/13 Services:7 ConnectedEndpoints:1 Version:2023-01-16T09:15:26Z/13
-2023-01-16T09:15:26.814514Z	info	ads	CDS: PUSH <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:15 size:14.5kB cached:13/14
-2023-01-16T09:15:26.814568Z	info	ads	EDS: PUSH INC <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:1 size:52B empty:1 cached:0/1
-2023-01-16T09:15:26.814602Z	info	ads	LDS: PUSH <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:0 size:0B
+2023-01-16T09:15:26.712662Z  info  ads  Incremental push, service helloworld.sample.svc.cluster.local at shard Kubernetes/cluster2 has no endpoints
+2023-01-16T09:15:26.813742Z  info  ads  Push debounce stable<span class="o">[</span>20<span class="o">]</span> <span class="m">2</span> <span class="k">for</span> config ServiceEntry/sample/helloworld.sample.svc.cluster.local: 101.02765ms since last change, 104.914465ms since last push, <span class="nv">full</span><span class="o">=</span><span class="nb">true</span>
+2023-01-16T09:15:26.814195Z  info  ads  XDS: Pushing:2023-01-16T09:15:26Z/13 Services:7 ConnectedEndpoints:1 Version:2023-01-16T09:15:26Z/13
+2023-01-16T09:15:26.814514Z  info  ads  CDS: PUSH <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:15 size:14.5kB cached:13/14
+2023-01-16T09:15:26.814568Z  info  ads  EDS: PUSH INC <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:1 size:52B empty:1 cached:0/1
+2023-01-16T09:15:26.814602Z  info  ads  LDS: PUSH <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:0 size:0B
 <span class="c1"># 创建 cluster1 的 deployment helloworld 产生的日志</span>
-2023-01-16T09:16:04.805493Z	info	ads	Incremental push, service helloworld.sample.svc.cluster.local at shard Kubernetes/cluster1 has no endpoints
-2023-01-16T09:16:04.905918Z	info	ads	Push debounce stable<span class="o">[</span>21<span class="o">]</span> <span class="m">1</span> <span class="k">for</span> config ServiceEntry/sample/helloworld.sample.svc.cluster.local: 100.365169ms since last change, 100.364925ms since last push, <span class="nv">full</span><span class="o">=</span><span class="nb">false</span>
-2023-01-16T09:16:04.906018Z	info	ads	XDS: Incremental Pushing:2023-01-16T09:15:26Z/13 ConnectedEndpoints:1 Version:2023-01-16T09:15:26Z/13
-2023-01-16T09:16:06.813715Z	info	ads	Full push, new service sample/helloworld.sample.svc.cluster.local
-2023-01-16T09:16:06.914790Z	info	ads	Push debounce stable<span class="o">[</span>22<span class="o">]</span> <span class="m">1</span> <span class="k">for</span> config ServiceEntry/sample/helloworld.sample.svc.cluster.local: 100.821371ms since last change, 100.821083ms since last push, <span class="nv">full</span><span class="o">=</span><span class="nb">true</span>
-2023-01-16T09:16:06.915430Z	info	ads	XDS: Pushing:2023-01-16T09:16:06Z/14 Services:7 ConnectedEndpoints:1 Version:2023-01-16T09:16:06Z/14
-2023-01-16T09:16:06.915867Z	info	ads	CDS: PUSH <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:15 size:14.5kB cached:13/14
-2023-01-16T09:16:06.916113Z	info	ads	EDS: PUSH INC <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:1 size:217B empty:0 cached:0/1
-2023-01-16T09:16:06.916175Z	info	ads	LDS: PUSH <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:0 size:0B
+2023-01-16T09:16:04.805493Z  info  ads  Incremental push, service helloworld.sample.svc.cluster.local at shard Kubernetes/cluster1 has no endpoints
+2023-01-16T09:16:04.905918Z  info  ads  Push debounce stable<span class="o">[</span>21<span class="o">]</span> <span class="m">1</span> <span class="k">for</span> config ServiceEntry/sample/helloworld.sample.svc.cluster.local: 100.365169ms since last change, 100.364925ms since last push, <span class="nv">full</span><span class="o">=</span><span class="nb">false</span>
+2023-01-16T09:16:04.906018Z  info  ads  XDS: Incremental Pushing:2023-01-16T09:15:26Z/13 ConnectedEndpoints:1 Version:2023-01-16T09:15:26Z/13
+2023-01-16T09:16:06.813715Z  info  ads  Full push, new service sample/helloworld.sample.svc.cluster.local
+2023-01-16T09:16:06.914790Z  info  ads  Push debounce stable<span class="o">[</span>22<span class="o">]</span> <span class="m">1</span> <span class="k">for</span> config ServiceEntry/sample/helloworld.sample.svc.cluster.local: 100.821371ms since last change, 100.821083ms since last push, <span class="nv">full</span><span class="o">=</span><span class="nb">true</span>
+2023-01-16T09:16:06.915430Z  info  ads  XDS: Pushing:2023-01-16T09:16:06Z/14 Services:7 ConnectedEndpoints:1 Version:2023-01-16T09:16:06Z/14
+2023-01-16T09:16:06.915867Z  info  ads  CDS: PUSH <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:15 size:14.5kB cached:13/14
+2023-01-16T09:16:06.916113Z  info  ads  EDS: PUSH INC <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:1 size:217B empty:0 cached:0/1
+2023-01-16T09:16:06.916175Z  info  ads  LDS: PUSH <span class="k">for</span> node:istio-ingressgateway-5bc5cb6888-dqqkq.istio-system resources:0 size:0B
 <span class="c1"># 创建 cluster2 的 deployment helloworld 产生的日志</span>
-2023-01-16T09:17:51.310335Z	info	Sidecar injection request <span class="k">for</span> sample/helloworld-v2-54dddc5567-***** <span class="o">(</span>actual name not yet known<span class="o">)</span>
-2023-01-16T09:17:52.458115Z	info	ads	Incremental push, service helloworld.sample.svc.cluster.local at shard Kubernetes/cluster2 has no endpoints
-2023-01-16T09:17:52.558430Z	info	ads	Push debounce stable<span class="o">[</span>23<span class="o">]</span> <span class="m">1</span> <span class="k">for</span> config ServiceEntry/sample/helloworld.sample.svc.cluster.local: 100.238395ms since last change, 100.238086ms since last push, <span class="nv">full</span><span class="o">=</span><span class="nb">false</span>
-2023-01-16T09:17:52.558500Z	info	ads	XDS: Incremental Pushing:2023-01-16T09:16:06Z/14 ConnectedEndpoints:1 Version:2023-01-16T09:16:06Z/14
-2023-01-16T09:17:52.963838Z	info	ads	ADS: new connection <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample-4
-2023-01-16T09:17:52.964083Z	info	ads	CDS: PUSH request <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample resources:18 size:15.9kB cached:13/14
-2023-01-16T09:17:52.978204Z	info	ads	EDS: PUSH request <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample resources:14 size:2.7kB empty:0 cached:14/14
-2023-01-16T09:17:52.995232Z	info	ads	LDS: PUSH request <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample resources:16 size:46.5kB
-2023-01-16T09:17:53.033523Z	info	ads	RDS: PUSH request <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample resources:8 size:4.8kB cached:7/8
-2023-01-16T09:17:53.471174Z	info	ads	CDS: PUSH <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample resources:18 size:15.9kB cached:13/14
-2023-01-16T09:17:53.471290Z	info	ads	EDS: PUSH <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample resources:14 size:2.7kB empty:0 cached:14/14
-2023-01-16T09:17:53.472629Z	info	ads	LDS: PUSH <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample resources:16 size:46.5kB
-2023-01-16T09:17:53.472977Z	info	ads	RDS: PUSH <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample resources:8 size:4.8kB cached:7/8
-2023-01-16T09:17:53.582899Z	info	ads	Push debounce stable<span class="o">[</span>24<span class="o">]</span> <span class="m">1</span> <span class="k">for</span> config ServiceEntry/sample/helloworld.sample.svc.cluster.local: 100.230617ms since last change, 100.230465ms since last push, <span class="nv">full</span><span class="o">=</span><span class="nb">false</span>
-2023-01-16T09:17:53.582963Z	info	ads	XDS: Incremental Pushing:2023-01-16T09:16:06Z/14 ConnectedEndpoints:2 Version:2023-01-16T09:16:06Z/14
+2023-01-16T09:17:51.310335Z  info  Sidecar injection request <span class="k">for</span> sample/helloworld-v2-54dddc5567-***** <span class="o">(</span>actual name not yet known<span class="o">)</span>
+2023-01-16T09:17:52.458115Z  info  ads  Incremental push, service helloworld.sample.svc.cluster.local at shard Kubernetes/cluster2 has no endpoints
+2023-01-16T09:17:52.558430Z  info  ads  Push debounce stable<span class="o">[</span>23<span class="o">]</span> <span class="m">1</span> <span class="k">for</span> config ServiceEntry/sample/helloworld.sample.svc.cluster.local: 100.238395ms since last change, 100.238086ms since last push, <span class="nv">full</span><span class="o">=</span><span class="nb">false</span>
+2023-01-16T09:17:52.558500Z  info  ads  XDS: Incremental Pushing:2023-01-16T09:16:06Z/14 ConnectedEndpoints:1 Version:2023-01-16T09:16:06Z/14
+2023-01-16T09:17:52.963838Z  info  ads  ADS: new connection <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample-4
+2023-01-16T09:17:52.964083Z  info  ads  CDS: PUSH request <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample resources:18 size:15.9kB cached:13/14
+2023-01-16T09:17:52.978204Z  info  ads  EDS: PUSH request <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample resources:14 size:2.7kB empty:0 cached:14/14
+2023-01-16T09:17:52.995232Z  info  ads  LDS: PUSH request <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample resources:16 size:46.5kB
+2023-01-16T09:17:53.033523Z  info  ads  RDS: PUSH request <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample resources:8 size:4.8kB cached:7/8
+2023-01-16T09:17:53.471174Z  info  ads  CDS: PUSH <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample resources:18 size:15.9kB cached:13/14
+2023-01-16T09:17:53.471290Z  info  ads  EDS: PUSH <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample resources:14 size:2.7kB empty:0 cached:14/14
+2023-01-16T09:17:53.472629Z  info  ads  LDS: PUSH <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample resources:16 size:46.5kB
+2023-01-16T09:17:53.472977Z  info  ads  RDS: PUSH <span class="k">for</span> node:helloworld-v2-54dddc5567-99j9l.sample resources:8 size:4.8kB cached:7/8
+2023-01-16T09:17:53.582899Z  info  ads  Push debounce stable<span class="o">[</span>24<span class="o">]</span> <span class="m">1</span> <span class="k">for</span> config ServiceEntry/sample/helloworld.sample.svc.cluster.local: 100.230617ms since last change, 100.230465ms since last push, <span class="nv">full</span><span class="o">=</span><span class="nb">false</span>
+2023-01-16T09:17:53.582963Z  info  ads  XDS: Incremental Pushing:2023-01-16T09:16:06Z/14 ConnectedEndpoints:2 Version:2023-01-16T09:16:06Z/14
 </code></pre></td></tr></table>
 </div>
 </div><p>分别查看创建的 pods：</p>
