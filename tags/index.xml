@@ -6,20 +6,20 @@
     <description>Recent content in Tags on yefengzhichen&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Tue, 21 Nov 2023 16:10:46 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 08 Apr 2024 10:34:40 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>envoy</title>
-      <link>https://yefengzhichen.github.io/tags/envoy/</link>
-      <pubDate>Tue, 21 Nov 2023 16:10:46 +0800</pubDate>
+      <title>ambient</title>
+      <link>https://yefengzhichen.github.io/tags/ambient/</link>
+      <pubDate>Mon, 08 Apr 2024 10:34:40 +0800</pubDate>
       
-      <guid>https://yefengzhichen.github.io/tags/envoy/</guid>
+      <guid>https://yefengzhichen.github.io/tags/ambient/</guid>
       <description></description>
     </item>
     
     <item>
       <title>istio</title>
       <link>https://yefengzhichen.github.io/tags/istio/</link>
-      <pubDate>Tue, 21 Nov 2023 16:10:46 +0800</pubDate>
+      <pubDate>Mon, 08 Apr 2024 10:34:40 +0800</pubDate>
       
       <guid>https://yefengzhichen.github.io/tags/istio/</guid>
       <description></description>
@@ -28,9 +28,18 @@
     <item>
       <title>kubernetes</title>
       <link>https://yefengzhichen.github.io/tags/kubernetes/</link>
-      <pubDate>Tue, 21 Nov 2023 16:10:46 +0800</pubDate>
+      <pubDate>Mon, 08 Apr 2024 10:34:40 +0800</pubDate>
       
       <guid>https://yefengzhichen.github.io/tags/kubernetes/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>envoy</title>
+      <link>https://yefengzhichen.github.io/tags/envoy/</link>
+      <pubDate>Tue, 21 Nov 2023 16:10:46 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/envoy/</guid>
       <description></description>
     </item>
     

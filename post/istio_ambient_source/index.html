@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Istio 1.21.0 版本 inpod ambient 模式源码解析 - yefengzhichen&#39;s blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="yefengzhichen" /><meta name="description" content="版本说明 基于 istio 1.21.0 版本源代码，ambient 进行了大更新，从原来的主机网络命名空间中重定向更新为 in-Pod 网络命名空间重定向，解决了原有模式 Istio CNI 扩展的" /><meta name="keywords" content="Hugo, theme, even" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.92.1 with theme even" />
+
+
+<link rel="canonical" href="https://yefengzhichen.github.io/post/istio_ambient_source/" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../favicon-16x16.png">
+<link rel="manifest" href="../../manifest.json">
+<link rel="mask-icon" href="../../safari-pinned-tab.svg" color="#5bbad5">
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<link href="../../sass/main.min.f92fd13721ddf72129410fd8250e73152cc6f2438082b6c0208dc24ee7c13fc4.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="Istio 1.21.0 版本 inpod ambient 模式源码解析" />
+<meta property="og:description" content="版本说明 基于 istio 1.21.0 版本源代码，ambient 进行了大更新，从原来的主机网络命名空间中重定向更新为 in-Pod 网络命名空间重定向，解决了原有模式 Istio CNI 扩展的" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yefengzhichen.github.io/post/istio_ambient_source/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2024-04-08T10:34:40+08:00" />
+<meta property="article:modified_time" content="2024-04-08T10:34:40+08:00" />
+
+<meta itemprop="name" content="Istio 1.21.0 版本 inpod ambient 模式源码解析">
+<meta itemprop="description" content="版本说明 基于 istio 1.21.0 版本源代码，ambient 进行了大更新，从原来的主机网络命名空间中重定向更新为 in-Pod 网络命名空间重定向，解决了原有模式 Istio CNI 扩展的"><meta itemprop="datePublished" content="2024-04-08T10:34:40+08:00" />
+<meta itemprop="dateModified" content="2024-04-08T10:34:40+08:00" />
+<meta itemprop="wordCount" content="3897">
+<meta itemprop="keywords" content="kubernetes,istio,ambient," /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Istio 1.21.0 版本 inpod ambient 模式源码解析"/>
+<meta name="twitter:description" content="版本说明 基于 istio 1.21.0 版本源代码，ambient 进行了大更新，从原来的主机网络命名空间中重定向更新为 in-Pod 网络命名空间重定向，解决了原有模式 Istio CNI 扩展的"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="../../">
+        <li class="mobile-menu-item">首页</li>
+      </a><a href="../../post/">
+        <li class="mobile-menu-item">列表</li>
+      </a><a href="../../tags/">
+        <li class="mobile-menu-item">标签</li>
+      </a><a href="../../categories/">
+        <li class="mobile-menu-item">分类</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="../../">首页</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../post/">列表</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../tags/">标签</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../categories/">分类</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">Istio 1.21.0 版本 inpod ambient 模式源码解析</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2024-04-08 </span>
+        <div class="post-category">
+            <a href="../../categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
+            </div>
+          <span class="more-meta"> 约 3897 字 </span>
+          <span class="more-meta"> 预计阅读 8 分钟 </span>
+        <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#版本说明">版本说明</a></li>
+    <li><a href="#部署">部署</a></li>
+    <li><a href="#cni-源码">cni 源码</a>
+      <ul>
+        <li><a href="#为-pods-生成-iptables-规则">为 pods 生成 iptables 规则</a></li>
+        <li><a href="#设置-ambient-相关源码">设置 ambient 相关源码</a></li>
+      </ul>
+    </li>
+    <li><a href="#ztunnel-源码">ztunnel 源码</a></li>
+    <li><a href="#参考">参考</a></li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h1 id="版本说明">版本说明</h1>
+<p>基于 istio 1.21.0 版本源代码，ambient 进行了大更新，从原来的主机网络命名空间中重定向更新为 in-Pod 网络命名空间重定向，解决了原有模式 Istio CNI 扩展的网络配置可能会和主流 CNI 实现的主机级网络配置互相干扰，导致流量中断和网络策略无法生效等问题，更新后理论将支持所有 CNI，经过实际测试，在 Flannel、Cilium 等网络 CNI 插件都能正常工作，详细参考 <a href="https://istio.io/latest/zh/blog/2024/inpod-traffic-redirection-ambient/">inpod 流量重定向 ambient 模式</a>。</p>
+<p>这里主要测试了在 cilium CNI 插件下，ambient 模式能够正常工作，并根据测试过程中的日志，从 cni 和 ztunnel 两个模块源码中分析 ambient 模式的实现细节。</p>
+<h1 id="部署">部署</h1>
+<p>这里使用 k3s 集群来测试，因为 k3s 集群默认的 cni 插件是 flannel，路径为<code>/var/lib/rancher/k3s/agent/etc/cni/net.d</code>，与 istio 中的默认的插件路径不一致，这里改为用 cilium cni 插件：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">rm -rf /etc/cni/net.d/*
+curl -sfL https://rancher-mirror.rancher.cn/k3s/k3s-install.sh <span class="p">|</span> <span class="nv">INSTALL_K3S_MIRROR</span><span class="o">=</span>cn <span class="se">\
+</span><span class="se"></span>  <span class="nv">INSTALL_K3S_EXEC</span><span class="o">=</span><span class="s1">&#39;--flannel-backend=none&#39;</span> sh -s - <span class="se">\
+</span><span class="se"></span>  --disable-network-policy <span class="se">\
+</span><span class="se"></span>  --disable <span class="s2">&#34;servicelb&#34;</span> <span class="se">\
+</span><span class="se"></span>  --disable <span class="s2">&#34;traefik&#34;</span> <span class="se">\
+</span><span class="se"></span>  --disable <span class="s2">&#34;metrics-server&#34;</span>
+
+cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
+
+wget https://github.com/cilium/cilium-cli/releases/download/v0.15.23/cilium-linux-amd64.tar.gz
+tar -xzvf cilium-linux-amd64.tar.gz
+mv cilium /usr/local/bin/
+<span class="c1"># 设置 cni-exclusive 为 false，防止 cilium 一直重写/etc/cni/net.d/05-cilium.conflist 文件</span>
+<span class="c1"># 参考：https://github.com/istio/istio/issues/46764 这里改为安装时设置</span>
+<span class="c1"># set 值通过 helm 查看：helm show values cilium/cilium</span>
+cilium install --version 1.15.1 <span class="se">\
+</span><span class="se"></span>--set <span class="s2">&#34;routingMode=native,debug.enabled=true,cni.exclusive=false,ipv4NativeRoutingCIDR=10.0.0.0/8&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>等 pods 起来后，使用下面的命令来部署 istio 和测试应用：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">wget https://github.com/istio/istio/releases/download/1.21.0/istio-1.21.0-linux-amd64.tar.gz
+<span class="c1"># 解压后在～/.bash_profile 中添加 istioctl 的路径：PATH=$PATH:/root/found/istio-1.21.0/bin</span>
+<span class="c1"># 安装设置 ambient 模式，并开启 ingressGateway，设置各个组件日志级别为 debug</span>
+istioctl install --set <span class="nv">profile</span><span class="o">=</span>ambient --set <span class="s2">&#34;components.ingressGateways[0].enabled=true&#34;</span> <span class="se">\
+</span><span class="se"></span>--set <span class="s2">&#34;components.ingressGateways[0].name=istio-ingressgateway&#34;</span> <span class="se">\
+</span><span class="se"></span>--set <span class="s2">&#34;values.global.logging.level=default:debug&#34;</span> <span class="se">\
+</span><span class="se"></span>--set <span class="s2">&#34;components.cni.k8s.env[0].name=LOG_LEVEL&#34;</span> <span class="se">\
+</span><span class="se"></span>--set <span class="s2">&#34;components.cni.k8s.env[0].value=debug&#34;</span> <span class="se">\
+</span><span class="se"></span>--set <span class="s2">&#34;components.ztunnel.k8s.env[0].name=RUST_LOG&#34;</span> <span class="se">\
+</span><span class="se"></span>--set <span class="s2">&#34;components.ztunnel.k8s.env[0].value=debug&#34;</span> <span class="se">\
+</span><span class="se"></span>--skip-confirmation
+
+<span class="c1"># Kubernetes Gateway API 部署 waypoint 需要</span>
+kubectl get crd gateways.gateway.networking.k8s.io <span class="p">&amp;</span>&gt; /dev/null <span class="o">||</span> <span class="se">\
+</span><span class="se"></span>  <span class="o">{</span> kubectl kustomize <span class="s2">&#34;github.com/kubernetes-sigs/gateway-api/config/crd/experimental?ref=v1.0.0&#34;</span> <span class="p">|</span> kubectl apply -f -<span class="p">;</span> <span class="o">}</span>
+
+<span class="c1"># 如果要观察 kaili 页面访问情况，需部署 kaili 和 prometheus.yaml</span>
+wget https://raw.githubusercontent.com/istio/istio/release-1.21/samples/addons/kiali.yaml
+<span class="c1"># kiali 下载后修改 service kiali 类型为 NodePort，http nodePort 设置为 30001</span>
+<span class="c1">#  type: NodePort</span>
+<span class="c1">#  ports:</span>
+<span class="c1">#  - name: http</span>
+<span class="c1">#    appProtocol: http</span>
+<span class="c1">#    protocol: TCP</span>
+<span class="c1">#    nodePort: 30001</span>
+<span class="c1">#    port: 20001</span>
+kubectl apply -f kiali.yaml
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.21/samples/addons/prometheus.yaml
+</code></pre></td></tr></table>
+</div>
+</div><p>等网格所有服务 pods 启动后，部署测试应用，并测试在设置命名空间为 ambient 模式前后是否能正常请求：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 并部署测试应用</span>
+kubectl create namespace sample
+kubectl apply  -f samples/helloworld/helloworld.yaml <span class="se">\
+</span><span class="se"></span>    -l <span class="nv">service</span><span class="o">=</span>helloworld -n sample
+kubectl apply -f samples/helloworld/helloworld.yaml <span class="se">\
+</span><span class="se"></span>    -l <span class="nv">version</span><span class="o">=</span>v1 -n sample
+kubectl apply -f samples/helloworld/helloworld.yaml <span class="se">\
+</span><span class="se"></span>    -l <span class="nv">version</span><span class="o">=</span>v2 -n sample
+kubectl apply -f samples/sleep/sleep.yaml -n sample
+
+<span class="c1"># 没加入 ambient 时可以正常返回</span>
+kubectl <span class="nb">exec</span> -n sample -c sleep <span class="s2">&#34;</span><span class="k">$(</span>kubectl get pod -n sample -l <span class="se">\
+</span><span class="se"></span>    <span class="nv">app</span><span class="o">=</span>sleep -o <span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.items[0].metadata.name}&#39;</span><span class="k">)</span><span class="s2">&#34;</span> <span class="se">\
+</span><span class="se"></span>    -- curl helloworld.sample:5000/hello
+
+<span class="c1"># 加入 ambient</span>
+kubectl label namespace sample istio.io/dataplane-mode<span class="o">=</span>ambient
+
+<span class="c1"># 再次测试可以正常返回</span>
+kubectl <span class="nb">exec</span> -n sample -c sleep <span class="s2">&#34;</span><span class="k">$(</span>kubectl get pod -n sample -l <span class="se">\
+</span><span class="se"></span>    <span class="nv">app</span><span class="o">=</span>sleep -o <span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.items[0].metadata.name}&#39;</span><span class="k">)</span><span class="s2">&#34;</span> <span class="se">\
+</span><span class="se"></span>    -- curl helloworld.sample:5000/hello
+</code></pre></td></tr></table>
+</div>
+</div><h1 id="cni-源码">cni 源码</h1>
+<h2 id="为-pods-生成-iptables-规则">为 pods 生成 iptables 规则</h2>
+<p>节点上的 istio-cni-node pods 会为在 ambient mesh 模式下的 pods 生成 iptables 规则，规则如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 进入 helloworld pods 并安装 iptables</span>
+<span class="o">[</span>root@localhost ~<span class="o">]</span><span class="c1"># kubectl -nsample exec -it helloworld-v1-559bccf6d7-jwx42 -- /bin/bash</span>
+root@helloworld-v1-559bccf6d7-jwx42:/opt/microservices# apt-get update
+root@helloworld-v1-559bccf6d7-jwx42:/opt/microservices# apt-get install iptables
+<span class="c1"># nat 表</span>
+root@helloworld-v1-559bccf6d7-jwx42:/opt/microservices# iptables-legacy -t nat -nL --line-number
+Chain PREROUTING <span class="o">(</span>policy ACCEPT<span class="o">)</span>
+num  target     prot opt <span class="nb">source</span>               destination
+
+Chain INPUT <span class="o">(</span>policy ACCEPT<span class="o">)</span>
+num  target     prot opt <span class="nb">source</span>               destination
+
+Chain OUTPUT <span class="o">(</span>policy ACCEPT<span class="o">)</span>
+num  target     prot opt <span class="nb">source</span>               destination
+<span class="m">1</span>    ISTIO_OUTPUT  <span class="m">0</span>    --  0.0.0.0/0            0.0.0.0/0
+
+Chain POSTROUTING <span class="o">(</span>policy ACCEPT<span class="o">)</span>
+num  target     prot opt <span class="nb">source</span>               destination
+
+Chain ISTIO_OUTPUT <span class="o">(</span><span class="m">1</span> references<span class="o">)</span>
+num  target     prot opt <span class="nb">source</span>               destination
+<span class="c1"># 接受目的地址是 169.254.7.127 的 tcp 流量</span>
+<span class="m">1</span>    ACCEPT     <span class="m">6</span>    --  0.0.0.0/0            169.254.7.127        tcp
+<span class="c1"># 如果协议是 TCP，且数据包的标记匹配 0x111，则接受</span>
+<span class="m">2</span>    ACCEPT     <span class="m">6</span>    --  0.0.0.0/0            0.0.0.0/0            mark match 0x111/0xfff
+<span class="c1"># 如果目的地址不是 127.0.0.1，则接受</span>
+<span class="m">3</span>    ACCEPT     <span class="m">0</span>    --  0.0.0.0/0           !127.0.0.1
+<span class="c1"># 如果目的地址不是 127.0.0.1，协议是 TCP，且数据包的标记不为 0x539，则定向到本地的 15001 端口</span>
+<span class="m">4</span>    REDIRECT   <span class="m">6</span>    --  0.0.0.0/0           !127.0.0.1            mark match ! 0x539/0xfff redir ports <span class="m">15001</span>
+
+<span class="c1"># mangle 表，用来修改数据包的服务类型和设置标记等</span>
+root@helloworld-v1-559bccf6d7-jwx42:/opt/microservices# iptables-legacy -t mangle -nL --line-number
+Chain PREROUTING <span class="o">(</span>policy ACCEPT<span class="o">)</span>
+num  target     prot opt <span class="nb">source</span>               destination
+<span class="m">1</span>    ISTIO_PRERT  <span class="m">0</span>    --  0.0.0.0/0            0.0.0.0/0
+
+Chain INPUT <span class="o">(</span>policy ACCEPT<span class="o">)</span>
+num  target     prot opt <span class="nb">source</span>               destination
+
+Chain FORWARD <span class="o">(</span>policy ACCEPT<span class="o">)</span>
+num  target     prot opt <span class="nb">source</span>               destination
+
+Chain OUTPUT <span class="o">(</span>policy ACCEPT<span class="o">)</span>
+num  target     prot opt <span class="nb">source</span>               destination
+<span class="m">1</span>    ISTIO_OUTPUT  <span class="m">0</span>    --  0.0.0.0/0            0.0.0.0/0
+
+Chain POSTROUTING <span class="o">(</span>policy ACCEPT<span class="o">)</span>
+num  target     prot opt <span class="nb">source</span>               destination
+
+Chain ISTIO_OUTPUT <span class="o">(</span><span class="m">1</span> references<span class="o">)</span>
+num  target     prot opt <span class="nb">source</span>               destination
+<span class="c1"># 对连接标记字段等于 0x111 的数据包，其连接标记将被恢复</span>
+<span class="m">1</span>    CONNMARK   <span class="m">0</span>    --  0.0.0.0/0            0.0.0.0/0            connmark match  0x111/0xfff CONNMARK restore
+
+Chain ISTIO_PRERT <span class="o">(</span><span class="m">1</span> references<span class="o">)</span>
+num  target     prot opt <span class="nb">source</span>               destination
+<span class="c1"># 对标记为 0x539 的数据包设置连接标记 0x111</span>
+<span class="m">1</span>    CONNMARK   <span class="m">0</span>    --  0.0.0.0/0            0.0.0.0/0            mark match 0x539/0xfff CONNMARK xset 0x111/0xfff
+<span class="c1"># 接受来自 169.254.7.127 的 TCP 流量</span>
+<span class="m">2</span>    ACCEPT     <span class="m">6</span>    --  169.254.7.127        0.0.0.0/0            tcp
+<span class="c1"># 接受所有目标不为 127.0.0.1 的本地 TCP 流量</span>
+<span class="m">3</span>    ACCEPT     <span class="m">6</span>    --  0.0.0.0/0           !127.0.0.1
+<span class="c1"># 所有标记不为 0x539，且目标端口为 15008 的 TCP 流量进行透明代理，代理端口为 15008，并设置代理标记为 0x111</span>
+<span class="c1"># 处理加密流量，经过 HBONE(HTTP-Based Overlay Network Environment) 套接字 15008 进入</span>
+<span class="m">4</span>    TPROXY     <span class="m">6</span>    --  0.0.0.0/0            0.0.0.0/0            tcp dpt:15008 mark match ! 0x539/0xfff TPROXY redirect 0.0.0.0:15008 mark 0x111/0xfff
+<span class="c1"># 接受所有已建立或相关的 TCP 连接</span>
+<span class="m">5</span>    ACCEPT     <span class="m">6</span>    --  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+<span class="c1"># 处理所有明文套接字，重定向到 15006</span>
+<span class="c1"># 对所有标记不为 0x539 ，且目标不为 127.0.0.1 的 TCP 流量进行透明代理，代理端口为 15006，并设置代理标记为 0x111</span>
+<span class="m">6</span>    TPROXY     <span class="m">6</span>    --  0.0.0.0/0           !127.0.0.1            mark match ! 0x539/0xfff TPROXY redirect 0.0.0.0:15006 mark 0x111/0xfff
+</code></pre></td></tr></table>
+</div>
+</div><p>其中“169.254.7.127”为固定的 IP 地址，用来从 pod 内部可靠地识别 kubelet 健康探针。这些 iptable 规则，可以参考 istio 官网的两张图来理解：
+<img src="https://istio.io/latest/zh/blog/2024/inpod-traffic-redirection-ambient/traffic-flows-between-pods-in-ambient.svg" alt="tls_flow" title="Pods 中加密流量流程">
+<img src="https://istio.io/latest/zh/blog/2024/inpod-traffic-redirection-ambient/traffic-flows-plaintext.svg" alt="raw_buffer_flow" title="Pods 中明文流量流程"></p>
+<h2 id="设置-ambient-相关源码">设置 ambient 相关源码</h2>
+<p>在开启了“istio.io/dataplane-mode=ambient”标签的命名空间下，增加 pods 时会调用到以下代码：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// cni/pkg/nodeagent/net.go
+</span><span class="c1">// 1、获取网络空间
+</span><span class="c1">// 2、将 pod 的 IP 添加到 hostnetns 的 ipset 中，用于节点探针检查
+</span><span class="c1">// 3、在 pod 的网络空间中创建 iptables 规则
+</span><span class="c1">// 4、通过 GRPC 通知 ztunnel 创建一个代理
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">NetServer</span><span class="p">)</span> <span class="nf">AddPodToMesh</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">pod</span> <span class="o">*</span><span class="nx">corev1</span><span class="p">.</span><span class="nx">Pod</span><span class="p">,</span> <span class="nx">podIPs</span> <span class="p">[]</span><span class="nx">netip</span><span class="p">.</span><span class="nx">Addr</span><span class="p">,</span> <span class="nx">netNs</span> <span class="kt">string</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="nx">log</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;in pod mode - adding pod %s/%s to ztunnel &#34;</span><span class="p">,</span> <span class="nx">pod</span><span class="p">.</span><span class="nx">Namespace</span><span class="p">,</span> <span class="nx">pod</span><span class="p">.</span><span class="nx">Name</span><span class="p">)</span>
+	<span class="nx">s</span><span class="p">.</span><span class="nx">currentPodSnapshot</span><span class="p">.</span><span class="nf">Ensure</span><span class="p">(</span><span class="nb">string</span><span class="p">(</span><span class="nx">pod</span><span class="p">.</span><span class="nx">UID</span><span class="p">))</span>
+	<span class="nx">openNetns</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nf">getOrOpenNetns</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">pod</span><span class="p">.</span><span class="nx">ObjectMeta</span><span class="p">,</span> <span class="nx">netNs</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span>
+
+	<span class="nx">err</span> <span class="p">=</span> <span class="nf">addPodToHostNSIpset</span><span class="p">(</span><span class="nx">pod</span><span class="p">,</span> <span class="nx">podIPs</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">s</span><span class="p">.</span><span class="nx">hostsideProbeIPSet</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to add pod to ipset: %s/%s %v&#34;</span><span class="p">,</span> <span class="nx">pod</span><span class="p">.</span><span class="nx">Namespace</span><span class="p">,</span> <span class="nx">pod</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span>
+
+	<span class="nx">log</span><span class="p">.</span><span class="nf">Debug</span><span class="p">(</span><span class="s">&#34;calling CreateInpodRules&#34;</span><span class="p">)</span>
+	<span class="c1">// 切换 ns 并执行
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nf">netnsRunner</span><span class="p">(</span><span class="nx">openNetns</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="kt">error</span> <span class="p">{</span>
+		<span class="c1">// 这里会创建上面的 iptables 规则
+</span><span class="c1"></span>		<span class="k">return</span> <span class="nx">s</span><span class="p">.</span><span class="nx">iptablesConfigurator</span><span class="p">.</span><span class="nf">CreateInpodRules</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">HostProbeSNATIP</span><span class="p">)</span>
+	<span class="p">});</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to update POD inpod: %s/%s %v&#34;</span><span class="p">,</span> <span class="nx">pod</span><span class="p">.</span><span class="nx">Namespace</span><span class="p">,</span> <span class="nx">pod</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span>
+
+	<span class="nx">log</span><span class="p">.</span><span class="nf">Debug</span><span class="p">(</span><span class="s">&#34;notifying subscribed node proxies&#34;</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nf">sendPodToZtunnelAndWaitForAck</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">pod</span><span class="p">.</span><span class="nx">ObjectMeta</span><span class="p">,</span> <span class="nx">openNetns</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nf">NewErrPartialAdd</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这里通过函数 netnsRunner 来运行 CreateInpodRules 函数，会先把当前进程的网络命名空间 ns 切换到目标 pods 的 ns，然后执行 iptables 命令。执行完成后再调用 ztunnel 的 grpc 接口，通知 ztunnel 创建一个代理。</p>
+<p>通过搜索看到，AddPodToMesh 这个函数在两个地方会调用，一个是 InformerHandlers 中，其通过 k8s informer 机制监听 pods 和命名空间的事件，在 pods 新增和更新事件中调用 AddPodToMesh 设置 iptables 规则：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// cni/pkg/nodeagent/informers.go
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">setupHandlers</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">kubeClient</span> <span class="nx">kube</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">dataplane</span> <span class="nx">MeshDataplane</span><span class="p">,</span> <span class="nx">systemNamespace</span> <span class="kt">string</span><span class="p">)</span> <span class="o">*</span><span class="nx">InformerHandlers</span> <span class="p">{</span>
+	<span class="nx">s</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">InformerHandlers</span><span class="p">{</span><span class="nx">ctx</span><span class="p">:</span> <span class="nx">ctx</span><span class="p">,</span> <span class="nx">dataplane</span><span class="p">:</span> <span class="nx">dataplane</span><span class="p">,</span> <span class="nx">systemNamespace</span><span class="p">:</span> <span class="nx">systemNamespace</span><span class="p">}</span>
+	<span class="nx">s</span><span class="p">.</span><span class="nx">queue</span> <span class="p">=</span> <span class="nx">controllers</span><span class="p">.</span><span class="nf">NewQueue</span><span class="p">(</span><span class="s">&#34;ambient&#34;</span><span class="p">,</span>
+		<span class="nx">controllers</span><span class="p">.</span><span class="nf">WithGenericReconciler</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nx">reconcile</span><span class="p">),</span>
+		<span class="nx">controllers</span><span class="p">.</span><span class="nf">WithMaxAttempts</span><span class="p">(</span><span class="mi">5</span><span class="p">),</span>
+	<span class="p">)</span>
+	<span class="c1">// 关注当前 node 上的 pods 事件，并添加到 queue
+</span><span class="c1"></span>	<span class="nx">s</span><span class="p">.</span><span class="nx">pods</span> <span class="p">=</span> <span class="nx">kclient</span><span class="p">.</span><span class="nx">NewFiltered</span><span class="p">[</span><span class="o">*</span><span class="nx">corev1</span><span class="p">.</span><span class="nx">Pod</span><span class="p">](</span><span class="nx">kubeClient</span><span class="p">,</span> <span class="nx">kclient</span><span class="p">.</span><span class="nx">Filter</span><span class="p">{</span><span class="nx">FieldSelector</span><span class="p">:</span> <span class="s">&#34;spec.nodeName=&#34;</span> <span class="o">+</span> <span class="nx">NodeName</span><span class="p">})</span>
+	<span class="nx">s</span><span class="p">.</span><span class="nx">pods</span><span class="p">.</span><span class="nf">AddEventHandler</span><span class="p">(</span><span class="nx">controllers</span><span class="p">.</span><span class="nf">FromEventHandler</span><span class="p">(</span><span class="kd">func</span><span class="p">(</span><span class="nx">o</span> <span class="nx">controllers</span><span class="p">.</span><span class="nx">Event</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">s</span><span class="p">.</span><span class="nx">queue</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="nx">o</span><span class="p">)</span>
+	<span class="p">}))</span>
+	<span class="c1">// 关注所有的 ns 事件，并添加到 queue
+</span><span class="c1"></span>	<span class="nx">s</span><span class="p">.</span><span class="nx">namespaces</span> <span class="p">=</span> <span class="nx">kclient</span><span class="p">.</span><span class="nx">New</span><span class="p">[</span><span class="o">*</span><span class="nx">corev1</span><span class="p">.</span><span class="nx">Namespace</span><span class="p">](</span><span class="nx">kubeClient</span><span class="p">)</span>
+	<span class="nx">s</span><span class="p">.</span><span class="nx">namespaces</span><span class="p">.</span><span class="nf">AddEventHandler</span><span class="p">(</span><span class="nx">controllers</span><span class="p">.</span><span class="nf">FromEventHandler</span><span class="p">(</span><span class="kd">func</span><span class="p">(</span><span class="nx">o</span> <span class="nx">controllers</span><span class="p">.</span><span class="nx">Event</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">s</span><span class="p">.</span><span class="nx">queue</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="nx">o</span><span class="p">)</span>
+	<span class="p">}))</span>
+
+	<span class="k">return</span> <span class="nx">s</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">InformerHandlers</span><span class="p">)</span> <span class="nf">reconcilePod</span><span class="p">(</span><span class="nx">input</span> <span class="nx">any</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="nx">event</span> <span class="o">:=</span> <span class="nx">input</span><span class="p">.(</span><span class="nx">controllers</span><span class="p">.</span><span class="nx">Event</span><span class="p">)</span>
+	<span class="nx">pod</span> <span class="o">:=</span> <span class="nx">event</span><span class="p">.</span><span class="nf">Latest</span><span class="p">().(</span><span class="o">*</span><span class="nx">corev1</span><span class="p">.</span><span class="nx">Pod</span><span class="p">)</span>
+
+	<span class="k">defer</span> <span class="nx">EventTotals</span><span class="p">.</span><span class="nf">With</span><span class="p">(</span><span class="nx">eventTypeTag</span><span class="p">.</span><span class="nf">Value</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">Event</span><span class="p">.</span><span class="nf">String</span><span class="p">())).</span><span class="nf">Increment</span><span class="p">()</span>
+
+	<span class="k">switch</span> <span class="nx">event</span><span class="p">.</span><span class="nx">Event</span> <span class="p">{</span>
+	<span class="k">case</span> <span class="nx">controllers</span><span class="p">.</span><span class="nx">EventAdd</span><span class="p">:</span>
+	<span class="k">case</span> <span class="nx">controllers</span><span class="p">.</span><span class="nx">EventUpdate</span><span class="p">:</span>
+		<span class="nx">newPod</span> <span class="o">:=</span> <span class="nx">event</span><span class="p">.</span><span class="nx">New</span><span class="p">.(</span><span class="o">*</span><span class="nx">corev1</span><span class="p">.</span><span class="nx">Pod</span><span class="p">)</span>
+		<span class="nx">oldPod</span> <span class="o">:=</span> <span class="nx">event</span><span class="p">.</span><span class="nx">Old</span><span class="p">.(</span><span class="o">*</span><span class="nx">corev1</span><span class="p">.</span><span class="nx">Pod</span><span class="p">)</span>
+		<span class="nx">ns</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">namespaces</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="nx">newPod</span><span class="p">.</span><span class="nx">Namespace</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">ns</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to find namespace %v&#34;</span><span class="p">,</span> <span class="nx">ns</span><span class="p">)</span>
+		<span class="p">}</span>
+		<span class="nx">wasAnnotated</span> <span class="o">:=</span> <span class="nx">oldPod</span><span class="p">.</span><span class="nx">Annotations</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">&amp;&amp;</span> <span class="nx">oldPod</span><span class="p">.</span><span class="nx">Annotations</span><span class="p">[</span><span class="nx">constants</span><span class="p">.</span><span class="nx">AmbientRedirection</span><span class="p">]</span> <span class="o">==</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">AmbientRedirectionEnabled</span>
+		<span class="nx">isAnnotated</span> <span class="o">:=</span> <span class="nx">newPod</span><span class="p">.</span><span class="nx">Annotations</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">&amp;&amp;</span> <span class="nx">newPod</span><span class="p">.</span><span class="nx">Annotations</span><span class="p">[</span><span class="nx">constants</span><span class="p">.</span><span class="nx">AmbientRedirection</span><span class="p">]</span> <span class="o">==</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">AmbientRedirectionEnabled</span>
+		<span class="nx">shouldBeEnabled</span> <span class="o">:=</span> <span class="nx">util</span><span class="p">.</span><span class="nf">PodRedirectionEnabled</span><span class="p">(</span><span class="nx">ns</span><span class="p">,</span> <span class="nx">newPod</span><span class="p">)</span>
+
+		<span class="nx">changeNeeded</span> <span class="o">:=</span> <span class="nx">wasAnnotated</span> <span class="o">!=</span> <span class="nx">shouldBeEnabled</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Debugf</span><span class="p">(</span><span class="s">&#34;Pod %s events: %+v&#34;</span><span class="p">,</span> <span class="nx">pod</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">pod</span><span class="p">)</span>
+		<span class="k">if</span> <span class="p">!</span><span class="nx">changeNeeded</span> <span class="p">{</span>
+			<span class="nx">log</span><span class="p">.</span><span class="nf">Debugf</span><span class="p">(</span><span class="s">&#34;Pod %s update event skipped, no change needed&#34;</span><span class="p">,</span> <span class="nx">pod</span><span class="p">.</span><span class="nx">Name</span><span class="p">)</span>
+			<span class="k">return</span> <span class="kc">nil</span>
+		<span class="p">}</span>
+
+		<span class="k">if</span> <span class="p">!</span><span class="nx">shouldBeEnabled</span> <span class="p">{</span>
+			<span class="nx">log</span><span class="p">.</span><span class="nf">Debugf</span><span class="p">(</span><span class="s">&#34;Pod %s no longer matches, removing from mesh&#34;</span><span class="p">,</span> <span class="nx">newPod</span><span class="p">.</span><span class="nx">Name</span><span class="p">)</span>
+			<span class="nx">err</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">dataplane</span><span class="p">.</span><span class="nf">RemovePodFromMesh</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">pod</span><span class="p">)</span>
+			<span class="nx">log</span><span class="p">.</span><span class="nf">Debugf</span><span class="p">(</span><span class="s">&#34;RemovePodFromMesh(%s) returned %v&#34;</span><span class="p">,</span> <span class="nx">newPod</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+		<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+			<span class="nx">wasReady</span> <span class="o">:=</span> <span class="nx">kube</span><span class="p">.</span><span class="nf">CheckPodReadyOrComplete</span><span class="p">(</span><span class="nx">oldPod</span><span class="p">)</span>
+			<span class="nx">isReady</span> <span class="o">:=</span> <span class="nx">kube</span><span class="p">.</span><span class="nf">CheckPodReadyOrComplete</span><span class="p">(</span><span class="nx">newPod</span><span class="p">)</span>
+			<span class="k">if</span> <span class="nx">wasReady</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">&amp;&amp;</span> <span class="nx">isReady</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">&amp;&amp;</span> <span class="nx">isAnnotated</span> <span class="p">{</span>
+				<span class="nx">log</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;Pod %s update event skipped, added/labeled by CNI plugin&#34;</span><span class="p">,</span> <span class="nx">pod</span><span class="p">.</span><span class="nx">Name</span><span class="p">)</span>
+				<span class="k">return</span> <span class="kc">nil</span>
+			<span class="p">}</span>
+
+			<span class="nx">log</span><span class="p">.</span><span class="nf">Debugf</span><span class="p">(</span><span class="s">&#34;Pod %s now matches, adding to mesh&#34;</span><span class="p">,</span> <span class="nx">newPod</span><span class="p">.</span><span class="nx">Name</span><span class="p">)</span>
+			<span class="nx">podIPs</span> <span class="o">:=</span> <span class="nx">util</span><span class="p">.</span><span class="nf">GetPodIPsIfPresent</span><span class="p">(</span><span class="nx">pod</span><span class="p">)</span>
+			<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">podIPs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+				<span class="nx">log</span><span class="p">.</span><span class="nf">Warnf</span><span class="p">(</span><span class="s">&#34;pod %s does not appear to have any assigned IPs, not capturing&#34;</span><span class="p">,</span> <span class="nx">pod</span><span class="p">.</span><span class="nx">Name</span><span class="p">)</span>
+				<span class="k">return</span> <span class="kc">nil</span>
+			<span class="p">}</span>
+
+			<span class="nx">err</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">dataplane</span><span class="p">.</span><span class="nf">AddPodToMesh</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">pod</span><span class="p">,</span> <span class="nx">podIPs</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">)</span>
+			<span class="nx">log</span><span class="p">.</span><span class="nf">Debugf</span><span class="p">(</span><span class="s">&#34;AddPodToMesh(%s) returned %v&#34;</span><span class="p">,</span> <span class="nx">newPod</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+		<span class="p">}</span>
+	<span class="k">case</span> <span class="nx">controllers</span><span class="p">.</span><span class="nx">EventDelete</span><span class="p">:</span>
+		<span class="nx">err</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">dataplane</span><span class="p">.</span><span class="nf">DelPodFromMesh</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">pod</span><span class="p">)</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Debugf</span><span class="p">(</span><span class="s">&#34;DelPodFromMesh(%s) returned %v&#34;</span><span class="p">,</span> <span class="nx">pod</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>另一个是 CniPluginServer，会在 cni 插件的 socket 地址“/var/run/istio-cni/pluginevent.sock” 监听事件，当有事件发生时，会调用 AddPodToMesh 设置 iptables 规则：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span><span class="lnt">78
+</span><span class="lnt">79
+</span><span class="lnt">80
+</span><span class="lnt">81
+</span><span class="lnt">82
+</span><span class="lnt">83
+</span><span class="lnt">84
+</span><span class="lnt">85
+</span><span class="lnt">86
+</span><span class="lnt">87
+</span><span class="lnt">88
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// cni/pkg/nodeagent/cni-watcher.go
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">startCniPluginServer</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">pluginSocket</span> <span class="kt">string</span><span class="p">,</span>
+	<span class="nx">handlers</span> <span class="nx">K8sHandlers</span><span class="p">,</span>
+	<span class="nx">dataplane</span> <span class="nx">MeshDataplane</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">*</span><span class="nx">CniPluginServer</span> <span class="p">{</span>
+	<span class="nx">ctx</span><span class="p">,</span> <span class="nx">cancel</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">WithCancel</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+	<span class="nx">mux</span> <span class="o">:=</span> <span class="nx">http</span><span class="p">.</span><span class="nf">NewServeMux</span><span class="p">()</span>
+	<span class="nx">s</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">CniPluginServer</span><span class="p">{</span>
+		<span class="nx">handlers</span><span class="p">:</span>  <span class="nx">handlers</span><span class="p">,</span>
+		<span class="nx">dataplane</span><span class="p">:</span> <span class="nx">dataplane</span><span class="p">,</span>
+		<span class="nx">cniListenServer</span><span class="p">:</span> <span class="o">&amp;</span><span class="nx">http</span><span class="p">.</span><span class="nx">Server</span><span class="p">{</span>
+			<span class="nx">Handler</span><span class="p">:</span> <span class="nx">mux</span><span class="p">,</span>
+		<span class="p">},</span>
+		<span class="nx">cniListenServerCancel</span><span class="p">:</span> <span class="nx">cancel</span><span class="p">,</span>
+		<span class="nx">sockAddress</span><span class="p">:</span>           <span class="nx">pluginSocket</span><span class="p">,</span>
+		<span class="nx">ctx</span><span class="p">:</span>                   <span class="nx">ctx</span><span class="p">,</span>
+	<span class="p">}</span>
+	<span class="c1">// 创建了一个 http server，并在/cmdadd 路径下注册了一个处理函数
+</span><span class="c1"></span>	<span class="nx">mux</span><span class="p">.</span><span class="nf">HandleFunc</span><span class="p">(</span><span class="nx">pconstants</span><span class="p">.</span><span class="nx">CNIAddEventPath</span><span class="p">,</span> <span class="nx">s</span><span class="p">.</span><span class="nx">handleAddEvent</span><span class="p">)</span>
+	<span class="k">return</span> <span class="nx">s</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">CniPluginServer</span><span class="p">)</span> <span class="nf">handleAddEvent</span><span class="p">(</span><span class="nx">w</span> <span class="nx">http</span><span class="p">.</span><span class="nx">ResponseWriter</span><span class="p">,</span> <span class="nx">req</span> <span class="o">*</span><span class="nx">http</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">req</span><span class="p">.</span><span class="nx">Body</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="s">&#34;empty request body&#34;</span><span class="p">)</span>
+		<span class="nx">http</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="s">&#34;empty request body&#34;</span><span class="p">,</span> <span class="nx">http</span><span class="p">.</span><span class="nx">StatusBadRequest</span><span class="p">)</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+	<span class="k">defer</span> <span class="nx">req</span><span class="p">.</span><span class="nx">Body</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+	<span class="nx">data</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">io</span><span class="p">.</span><span class="nf">ReadAll</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">Body</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;Failed to read event report from cni plugin: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+		<span class="nx">http</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="nx">err</span><span class="p">.</span><span class="nf">Error</span><span class="p">(),</span> <span class="nx">http</span><span class="p">.</span><span class="nx">StatusInternalServerError</span><span class="p">)</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+	<span class="nx">msg</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">processAddEvent</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;Failed to process CNI event payload: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+		<span class="nx">http</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="nx">err</span><span class="p">.</span><span class="nf">Error</span><span class="p">(),</span> <span class="nx">http</span><span class="p">.</span><span class="nx">StatusBadRequest</span><span class="p">)</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nf">ReconcileCNIAddEvent</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nf">Context</span><span class="p">(),</span> <span class="nx">msg</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;Failed to handle add event: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+		<span class="nx">http</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="nx">err</span><span class="p">.</span><span class="nf">Error</span><span class="p">(),</span> <span class="nx">http</span><span class="p">.</span><span class="nx">StatusInternalServerError</span><span class="p">)</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// 获取 pods 信息并添加到网格中
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">CniPluginServer</span><span class="p">)</span> <span class="nf">ReconcileCNIAddEvent</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">addCmd</span> <span class="nx">CNIPluginAddEvent</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="nx">log</span> <span class="o">:=</span> <span class="nx">log</span><span class="p">.</span><span class="nf">WithLabels</span><span class="p">(</span><span class="s">&#34;cni-event&#34;</span><span class="p">,</span> <span class="nx">addCmd</span><span class="p">)</span>
+
+	<span class="nx">log</span><span class="p">.</span><span class="nf">Debugf</span><span class="p">(</span><span class="s">&#34;netns: %s&#34;</span><span class="p">,</span> <span class="nx">addCmd</span><span class="p">.</span><span class="nx">Netns</span><span class="p">)</span>
+
+	<span class="nx">maxStaleRetries</span> <span class="o">:=</span> <span class="mi">10</span>
+	<span class="nx">msInterval</span> <span class="o">:=</span> <span class="mi">10</span>
+	<span class="nx">retries</span> <span class="o">:=</span> <span class="mi">0</span>
+	<span class="kd">var</span> <span class="nx">ambientPod</span> <span class="o">*</span><span class="nx">corev1</span><span class="p">.</span><span class="nx">Pod</span>
+	<span class="kd">var</span> <span class="nx">err</span> <span class="kt">error</span>
+
+	<span class="nx">log</span><span class="p">.</span><span class="nf">Debugf</span><span class="p">(</span><span class="s">&#34;Checking pod: %s in ns: %s is enabled for ambient&#34;</span><span class="p">,</span> <span class="nx">addCmd</span><span class="p">.</span><span class="nx">PodName</span><span class="p">,</span> <span class="nx">addCmd</span><span class="p">.</span><span class="nx">PodNamespace</span><span class="p">)</span>
+	<span class="k">for</span> <span class="nx">ambientPod</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">handlers</span><span class="p">.</span><span class="nf">GetPodIfAmbient</span><span class="p">(</span><span class="nx">addCmd</span><span class="p">.</span><span class="nx">PodName</span><span class="p">,</span> <span class="nx">addCmd</span><span class="p">.</span><span class="nx">PodNamespace</span><span class="p">);</span> <span class="p">(</span><span class="nx">ambientPod</span> <span class="o">==</span> <span class="kc">nil</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="nx">retries</span> <span class="p">&lt;</span> <span class="nx">maxStaleRetries</span><span class="p">);</span> <span class="nx">retries</span><span class="o">++</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="nx">err</span>
+		<span class="p">}</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Warnf</span><span class="p">(</span><span class="s">&#34;got an event for pod %s in namespace %s not found in current pod cache, retry %d of %d&#34;</span><span class="p">,</span>
+			<span class="nx">addCmd</span><span class="p">.</span><span class="nx">PodName</span><span class="p">,</span> <span class="nx">addCmd</span><span class="p">.</span><span class="nx">PodNamespace</span><span class="p">,</span> <span class="nx">retries</span><span class="p">,</span> <span class="nx">maxStaleRetries</span><span class="p">)</span>
+		<span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nf">Duration</span><span class="p">(</span><span class="nx">msInterval</span><span class="p">)</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Millisecond</span><span class="p">)</span>
+	<span class="p">}</span>
+
+	<span class="k">if</span> <span class="nx">ambientPod</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;got event for pod %s in namespace %s but could not find in pod cache after retries&#34;</span><span class="p">,</span> <span class="nx">addCmd</span><span class="p">.</span><span class="nx">PodName</span><span class="p">,</span> <span class="nx">addCmd</span><span class="p">.</span><span class="nx">PodNamespace</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="nx">log</span><span class="p">.</span><span class="nf">Debugf</span><span class="p">(</span><span class="s">&#34;Pod: %s in ns: %s is enabled for ambient, adding to mesh.&#34;</span><span class="p">,</span> <span class="nx">addCmd</span><span class="p">.</span><span class="nx">PodName</span><span class="p">,</span> <span class="nx">addCmd</span><span class="p">.</span><span class="nx">PodNamespace</span><span class="p">)</span>
+
+	<span class="kd">var</span> <span class="nx">podIps</span> <span class="p">[]</span><span class="nx">netip</span><span class="p">.</span><span class="nx">Addr</span>
+	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">configuredPodIPs</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">addCmd</span><span class="p">.</span><span class="nx">IPs</span> <span class="p">{</span>
+		<span class="nx">ip</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">netip</span><span class="p">.</span><span class="nf">AddrFromSlice</span><span class="p">(</span><span class="nx">configuredPodIPs</span><span class="p">.</span><span class="nx">Address</span><span class="p">.</span><span class="nx">IP</span><span class="p">)</span>
+		<span class="nx">podIps</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">podIps</span><span class="p">,</span> <span class="nx">ip</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="nx">err</span> <span class="p">=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">dataplane</span><span class="p">.</span><span class="nf">AddPodToMesh</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">ambientPod</span><span class="p">,</span> <span class="nx">podIps</span><span class="p">,</span> <span class="nx">addCmd</span><span class="p">.</span><span class="nx">Netns</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span>
+
+	<span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h1 id="ztunnel-源码">ztunnel 源码</h1>
+<p>在 ztunnel 中，收到 cni 发送的创建代理信息后，其处理日志为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">2024-02-20T03:07:24.246171Z DEBUG ztunnel::inpod::protocol: FD <span class="m">20</span> <span class="nb">type</span> is netns
+2024-02-20T03:07:24.246197Z DEBUG ztunnel::inpod::protocol: FD <span class="m">20</span> looks like a netns
+2024-02-20T03:07:24.246200Z DEBUG ztunnel::inpod::protocol: Validating netns FD: Ok<span class="o">(())</span>
+2024-02-20T03:07:24.246220Z DEBUG ztunnel::inpod::workloadmanager: received message: AddWorkload<span class="o">(</span>WorkloadData <span class="o">{</span> netns: OwnedFd <span class="o">{</span> fd: <span class="m">20</span> <span class="o">}</span>, info: WorkloadInfo <span class="o">{</span> workload_uid: WorkloadUid<span class="o">(</span><span class="s2">&#34;5e28c62f-51c5-4179-a651-76dca59d65ab&#34;</span><span class="o">)</span> <span class="o">}</span> <span class="o">})</span>
+2024-02-20T03:07:24.246255Z  INFO ztunnel::inpod::statemanager: pod WorkloadUid<span class="o">(</span><span class="s2">&#34;5e28c62f-51c5-4179-a651-76dca59d65ab&#34;</span><span class="o">)</span> received netns, starting proxy
+2024-02-20T03:07:24.246328Z DEBUG ztunnel::inpod::statemanager: starting proxy <span class="nv">workload</span><span class="o">=</span>WorkloadInfo <span class="o">{</span> workload_uid: WorkloadUid<span class="o">(</span><span class="s2">&#34;5e28c62f-51c5-4179-a651-76dca59d65ab&#34;</span><span class="o">)</span> <span class="o">}</span> <span class="nv">inode</span><span class="o">=</span><span class="m">4026532923</span>
+2024-02-20T03:07:24.246425Z  INFO ztunnel::proxy::inbound: listener established <span class="nv">address</span><span class="o">=[</span>::<span class="o">]</span>:15008 <span class="nv">component</span><span class="o">=</span><span class="s2">&#34;inbound&#34;</span> <span class="nv">transparent</span><span class="o">=</span><span class="nb">true</span>
+2024-02-20T03:07:24.246472Z  INFO ztunnel::proxy::inbound_passthrough: listener established <span class="nv">address</span><span class="o">=[</span>::<span class="o">]</span>:15006 <span class="nv">component</span><span class="o">=</span><span class="s2">&#34;inbound plaintext&#34;</span> <span class="nv">transparent</span><span class="o">=</span><span class="nb">true</span>
+2024-02-20T03:07:24.246494Z  INFO ztunnel::proxy::outbound: listener established <span class="nv">address</span><span class="o">=[</span>::<span class="o">]</span>:15001 <span class="nv">component</span><span class="o">=</span><span class="s2">&#34;outbound&#34;</span> <span class="nv">transparent</span><span class="o">=</span><span class="nb">true</span>
+2024-02-20T03:07:24.246522Z  INFO ztunnel::proxy::socks5: listener established <span class="nv">address</span><span class="o">=</span>127.0.0.1:15080 <span class="nv">component</span><span class="o">=</span><span class="s2">&#34;socks5&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>ztunnel 会创建 4 个监听端口，分别是 15008、15006、15001、15080。其中 15008 和 15006 用于入口流量，15001 用于出口流量，15080 用于 socks5 代理。入向 15008 的相关源码如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="c1">// ztunnel/src/inpod/workloadmanager.rs
+</span><span class="c1"></span><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="k">fn</span> <span class="nf">process_msg</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">msg</span>: <span class="nc">WorkloadMessage</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nb">Result</span><span class="o">&lt;</span><span class="p">(),</span><span class="w"> </span><span class="n">Error</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">        </span><span class="k">match</span><span class="w"> </span><span class="n">msg</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">            </span><span class="n">WorkloadMessage</span>::<span class="n">AddWorkload</span><span class="p">(</span><span class="n">poddata</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">                </span><span class="n">info</span><span class="o">!</span><span class="p">(</span><span class="w">
+</span><span class="w">                    </span><span class="s">&#34;pod {:?} received netns, starting proxy&#34;</span><span class="p">,</span><span class="w">
+</span><span class="w">                    </span><span class="n">poddata</span><span class="p">.</span><span class="n">info</span><span class="p">.</span><span class="n">workload_uid</span><span class="w">
+</span><span class="w">                </span><span class="p">);</span><span class="w">
+</span><span class="w">                </span><span class="k">if</span><span class="w"> </span><span class="o">!</span><span class="bp">self</span><span class="p">.</span><span class="n">snapshot_received</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">                    </span><span class="bp">self</span><span class="p">.</span><span class="n">snapshot_names</span><span class="w">
+</span><span class="w">                        </span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">poddata</span><span class="p">.</span><span class="n">info</span><span class="p">.</span><span class="n">workload_uid</span><span class="p">.</span><span class="n">clone</span><span class="p">());</span><span class="w">
+</span><span class="w">                </span><span class="p">}</span><span class="w">
+</span><span class="w">                </span><span class="kd">let</span><span class="w"> </span><span class="n">netns</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">InpodNetns</span>::<span class="n">new</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">inpod_config</span><span class="p">.</span><span class="n">cur_netns</span><span class="p">(),</span><span class="w"> </span><span class="n">poddata</span><span class="p">.</span><span class="n">netns</span><span class="p">)</span><span class="w">
+</span><span class="w">                    </span><span class="p">.</span><span class="n">map_err</span><span class="p">(</span><span class="o">|</span><span class="n">e</span><span class="o">|</span><span class="w"> </span><span class="n">Error</span>::<span class="n">ProxyError</span><span class="p">(</span><span class="k">crate</span>::<span class="n">proxy</span>::<span class="n">Error</span>::<span class="n">Io</span><span class="p">(</span><span class="n">e</span><span class="p">)))</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span><span class="w">
+</span><span class="w">                </span><span class="bp">self</span><span class="p">.</span><span class="n">add_workload</span><span class="p">(</span><span class="n">poddata</span><span class="p">.</span><span class="n">info</span><span class="p">,</span><span class="w"> </span><span class="n">netns</span><span class="p">)</span><span class="w">
+</span><span class="w">                    </span><span class="p">.</span><span class="k">await</span><span class="w">
+</span><span class="w">                    </span><span class="p">.</span><span class="n">map_err</span><span class="p">(</span><span class="n">Error</span>::<span class="n">ProxyError</span><span class="p">)</span><span class="w">
+</span><span class="w">            </span><span class="p">}</span><span class="w">
+</span><span class="w">            </span><span class="c1">// ...
+</span><span class="c1"></span><span class="w">        </span><span class="p">}</span><span class="w">
+</span><span class="w">    </span><span class="p">}</span><span class="w">
+</span><span class="w">    </span><span class="c1">// 添加 workload，即配置几个端口代理
+</span><span class="c1"></span><span class="w">    </span><span class="k">async</span><span class="w"> </span><span class="k">fn</span> <span class="nf">add_workload</span><span class="p">(</span><span class="w">
+</span><span class="w">        </span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="bp">self</span><span class="p">,</span><span class="w">
+</span><span class="w">        </span><span class="n">workload_info</span>: <span class="nc">WorkloadInfo</span><span class="p">,</span><span class="w">
+</span><span class="w">        </span><span class="n">netns</span>: <span class="nc">InpodNetns</span><span class="p">,</span><span class="w">
+</span><span class="w">    </span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nb">Result</span><span class="o">&lt;</span><span class="p">(),</span><span class="w"> </span><span class="k">crate</span>::<span class="n">proxy</span>::<span class="n">Error</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">        </span><span class="k">match</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">add_workload_inner</span><span class="p">(</span><span class="o">&amp;</span><span class="n">workload_info</span><span class="p">,</span><span class="w"> </span><span class="n">netns</span><span class="p">.</span><span class="n">clone</span><span class="p">()).</span><span class="k">await</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">			</span><span class="c1">// ...
+</span><span class="c1"></span><span class="w">        </span><span class="p">}</span><span class="w">
+</span><span class="w">    </span><span class="p">}</span><span class="w">
+</span><span class="w">    </span><span class="k">async</span><span class="w"> </span><span class="k">fn</span> <span class="nf">add_workload_inner</span><span class="p">(</span><span class="w">
+</span><span class="w">        </span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="bp">self</span><span class="p">,</span><span class="w">
+</span><span class="w">        </span><span class="n">workload_info</span>: <span class="kp">&amp;</span><span class="nc">WorkloadInfo</span><span class="p">,</span><span class="w">
+</span><span class="w">        </span><span class="n">netns</span>: <span class="nc">InpodNetns</span><span class="p">,</span><span class="w">
+</span><span class="w">    </span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nb">Result</span><span class="o">&lt;</span><span class="p">(),</span><span class="w"> </span><span class="k">crate</span>::<span class="n">proxy</span>::<span class="n">Error</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">        </span><span class="c1">// 获取几个端口代理
+</span><span class="c1"></span><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">proxies</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="w">
+</span><span class="w">            </span><span class="p">.</span><span class="n">proxy_gen</span><span class="w">
+</span><span class="w">            </span><span class="p">.</span><span class="n">new_proxies_from_factory</span><span class="p">(</span><span class="w">
+</span><span class="w">                </span><span class="nb">Some</span><span class="p">(</span><span class="n">drain_rx</span><span class="p">),</span><span class="w">
+</span><span class="w">                </span><span class="n">Arc</span>::<span class="n">from</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">inpod_config</span><span class="p">.</span><span class="n">socket_factory</span><span class="p">(</span><span class="n">netns</span><span class="p">)),</span><span class="w">
+</span><span class="w">            </span><span class="p">)</span><span class="w">
+</span><span class="w">            </span><span class="p">.</span><span class="k">await</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span><span class="w">
+</span><span class="w">        </span><span class="c1">// ... 对每个代理依次执行 run
+</span><span class="c1"></span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">proxy</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">proxies</span><span class="p">.</span><span class="n">proxy</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">            </span><span class="n">tokio</span>::<span class="n">spawn</span><span class="p">(</span><span class="w">
+</span><span class="w">                </span><span class="k">async</span><span class="w"> </span><span class="k">move</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">                    </span><span class="n">proxy</span><span class="p">.</span><span class="n">run</span><span class="p">().</span><span class="k">await</span><span class="p">;</span><span class="w">
+</span><span class="w">                    </span><span class="n">debug</span><span class="o">!</span><span class="p">(</span><span class="s">&#34;proxy for workload {:?} exited&#34;</span><span class="p">,</span><span class="w"> </span><span class="n">uid</span><span class="p">);</span><span class="w">
+</span><span class="w">                    </span><span class="n">metrics</span><span class="p">.</span><span class="n">proxies_stopped</span><span class="p">.</span><span class="n">get_or_create</span><span class="p">(</span><span class="o">&amp;</span><span class="p">()).</span><span class="n">inc</span><span class="p">();</span><span class="w">
+</span><span class="w">                    </span><span class="n">admin_handler</span><span class="p">.</span><span class="n">proxy_down</span><span class="p">(</span><span class="o">&amp;</span><span class="n">uid</span><span class="p">);</span><span class="w">
+</span><span class="w">                </span><span class="p">}</span><span class="w">
+</span><span class="w">                </span><span class="p">.</span><span class="n">instrument</span><span class="p">(</span><span class="w">
+</span><span class="w">                    </span><span class="n">tracing</span>::<span class="n">info_span</span><span class="o">!</span><span class="p">(</span><span class="s">&#34;proxy&#34;</span><span class="p">,</span><span class="w"> </span><span class="n">uid</span><span class="o">=%</span><span class="n">workload_info</span><span class="p">.</span><span class="n">workload_uid</span><span class="p">.</span><span class="n">clone</span><span class="p">().</span><span class="n">into_string</span><span class="p">()),</span><span class="w">
+</span><span class="w">                </span><span class="p">),</span><span class="w">
+</span><span class="w">            </span><span class="p">);</span><span class="w">
+</span><span class="w">        </span><span class="p">}</span><span class="w">
+</span><span class="w">        </span><span class="c1">// ...
+</span><span class="c1"></span><span class="w">    </span><span class="p">}</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>new_proxies_from_factory 函数逻辑如下，主要是调用 Proxy::from_inputs 函数来生成的：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="c1">// src/proxyfactory.rs
+</span><span class="c1"></span><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="k">fn</span> <span class="nf">new_proxies_from_factory</span><span class="p">(</span><span class="w">
+</span><span class="w">        </span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w">
+</span><span class="w">        </span><span class="n">proxy_drain</span>: <span class="nb">Option</span><span class="o">&lt;</span><span class="n">Watch</span><span class="o">&gt;</span><span class="p">,</span><span class="w">
+</span><span class="w">        </span><span class="n">socket_factory</span>: <span class="nc">Arc</span><span class="o">&lt;</span><span class="k">dyn</span><span class="w"> </span><span class="k">crate</span>::<span class="n">proxy</span>::<span class="n">SocketFactory</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nb">Send</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nb">Sync</span><span class="o">&gt;</span><span class="p">,</span><span class="w">
+</span><span class="w">    </span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nb">Result</span><span class="o">&lt;</span><span class="n">ProxyResult</span><span class="p">,</span><span class="w"> </span><span class="n">Error</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">result</span>: <span class="nc">ProxyResult</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Default</span>::<span class="n">default</span><span class="p">();</span><span class="w">
+</span><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">drain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">proxy_drain</span><span class="p">.</span><span class="n">unwrap_or_else</span><span class="p">(</span><span class="o">||</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">drain</span><span class="p">.</span><span class="n">clone</span><span class="p">());</span><span class="w">
+</span><span class="w">
+</span><span class="w">        </span><span class="c1">// Optionally create the HBONE proxy.
+</span><span class="c1"></span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">proxy</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">            </span><span class="kd">let</span><span class="w"> </span><span class="n">pi</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">crate</span>::<span class="n">proxy</span>::<span class="n">ProxyInputs</span>::<span class="n">new</span><span class="p">(</span><span class="w">
+</span><span class="w">                </span><span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">clone</span><span class="p">(),</span><span class="w">
+</span><span class="w">                </span><span class="bp">self</span><span class="p">.</span><span class="n">cert_manager</span><span class="p">.</span><span class="n">clone</span><span class="p">(),</span><span class="w">
+</span><span class="w">                </span><span class="bp">self</span><span class="p">.</span><span class="n">state</span><span class="p">.</span><span class="n">clone</span><span class="p">(),</span><span class="w">
+</span><span class="w">                </span><span class="bp">self</span><span class="p">.</span><span class="n">proxy_metrics</span><span class="p">.</span><span class="n">clone</span><span class="p">().</span><span class="n">unwrap</span><span class="p">(),</span><span class="w">
+</span><span class="w">                </span><span class="n">socket_factory</span><span class="p">.</span><span class="n">clone</span><span class="p">(),</span><span class="w">
+</span><span class="w">            </span><span class="p">);</span><span class="w">
+</span><span class="w">            </span><span class="n">result</span><span class="p">.</span><span class="n">proxy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">Proxy</span>::<span class="n">from_inputs</span><span class="p">(</span><span class="n">pi</span><span class="p">,</span><span class="w"> </span><span class="n">drain</span><span class="p">.</span><span class="n">clone</span><span class="p">()).</span><span class="k">await</span><span class="o">?</span><span class="p">);</span><span class="w">
+</span><span class="w">        </span><span class="p">}</span><span class="w">
+</span><span class="w">
+</span><span class="w">        </span><span class="c1">// Optionally create the DNS proxy.
+</span><span class="c1"></span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">dns_proxy</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">            </span><span class="n">result</span><span class="p">.</span><span class="n">dns_proxy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="w">
+</span><span class="w">                </span><span class="n">dns</span>::<span class="n">Server</span>::<span class="n">new</span><span class="p">(</span><span class="w">
+</span><span class="w">                    </span><span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">cluster_domain</span><span class="p">.</span><span class="n">clone</span><span class="p">(),</span><span class="w">
+</span><span class="w">                    </span><span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">dns_proxy_addr</span><span class="p">,</span><span class="w">
+</span><span class="w">                    </span><span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">network</span><span class="p">.</span><span class="n">clone</span><span class="p">(),</span><span class="w">
+</span><span class="w">                    </span><span class="bp">self</span><span class="p">.</span><span class="n">state</span><span class="p">.</span><span class="n">clone</span><span class="p">(),</span><span class="w">
+</span><span class="w">                    </span><span class="n">dns</span>::<span class="n">forwarder_for_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">proxy_mode</span><span class="p">)</span><span class="o">?</span><span class="p">,</span><span class="w">
+</span><span class="w">                    </span><span class="bp">self</span><span class="p">.</span><span class="n">dns_metrics</span><span class="p">.</span><span class="n">clone</span><span class="p">().</span><span class="n">unwrap</span><span class="p">(),</span><span class="w">
+</span><span class="w">                    </span><span class="n">drain</span><span class="p">,</span><span class="w">
+</span><span class="w">                    </span><span class="n">socket_factory</span><span class="p">.</span><span class="n">as_ref</span><span class="p">(),</span><span class="w">
+</span><span class="w">                </span><span class="p">)</span><span class="w">
+</span><span class="w">                </span><span class="p">.</span><span class="k">await</span><span class="o">?</span><span class="p">,</span><span class="w">
+</span><span class="w">            </span><span class="p">);</span><span class="w">
+</span><span class="w">        </span><span class="p">}</span><span class="w">
+</span><span class="w">        </span><span class="nb">Ok</span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="w">
+</span><span class="w">    </span><span class="p">}</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>这里看其中一个端口 15008 代理的逻辑，其初始化代码如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="k">impl</span><span class="w"> </span><span class="n">Inbound</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">    </span><span class="k">pub</span><span class="p">(</span><span class="k">super</span><span class="p">)</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="k">fn</span> <span class="nf">new</span><span class="p">(</span><span class="k">mut</span><span class="w"> </span><span class="n">pi</span>: <span class="nc">ProxyInputs</span><span class="p">,</span><span class="w"> </span><span class="n">drain</span>: <span class="nc">Watch</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nb">Result</span><span class="o">&lt;</span><span class="n">Inbound</span><span class="p">,</span><span class="w"> </span><span class="n">Error</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">listener</span>: <span class="nc">TcpListener</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pi</span><span class="w">
+</span><span class="w">            </span><span class="p">.</span><span class="n">socket_factory</span><span class="w">
+</span><span class="w">            </span><span class="c1">// 调用的 InPodSocketFactory 中的 tcp_bind
+</span><span class="c1"></span><span class="w">            </span><span class="p">.</span><span class="n">tcp_bind</span><span class="p">(</span><span class="n">pi</span><span class="p">.</span><span class="n">cfg</span><span class="p">.</span><span class="n">inbound_addr</span><span class="p">)</span><span class="w">
+</span><span class="w">            </span><span class="p">.</span><span class="n">map_err</span><span class="p">(</span><span class="o">|</span><span class="n">e</span><span class="o">|</span><span class="w"> </span><span class="n">Error</span>::<span class="n">Bind</span><span class="p">(</span><span class="n">pi</span><span class="p">.</span><span class="n">cfg</span><span class="p">.</span><span class="n">inbound_addr</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">))</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">transparent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">super</span>::<span class="n">maybe_set_transparent</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pi</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">listener</span><span class="p">)</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span><span class="w">        </span><span class="n">pi</span><span class="p">.</span><span class="n">cfg</span><span class="p">.</span><span class="n">enable_original_source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">transparent</span><span class="p">);</span><span class="w">
+</span><span class="w">        </span><span class="nb">Ok</span><span class="p">(</span><span class="n">Inbound</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">            </span><span class="n">cfg</span>: <span class="nc">pi</span><span class="p">.</span><span class="n">cfg</span><span class="p">,</span><span class="w">
+</span><span class="w">            </span><span class="n">state</span>: <span class="nc">pi</span><span class="p">.</span><span class="n">state</span><span class="p">,</span><span class="w">
+</span><span class="w">            </span><span class="n">listener</span><span class="p">,</span><span class="w">
+</span><span class="w">            </span><span class="n">cert_manager</span>: <span class="nc">pi</span><span class="p">.</span><span class="n">cert_manager</span><span class="p">,</span><span class="w">
+</span><span class="w">            </span><span class="n">metrics</span>: <span class="nc">pi</span><span class="p">.</span><span class="n">metrics</span><span class="p">,</span><span class="w">
+</span><span class="w">            </span><span class="n">drain</span><span class="p">,</span><span class="w">
+</span><span class="w">            </span><span class="n">socket_factory</span>: <span class="nc">pi</span><span class="p">.</span><span class="n">socket_factory</span><span class="p">.</span><span class="n">clone</span><span class="p">(),</span><span class="w">
+</span><span class="w">        </span><span class="p">})</span><span class="w">
+</span><span class="w">    </span><span class="p">}</span><span class="w">
+</span><span class="w">
+</span><span class="w">    </span><span class="k">pub</span><span class="p">(</span><span class="k">super</span><span class="p">)</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="k">fn</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="c1">//...
+</span><span class="c1"></span><span class="w">    </span><span class="k">pub</span><span class="p">(</span><span class="k">super</span><span class="p">)</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="k">fn</span> <span class="nf">handle_inbound</span><span class="c1">//...
+</span></code></pre></td></tr></table>
+</div>
+</div><p>看下这里使用的 tcp_bind 函数实现逻辑：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="k">impl</span><span class="w"> </span><span class="k">crate</span>::<span class="n">proxy</span>::<span class="n">SocketFactory</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">InPodSocketFactory</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">    </span><span class="k">fn</span> <span class="nf">new_tcp_v4</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nc">std</span>::<span class="n">io</span>::<span class="nb">Result</span><span class="o">&lt;</span><span class="n">tokio</span>::<span class="n">net</span>::<span class="n">TcpSocket</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">        </span><span class="bp">self</span><span class="p">.</span><span class="n">configure</span><span class="p">(</span><span class="n">tokio</span>::<span class="n">net</span>::<span class="n">TcpSocket</span>::<span class="n">new_v4</span><span class="p">)</span><span class="w">
+</span><span class="w">    </span><span class="p">}</span><span class="w">
+</span><span class="w">
+</span><span class="w">    </span><span class="k">fn</span> <span class="nf">new_tcp_v6</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nc">std</span>::<span class="n">io</span>::<span class="nb">Result</span><span class="o">&lt;</span><span class="n">tokio</span>::<span class="n">net</span>::<span class="n">TcpSocket</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">        </span><span class="bp">self</span><span class="p">.</span><span class="n">configure</span><span class="p">(</span><span class="n">tokio</span>::<span class="n">net</span>::<span class="n">TcpSocket</span>::<span class="n">new_v6</span><span class="p">)</span><span class="w">
+</span><span class="w">    </span><span class="p">}</span><span class="w">
+</span><span class="w">
+</span><span class="w">    </span><span class="k">fn</span> <span class="nf">tcp_bind</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">addr</span>: <span class="nc">std</span>::<span class="n">net</span>::<span class="n">SocketAddr</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nc">std</span>::<span class="n">io</span>::<span class="nb">Result</span><span class="o">&lt;</span><span class="n">tokio</span>::<span class="n">net</span>::<span class="n">TcpListener</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">        </span><span class="c1">// 会调用 configure 方法，将当前进程的网络命名空间 ns 切换到目标 pods 的 ns，执行 bind 函数
+</span><span class="c1"></span><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">std_sock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">configure</span><span class="p">(</span><span class="o">||</span><span class="w"> </span><span class="n">std</span>::<span class="n">net</span>::<span class="n">TcpListener</span>::<span class="n">bind</span><span class="p">(</span><span class="n">addr</span><span class="p">))</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span><span class="w">        </span><span class="n">std_sock</span><span class="p">.</span><span class="n">set_nonblocking</span><span class="p">(</span><span class="kc">true</span><span class="p">)</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span><span class="w">        </span><span class="n">tokio</span>::<span class="n">net</span>::<span class="n">TcpListener</span>::<span class="n">from_std</span><span class="p">(</span><span class="n">std_sock</span><span class="p">)</span><span class="w">
+</span><span class="w">    </span><span class="p">}</span><span class="w">
+</span><span class="w">
+</span><span class="w">    </span><span class="k">fn</span> <span class="nf">udp_bind</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">addr</span>: <span class="nc">std</span>::<span class="n">net</span>::<span class="n">SocketAddr</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nc">std</span>::<span class="n">io</span>::<span class="nb">Result</span><span class="o">&lt;</span><span class="n">tokio</span>::<span class="n">net</span>::<span class="n">UdpSocket</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">std_sock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">configure</span><span class="p">(</span><span class="o">||</span><span class="w"> </span><span class="n">std</span>::<span class="n">net</span>::<span class="n">UdpSocket</span>::<span class="n">bind</span><span class="p">(</span><span class="n">addr</span><span class="p">))</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span><span class="w">        </span><span class="n">std_sock</span><span class="p">.</span><span class="n">set_nonblocking</span><span class="p">(</span><span class="kc">true</span><span class="p">)</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span><span class="w">        </span><span class="n">tokio</span>::<span class="n">net</span>::<span class="n">UdpSocket</span>::<span class="n">from_std</span><span class="p">(</span><span class="n">std_sock</span><span class="p">)</span><span class="w">
+</span><span class="w">    </span><span class="p">}</span><span class="w">
+</span><span class="w"></span><span class="p">}</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="c1">// configure 定义
+</span><span class="c1"></span><span class="k">impl</span><span class="w"> </span><span class="n">InPodSocketFactory</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">    </span><span class="k">fn</span> <span class="nf">from_cfg</span><span class="p">(</span><span class="n">inpod_config</span>: <span class="kp">&amp;</span><span class="nc">InPodConfig</span><span class="p">,</span><span class="w"> </span><span class="n">netns</span>: <span class="nc">InpodNetns</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nc">Self</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">        </span><span class="bp">Self</span>::<span class="n">new</span><span class="p">(</span><span class="n">netns</span><span class="p">,</span><span class="w"> </span><span class="n">inpod_config</span><span class="p">.</span><span class="n">mark</span><span class="p">())</span><span class="w">
+</span><span class="w">    </span><span class="p">}</span><span class="w">
+</span><span class="w">    </span><span class="k">fn</span> <span class="nf">new</span><span class="p">(</span><span class="n">netns</span>: <span class="nc">InpodNetns</span><span class="p">,</span><span class="w"> </span><span class="n">mark</span>: <span class="nb">Option</span><span class="o">&lt;</span><span class="n">std</span>::<span class="n">num</span>::<span class="n">NonZeroU32</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nc">Self</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">        </span><span class="bp">Self</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">netns</span><span class="p">,</span><span class="w"> </span><span class="n">mark</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="w">    </span><span class="p">}</span><span class="w">
+</span><span class="w">
+</span><span class="w">    </span><span class="k">fn</span> <span class="nf">configure</span><span class="o">&lt;</span><span class="n">S</span>: <span class="nc">std</span>::<span class="n">os</span>::<span class="n">unix</span>::<span class="n">io</span>::<span class="n">AsFd</span><span class="p">,</span><span class="w"> </span><span class="n">F</span>: <span class="nb">FnOnce</span><span class="p">()</span><span class="w"> </span>-&gt; <span class="nc">std</span>::<span class="n">io</span>::<span class="nb">Result</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="w">
+</span><span class="w">        </span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w">
+</span><span class="w">        </span><span class="n">f</span>: <span class="nc">F</span><span class="p">,</span><span class="w">
+</span><span class="w">    </span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nc">std</span>::<span class="n">io</span>::<span class="nb">Result</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">socket</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">netns</span><span class="p">.</span><span class="n">run</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">??</span><span class="p">;</span><span class="w">
+</span><span class="w">
+</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">mark</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">mark</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">            </span><span class="k">crate</span>::<span class="n">socket</span>::<span class="n">set_mark</span><span class="p">(</span><span class="o">&amp;</span><span class="n">socket</span><span class="p">,</span><span class="w"> </span><span class="n">mark</span><span class="p">.</span><span class="n">into</span><span class="p">())</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span><span class="w">        </span><span class="p">}</span><span class="w">
+</span><span class="w">        </span><span class="nb">Ok</span><span class="p">(</span><span class="n">socket</span><span class="p">)</span><span class="w">
+</span><span class="w">    </span><span class="p">}</span><span class="w">
+</span><span class="w"></span><span class="p">}</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>最终执行到 netns.run(f) 这里，其代码如下，也在把当前进程的网络命名空间 ns 切换到目标 pods 的 ns，然后执行 f 函数，f 函数中会创建监听端口：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="c1">// src/inpod/netns.rs
+</span><span class="c1"></span><span class="k">impl</span><span class="w"> </span><span class="n">InpodNetns</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">    </span><span class="c1">// ...
+</span><span class="c1"></span><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="k">fn</span> <span class="nf">new</span><span class="p">(</span><span class="n">cur_netns</span>: <span class="nc">Arc</span><span class="o">&lt;</span><span class="n">OwnedFd</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="n">workload_netns</span>: <span class="nc">OwnedFd</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nc">std</span>::<span class="n">io</span>::<span class="nb">Result</span><span class="o">&lt;</span><span class="bp">Self</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nix</span>::<span class="n">sys</span>::<span class="n">stat</span>::<span class="n">fstat</span><span class="p">(</span><span class="n">workload_netns</span><span class="p">.</span><span class="n">as_raw_fd</span><span class="p">())</span><span class="w">
+</span><span class="w">            </span><span class="p">.</span><span class="n">map_err</span><span class="p">(</span><span class="o">|</span><span class="n">e</span><span class="o">|</span><span class="w"> </span><span class="n">std</span>::<span class="n">io</span>::<span class="n">Error</span>::<span class="n">from_raw_os_error</span><span class="p">(</span><span class="n">e</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">i32</span><span class="p">))</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">netns_inode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">res</span><span class="p">.</span><span class="n">st_ino</span><span class="p">;</span><span class="w">
+</span><span class="w">        </span><span class="nb">Ok</span><span class="p">(</span><span class="n">InpodNetns</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">            </span><span class="n">inner</span>: <span class="nc">Arc</span>::<span class="n">new</span><span class="p">(</span><span class="n">NetnsInner</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">                </span><span class="n">cur_netns</span><span class="p">,</span><span class="w">
+</span><span class="w">                </span><span class="n">netns</span>: <span class="nc">workload_netns</span><span class="p">,</span><span class="w">
+</span><span class="w">                </span><span class="n">netns_inode</span><span class="p">,</span><span class="w">
+</span><span class="w">            </span><span class="p">}),</span><span class="w">
+</span><span class="w">        </span><span class="p">})</span><span class="w">
+</span><span class="w">    </span><span class="p">}</span><span class="w">
+</span><span class="w">
+</span><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="k">fn</span> <span class="nf">run</span><span class="o">&lt;</span><span class="n">F</span><span class="p">,</span><span class="w"> </span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">f</span>: <span class="nc">F</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nc">std</span>::<span class="n">io</span>::<span class="nb">Result</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w">
+</span><span class="w">    </span><span class="k">where</span><span class="w">
+</span><span class="w">        </span><span class="n">F</span>: <span class="nb">FnOnce</span><span class="p">()</span><span class="w"> </span>-&gt; <span class="nc">T</span><span class="p">,</span><span class="w">
+</span><span class="w">    </span><span class="p">{</span><span class="w">
+</span><span class="w">        </span><span class="n">setns</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">inner</span><span class="p">.</span><span class="n">netns</span><span class="p">.</span><span class="n">as_raw_fd</span><span class="p">(),</span><span class="w"> </span><span class="n">CloneFlags</span>::<span class="n">CLONE_NEWNET</span><span class="p">)</span><span class="w">
+</span><span class="w">            </span><span class="p">.</span><span class="n">map_err</span><span class="p">(</span><span class="o">|</span><span class="n">e</span><span class="o">|</span><span class="w"> </span><span class="n">std</span>::<span class="n">io</span>::<span class="n">Error</span>::<span class="n">from_raw_os_error</span><span class="p">(</span><span class="n">e</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">i32</span><span class="p">))</span><span class="o">?</span><span class="p">;</span><span class="w">
+</span><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">ret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">f</span><span class="p">();</span><span class="w">
+</span><span class="w">        </span><span class="n">setns</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">inner</span><span class="p">.</span><span class="n">cur_netns</span><span class="p">.</span><span class="n">as_raw_fd</span><span class="p">(),</span><span class="w"> </span><span class="n">CloneFlags</span>::<span class="n">CLONE_NEWNET</span><span class="p">)</span><span class="w">
+</span><span class="w">            </span><span class="p">.</span><span class="n">expect</span><span class="p">(</span><span class="s">&#34;this must never fail&#34;</span><span class="p">);</span><span class="w">
+</span><span class="w">        </span><span class="nb">Ok</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span><span class="w">
+</span><span class="w">    </span><span class="p">}</span><span class="w">
+</span><span class="w"></span><span class="p">}</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><h1 id="参考">参考</h1>
+<ul>
+<li><a href="https://istio.io/latest/zh/blog/2024/inpod-traffic-redirection-ambient/">inpod 流量重定向 ambient 模式</a></li>
+</ul>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">yefengzhichen</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2024-04-08
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="../../tags/kubernetes/">kubernetes</a>
+          <a href="../../tags/istio/">istio</a>
+          <a href="../../tags/ambient/">ambient</a>
+          </div>
+      <nav class="post-nav">
+        
+        <a class="next" href="../../post/istio_multicluster_analyse/">
+            <span class="next-text nav-default">istio 多集群访问流程和源码分析</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="yefengzhichen/yefengzhichen.github.io"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="zhutao_hust@foxmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/yefengzhichen" class="iconfont icon-github" title="github"></a>
+  <a href="https://yefengzhichen.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  <div class="busuanzi-footer">
+    <span id="busuanzi_container_site_pv"> 本站总访问量 <span id="busuanzi_value_site_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次 </span>
+      <span class="division">|</span>
+    <span id="busuanzi_container_site_uv"> 本站总访客数 <span id="busuanzi_value_site_uv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 人 </span>
+  </div>
+
+  <span class="copyright-year">
+    &copy; 
+    2022 - 
+    2024<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="../../js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

@@ -773,8 +773,8 @@ num  target     prot opt <span class="nb">source</span>               destinatio
         <span class="c1">// 在使用 VIP 时，通过 Envoy 将应用程序的调用重定向到自身
 </span><span class="c1"></span>        <span class="c1">// 比如：appN =&gt; Envoy (client) =&gt; Envoy (server) =&gt; appN.
 </span><span class="c1"></span>    <span class="k">if</span> <span class="nx">redirectDNS</span> <span class="p">{</span>
-            <span class="c1">// 当 dns 捕获开启时，跳过端口 53，这可以保证不出现：app =&gt; istio-agent =&gt; Envoy inbound =&gt; dns server
-</span><span class="c1"></span>            <span class="c1">// 而保证流程为：app =&gt; istio-agent =&gt; dns server
+      <span class="c1">// 当 dns 捕获开启时，跳过端口 53，这可以保证不出现：app =&gt; istio-agent =&gt; Envoy inbound =&gt; dns server
+</span><span class="c1"></span>      <span class="c1">// 而保证流程为：app =&gt; istio-agent =&gt; dns server
 </span><span class="c1"></span>      <span class="c1">// 选择从本地 lo 网络接口发起的，且目的地址不为“127.0.0.1”
 </span><span class="c1"></span>      <span class="c1">// 指定是 tcp 规则，且目的端口不为 53
 </span><span class="c1"></span>      <span class="c1">// 匹配发起者用户为 uid，则转发到 ISTIOINREDIRECT 规则
@@ -794,7 +794,7 @@ num  target     prot opt <span class="nb">source</span>               destinatio
 </span><span class="c1"></span>        <span class="c1">// 如果通过 OutboundIPRangesInclude 明确设置了回环，那么就不要返回
 </span><span class="c1"></span>    <span class="k">if</span> <span class="p">!</span><span class="nx">ipv4RangesInclude</span><span class="p">.</span><span class="nx">HasLoopBackIP</span> <span class="o">&amp;&amp;</span> <span class="p">!</span><span class="nx">ipv6RangesInclude</span><span class="p">.</span><span class="nx">HasLoopBackIP</span> <span class="p">{</span>
       <span class="k">if</span> <span class="nx">redirectDNS</span> <span class="p">{</span>
-                <span class="c1">// 用户可能在本地有一个 DNS 服务器，为了处理这种情况，从这条规则中排除了端口 53
+        <span class="c1">// 用户可能在本地有一个 DNS 服务器，为了处理这种情况，从这条规则中排除了端口 53
 </span><span class="c1"></span>        <span class="c1">// 从本地接口请求，目的端口不为 53，且不是 uid 的用户发起的
 </span><span class="c1"></span>        <span class="c1">// 这条规则匹配 ISTIO_OUTPUT 中的第 3 条
 </span><span class="c1"></span>        <span class="c1">// 3    RETURN     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:!53 ! owner UID match 1337
@@ -810,7 +810,7 @@ num  target     prot opt <span class="nb">source</span>               destinatio
     <span class="c1">// ...
 </span><span class="c1"></span>  <span class="k">if</span> <span class="nx">redirectDNS</span> <span class="p">{</span>
     <span class="k">if</span> <span class="nx">cfg</span><span class="p">.</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">CaptureAllDNS</span> <span class="p">{</span>
-            <span class="c1">// 重定向所有 53 端口上的 TCP dns 流量到 agent 的端口 15053 上，这在 CNI 场景下很有用，因为 pod 的 dns 服务器地址还不能确定
+      <span class="c1">// 重定向所有 53 端口上的 TCP dns 流量到 agent 的端口 15053 上，这在 CNI 场景下很有用，因为 pod 的 dns 服务器地址还不能确定
 </span><span class="c1"></span>      <span class="nx">cfg</span><span class="p">.</span><span class="nx">iptables</span><span class="p">.</span><span class="nf">AppendRule</span><span class="p">(</span><span class="nx">iptableslog</span><span class="p">.</span><span class="nx">UndefinedCommand</span><span class="p">,</span>
         <span class="nx">constants</span><span class="p">.</span><span class="nx">ISTIOOUTPUT</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">NAT</span><span class="p">,</span>
         <span class="s">&#34;-p&#34;</span><span class="p">,</span> <span class="nx">constants</span><span class="p">.</span><span class="nx">TCP</span><span class="p">,</span>
@@ -1391,7 +1391,7 @@ num  target     prot opt <span class="nb">source</span>               destinatio
   <span class="copyright-year">
     &copy; 
     2022 - 
-    2023<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
+    2024<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
   </span>
 </div>
 

@@ -49,7 +49,7 @@
 <meta itemprop="name" content="istio 多集群访问流程和源码分析">
 <meta itemprop="description" content="安装 kubernetes 集群创建 部署方式为多网络多控制面，这里使用 k3s 安装两个 kubernetes 集群，安装后需执行： 1 2 3 4 5 6 7 8 9 # 拷贝 kubeconfig 配置，istioctl 需要 cp /etc/rancher/k3s/k3s.yaml ~/.kube/config #"><meta itemprop="datePublished" content="2023-11-21T16:10:46+08:00" />
 <meta itemprop="dateModified" content="2023-11-21T16:10:46+08:00" />
-<meta itemprop="wordCount" content="11109">
+<meta itemprop="wordCount" content="11113">
 <meta itemprop="keywords" content="kubernetes,istio,envoy,service mesh," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="istio 多集群访问流程和源码分析"/>
 <meta name="twitter:description" content="安装 kubernetes 集群创建 部署方式为多网络多控制面，这里使用 k3s 安装两个 kubernetes 集群，安装后需执行： 1 2 3 4 5 6 7 8 9 # 拷贝 kubeconfig 配置，istioctl 需要 cp /etc/rancher/k3s/k3s.yaml ~/.kube/config #"/>
@@ -132,7 +132,7 @@
         <div class="post-category">
             <a href="../../categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
             </div>
-          <span class="more-meta"> 约 11109 字 </span>
+          <span class="more-meta"> 约 11113 字 </span>
           <span class="more-meta"> 预计阅读 23 分钟 </span>
         <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
       </div>
@@ -1286,7 +1286,7 @@ openssl x509 -noout -text -in root.pem
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewController</span><span class="p">(</span><span class="nx">kubeclientset</span> <span class="nx">kube</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">namespace</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">clusterID</span> <span class="nx">cluster</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span> <span class="nx">meshWatcher</span> <span class="nx">mesh</span><span class="p">.</span><span class="nx">Watcher</span><span class="p">)</span> <span class="o">*</span><span class="nx">Controller</span> <span class="p">{</span>
   <span class="nx">informerClient</span> <span class="o">:=</span> <span class="nx">kubeclientset</span>
 
-  <span class="c1">// 创建 Informer 来获取和监听服务网格所在命名空间下，带有 label 为 “istio/multiClusterSecret=true” 的 secret 资源
+  <span class="c1">// 创建 Informer 来获取和监听服务网格所在命名空间下，带有 label 为 “istio/multiCluster: &#34;true&#34;”  的 secret 资源
 </span><span class="c1"></span>  <span class="nx">secretsInformer</span> <span class="o">:=</span> <span class="nx">cache</span><span class="p">.</span><span class="nf">NewSharedIndexInformer</span><span class="p">(</span>
     <span class="o">&amp;</span><span class="nx">cache</span><span class="p">.</span><span class="nx">ListWatch</span><span class="p">{</span>
       <span class="nx">ListFunc</span><span class="p">:</span> <span class="kd">func</span><span class="p">(</span><span class="nx">opts</span> <span class="nx">metav1</span><span class="p">.</span><span class="nx">ListOptions</span><span class="p">)</span> <span class="p">(</span><span class="nx">runtime</span><span class="p">.</span><span class="nx">Object</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
@@ -3056,7 +3056,11 @@ kubectl delete ns istio-system
           <a href="../../tags/service-mesh/">service mesh</a>
           </div>
       <nav class="post-nav">
-        
+        <a class="prev" href="../../post/istio_ambient_source/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">Istio 1.21.0 版本 inpod ambient 模式源码解析</span>
+            <span class="prev-text nav-mobile">上一篇</span>
+          </a>
         <a class="next" href="../../post/istio_cert_manager_src/">
             <span class="next-text nav-default">istio 集成 cert-manager 使用和源码分析</span>
             <span class="next-text nav-mobile">下一篇</span>
@@ -3109,7 +3113,7 @@ kubectl delete ns istio-system
   <span class="copyright-year">
     &copy; 
     2022 - 
-    2023<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
+    2024<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
   </span>
 </div>
 
