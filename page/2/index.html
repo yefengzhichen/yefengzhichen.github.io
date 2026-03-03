@@ -350,6 +350,27 @@
   </div>
 </article>
 
+    <article class="post">
+  <header class="post-header">
+    <h1 class="post-title"><a class="post-link" href="../../post/nvidia-container-runtime/"></a></h1>
+    <div class="post-meta">
+      <span class="post-time"> 0001-01-01 </span>
+      
+        <span class="more-meta"> 约 1631 字 </span>
+        <span class="more-meta"> 预计阅读 4 分钟 </span>
+    </div>
+  </header>
+  
+  <div class="post-content">
+    <div class="post-summary">
+      nvidia-container-runtime 相关逻辑 相关配置和内容 /etc/containerd/config.toml 中配置： 1 2 3 4 5 6 7 [plugins.&#34;io.containerd.grpc.v1.cri&#34;.containerd.runtimes.nvidia] privileged_without_host_devices = false runtime_engine = &#34;&#34; runtime_root = &#34;&#34; runtime_type = &#34;io.containerd.runc.v1&#34; [plugins.&#34;io.containerd.grpc.v1.cri&#34;.containerd.runtimes.nvidia.options] BinaryName = &#34;/usr/bin/nvidia-container-runtime&#34; 代码中读取配置文件路径：/etc/nvidia-conta
+    </div>
+    <div class="read-more">
+      <a href="../../post/nvidia-container-runtime/" class="read-more-link">阅读更多</a>
+    </div>
+  </div>
+</article>
+
     </section>
   
   <nav class="pagination">
@@ -391,7 +412,7 @@
   <span class="copyright-year">
     &copy; 
     2022 - 
-    2024<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
+    2026<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
   </span>
 </div>
 

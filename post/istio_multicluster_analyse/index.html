@@ -49,7 +49,7 @@
 <meta itemprop="name" content="istio 多集群访问流程和源码分析">
 <meta itemprop="description" content="安装 kubernetes 集群创建 部署方式为多网络多控制面，这里使用 k3s 安装两个 kubernetes 集群，安装后需执行： 1 2 3 4 5 6 7 8 9 # 拷贝 kubeconfig 配置，istioctl 需要 cp /etc/rancher/k3s/k3s.yaml ~/.kube/config #"><meta itemprop="datePublished" content="2023-11-21T16:10:46+08:00" />
 <meta itemprop="dateModified" content="2023-11-21T16:10:46+08:00" />
-<meta itemprop="wordCount" content="11113">
+<meta itemprop="wordCount" content="11109">
 <meta itemprop="keywords" content="kubernetes,istio,envoy,service mesh," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="istio 多集群访问流程和源码分析"/>
 <meta name="twitter:description" content="安装 kubernetes 集群创建 部署方式为多网络多控制面，这里使用 k3s 安装两个 kubernetes 集群，安装后需执行： 1 2 3 4 5 6 7 8 9 # 拷贝 kubeconfig 配置，istioctl 需要 cp /etc/rancher/k3s/k3s.yaml ~/.kube/config #"/>
@@ -132,7 +132,7 @@
         <div class="post-category">
             <a href="../../categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
             </div>
-          <span class="more-meta"> 约 11113 字 </span>
+          <span class="more-meta"> 约 11109 字 </span>
           <span class="more-meta"> 预计阅读 23 分钟 </span>
         <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
       </div>
@@ -195,7 +195,7 @@
 <pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 拷贝 kubeconfig 配置，istioctl 需要</span>
 cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
 <span class="c1"># 创建根证书</span>
-<span class="nb">cd</span> ~/test/istio-1.18.2
+<span class="nb">cd</span> ~/test/istio-1.19.5
 mkdir -p certs <span class="o">&amp;&amp;</span> <span class="nb">cd</span> certs
 make -f ../tools/certs/Makefile.selfsigned.mk root-ca
 make -f ../tools/certs/Makefile.selfsigned.mk cluster1
@@ -309,7 +309,7 @@ kubectl create secret generic cacerts -n istio-system <span class="se">\
 </span><span class="w">    </span><span class="nt">defaultConfig</span><span class="p">:</span><span class="w">
 </span><span class="w">      </span><span class="nt">proxyMetadata</span><span class="p">:</span><span class="w">
 </span><span class="w">        </span><span class="nt">ISTIO_META_DNS_CAPTURE</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;true&#34;</span><span class="w">
-</span><span class="w">  </span><span class="nt">tag</span><span class="p">:</span><span class="w"> </span><span class="m">1.18.2</span><span class="w">
+</span><span class="w">  </span><span class="nt">tag</span><span class="p">:</span><span class="w"> </span><span class="m">1.19.5</span><span class="w">
 </span><span class="w">  </span><span class="nt">profile</span><span class="p">:</span><span class="w"> </span><span class="l">demo</span><span class="w">
 </span><span class="w">  </span><span class="nt">components</span><span class="p">:</span><span class="w">
 </span><span class="w">    </span><span class="nt">ingressGateways</span><span class="p">:</span><span class="w">
@@ -417,19 +417,19 @@ kubectl create secret generic cacerts -n istio-system <span class="se">\
 <pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># cluster1</span>
 istioctl install -f cluster1.yaml
 kubectl  apply -n istio-system -f expose-services.yaml
-<span class="c1"># 可通过以下查看安装的文件 </span>
+<span class="c1"># 可通过以下查看安装的文件</span>
 <span class="c1"># istioctl manifest generate -f cluster1.yaml &gt; out_all.yaml</span>
 <span class="c1"># 查看 external ip，这个 ip 是这台 cluster1 云主机的内网 ip</span>
 kubectl  get svc istio-eastwestgateway -n istio-system
-NAME                    TYPE           CLUSTER-IP     EXTERNAL-IP      PORT<span class="o">(</span>S<span class="o">)</span>                                                           
+NAME                    TYPE           CLUSTER-IP     EXTERNAL-IP      PORT<span class="o">(</span>S<span class="o">)</span>
 istio-eastwestgateway   LoadBalancer   10.43.102.254  192.168.111.205   15021:31047/TCP...
 
-<span class="c1"># cluster2 </span>
+<span class="c1"># cluster2</span>
 istioctl install -f cluster2.yaml
 kubectl apply -n istio-system -f expose-services.yaml
 <span class="c1"># 查看 external ip，这个 ip 是这台 cluster1 云主机的内网 ip</span>
 kubectl get svc istio-eastwestgateway -n istio-system
-NAME                    TYPE           CLUSTER-IP     EXTERNAL-IP      PORT<span class="o">(</span>S<span class="o">)</span>                                                           
+NAME                    TYPE           CLUSTER-IP     EXTERNAL-IP      PORT<span class="o">(</span>S<span class="o">)</span>
 istio-eastwestgateway   LoadBalancer   10.43.109.162  192.168.111.131   15021:31047/TCP...
 </code></pre></td></tr></table>
 </div>
@@ -447,9 +447,9 @@ istio-eastwestgateway   LoadBalancer   10.43.109.162  192.168.111.131   15021:31
 </span></code></pre></td>
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># cluster1 使用当前节点的外网 ip</span>
-istioctl x create-remote-secret --name<span class="o">=</span>cluster1 --server<span class="o">=</span>https://192.168.111.205:6443 &gt; cluster1-remote-secret.yaml
+istioctl create-remote-secret --name<span class="o">=</span>cluster1 --server<span class="o">=</span>https://192.168.111.205:6443 &gt; cluster1-remote-secret.yaml
 <span class="c1"># cluster2 使用当前节点的外网 ip</span>
-istioctl x create-remote-secret --name<span class="o">=</span>cluster2 --server<span class="o">=</span>https://192.168.111.131:6443 &gt; cluster2-remote-secret.yaml
+istioctl create-remote-secret --name<span class="o">=</span>cluster2 --server<span class="o">=</span>https://192.168.111.131:6443 &gt; cluster2-remote-secret.yaml
 <span class="c1"># cluster2</span>
 kubectl apply -f cluster1-remote-secret.yaml
 <span class="c1"># cluster1</span>
@@ -1429,7 +1429,7 @@ openssl x509 -noout -text -in root.pem
   <span class="c1">// clusterStopCh is a channel that will be closed when this cluster removed.
 </span><span class="c1"></span>  <span class="k">return</span> <span class="nx">m</span><span class="p">.</span><span class="nf">initializeCluster</span><span class="p">(</span><span class="nx">cluster</span><span class="p">,</span> <span class="nx">kubeController</span><span class="p">,</span> <span class="nx">kubeRegistry</span><span class="p">,</span> <span class="o">*</span><span class="nx">options</span><span class="p">,</span> <span class="nx">configCluster</span><span class="p">,</span> <span class="nx">clusterStopCh</span><span class="p">)</span>
 <span class="p">}</span>
-<span class="c1">// 添加集群的各种事件处理器 
+<span class="c1">// 添加集群的各种事件处理器
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Multicluster</span><span class="p">)</span> <span class="nf">initializeCluster</span><span class="p">(</span><span class="nx">cluster</span> <span class="o">*</span><span class="nx">multicluster</span><span class="p">.</span><span class="nx">Cluster</span><span class="p">,</span> <span class="nx">kubeController</span> <span class="o">*</span><span class="nx">kubeController</span><span class="p">,</span> <span class="nx">kubeRegistry</span> <span class="o">*</span><span class="nx">Controller</span><span class="p">,</span>
   <span class="nx">options</span> <span class="nx">Options</span><span class="p">,</span> <span class="nx">configCluster</span> <span class="kt">bool</span><span class="p">,</span> <span class="nx">clusterStopCh</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{},</span>
 <span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
@@ -1729,7 +1729,7 @@ openssl x509 -noout -text -in root.pem
   <span class="k">return</span> <span class="nx">mgr</span><span class="p">,</span> <span class="kc">nil</span>
 <span class="p">}</span>
 
-<span class="c1">// NotifyGatewayHandlers 调用 
+<span class="c1">// NotifyGatewayHandlers 调用
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">mgr</span> <span class="o">*</span><span class="nx">NetworkManager</span><span class="p">)</span> <span class="nf">reloadGateways</span><span class="p">()</span> <span class="p">{</span>
   <span class="nx">mgr</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
   <span class="nx">oldGateways</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="nx">NetworkGatewaySet</span><span class="p">)</span>
@@ -1814,12 +1814,12 @@ openssl x509 -noout -text -in root.pem
 </span><span class="lnt">14
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">MeshNetworks</span><span class="p">:</span><span class="w"> 
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">MeshNetworks</span><span class="p">:</span><span class="w">
 </span><span class="w">  </span><span class="nt">networks</span><span class="p">:</span><span class="w">
 </span><span class="w">    </span><span class="nt">network1</span><span class="p">:</span><span class="w"> </span><span class="c"># 网络名</span><span class="w">
 </span><span class="w">      </span><span class="nt">endpoints</span><span class="p">:</span><span class="w">  </span><span class="c"># 网络中的端点</span><span class="w">
 </span><span class="w">      </span><span class="c"># 将指定注册中心的所有端点添加到此网络中，注册中心名称应该与用于配置注册中心 (Kubernetes 多集群）或 MCP 服务器提供的密钥中的 kubecconfig 文件名相对应。（多集群的 secret 配置是”istioctl create-remote-secret“命名创建的 secret？？？)</span><span class="w">
-</span><span class="w">      </span>- <span class="nt">fromRegistry</span><span class="p">:</span><span class="w"> </span><span class="l">registry1 </span><span class="w">
+</span><span class="w">      </span>- <span class="nt">fromRegistry</span><span class="p">:</span><span class="w"> </span><span class="l">registry1</span><span class="w">
 </span><span class="w">      </span>- <span class="nt">fromCidr</span><span class="p">:</span><span class="w"> </span><span class="m">192.168.100.0</span><span class="l">/22</span><span class="w"> </span><span class="c"># 端点来自指定的网段</span><span class="w">
 </span><span class="w">      </span><span class="nt">gateways</span><span class="p">:</span><span class="w"> </span><span class="c"># 网关</span><span class="w">
 </span><span class="w">      </span>- <span class="nt">registryServiceName</span><span class="p">:</span><span class="w"> </span><span class="l">istio-ingressgateway.istio-system.svc.cluster.local</span><span class="w"> </span><span class="c"># 全限定域名</span><span class="w">
@@ -1921,7 +1921,7 @@ openssl x509 -noout -text -in root.pem
 <span class="c1">// 添加注册中心和设置 handler 处理注册中心事件
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Controller</span><span class="p">)</span> <span class="nf">addRegistry</span><span class="p">(</span><span class="nx">registry</span> <span class="nx">serviceregistry</span><span class="p">.</span><span class="nx">Instance</span><span class="p">,</span> <span class="nx">stop</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{})</span> <span class="p">{</span>
   <span class="nx">c</span><span class="p">.</span><span class="nx">registries</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">registries</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">registryEntry</span><span class="p">{</span><span class="nx">Instance</span><span class="p">:</span> <span class="nx">registry</span><span class="p">,</span> <span class="nx">stop</span><span class="p">:</span> <span class="nx">stop</span><span class="p">})</span>
-  <span class="c1">// c.NotifyGatewayHandlers 
+  <span class="c1">// c.NotifyGatewayHandlers
 </span><span class="c1"></span>  <span class="nx">registry</span><span class="p">.</span><span class="nf">AppendNetworkGatewayHandler</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">NotifyGatewayHandlers</span><span class="p">)</span>
   <span class="nx">registry</span><span class="p">.</span><span class="nf">AppendServiceHandler</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">handlers</span><span class="p">.</span><span class="nx">NotifyServiceHandlers</span><span class="p">)</span>
   <span class="nx">registry</span><span class="p">.</span><span class="nf">AppendServiceHandler</span><span class="p">(</span><span class="kd">func</span><span class="p">(</span><span class="nx">prev</span><span class="p">,</span> <span class="nx">curr</span> <span class="o">*</span><span class="nx">model</span><span class="p">.</span><span class="nx">Service</span><span class="p">,</span> <span class="nx">event</span> <span class="nx">model</span><span class="p">.</span><span class="nx">Event</span><span class="p">)</span> <span class="p">{</span>
@@ -2800,7 +2800,7 @@ openssl x509 -noout -text -in root.pem
         <span class="k">continue</span>
       <span class="p">}</span>
 
-      <span class="c1">// 将权重和网关保存到 gatewayWeights 
+      <span class="c1">// 将权重和网关保存到 gatewayWeights
 </span><span class="c1"></span>      <span class="nf">splitWeightAmongGateways</span><span class="p">(</span><span class="nx">weight</span><span class="p">,</span> <span class="nx">gateways</span><span class="p">,</span> <span class="nx">gatewayWeights</span><span class="p">)</span>
     <span class="p">}</span>
 
@@ -2902,7 +2902,7 @@ openssl x509 -noout -text -in root.pem
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// istioctl/pkg/multicluster/remote_secret.go
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">createRemoteSecret</span><span class="p">(</span><span class="nx">opt</span> <span class="nx">RemoteSecretOptions</span><span class="p">,</span> <span class="nx">client</span> <span class="nx">kube</span><span class="p">.</span><span class="nx">CLIClient</span><span class="p">,</span> <span class="nx">env</span> <span class="nx">Environment</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Secret</span><span class="p">,</span> <span class="nx">Warning</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
-  <span class="c1">// ... 获取 tokenSecret 
+  <span class="c1">// ... 获取 tokenSecret
 </span><span class="c1"></span>  <span class="nx">tokenSecret</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">getServiceAccountSecret</span><span class="p">(</span><span class="nx">client</span><span class="p">,</span> <span class="nx">opt</span><span class="p">)</span>
 
   <span class="kd">var</span> <span class="nx">remoteSecret</span> <span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Secret</span>
@@ -2948,7 +2948,7 @@ openssl x509 -noout -text -in root.pem
 </span><span class="w"></span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">kubernetes.io/service-account-token</span><span class="w">
 </span></code></pre></td></tr></table>
 </div>
-</div><p>最后使用命令<code>istioctl x create-remote-secret --name=cluster2</code>时，创建的内容如下，即由上面的 secret 内容生成的：</p>
+</div><p>最后使用命令<code>istioctl create-remote-secret --name=cluster2</code>时，创建的内容如下，即由上面的 secret 内容生成的：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt"> 1
@@ -3113,7 +3113,7 @@ kubectl delete ns istio-system
   <span class="copyright-year">
     &copy; 
     2022 - 
-    2024<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
+    2026<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
   </span>
 </div>
 

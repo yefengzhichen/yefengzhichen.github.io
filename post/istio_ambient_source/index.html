@@ -49,7 +49,7 @@
 <meta itemprop="name" content="Istio 1.21.0 版本 inpod ambient 模式源码解析">
 <meta itemprop="description" content="版本说明 基于 istio 1.21.0 版本源代码，ambient 进行了大更新，从原来的主机网络命名空间中重定向更新为 in-Pod 网络命名空间重定向，解决了原有模式 Istio CNI 扩展的"><meta itemprop="datePublished" content="2024-04-08T10:34:40+08:00" />
 <meta itemprop="dateModified" content="2024-04-08T10:34:40+08:00" />
-<meta itemprop="wordCount" content="3897">
+<meta itemprop="wordCount" content="4099">
 <meta itemprop="keywords" content="kubernetes,istio,ambient," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Istio 1.21.0 版本 inpod ambient 模式源码解析"/>
 <meta name="twitter:description" content="版本说明 基于 istio 1.21.0 版本源代码，ambient 进行了大更新，从原来的主机网络命名空间中重定向更新为 in-Pod 网络命名空间重定向，解决了原有模式 Istio CNI 扩展的"/>
@@ -132,8 +132,8 @@
         <div class="post-category">
             <a href="../../categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
             </div>
-          <span class="more-meta"> 约 3897 字 </span>
-          <span class="more-meta"> 预计阅读 8 分钟 </span>
+          <span class="more-meta"> 约 4099 字 </span>
+          <span class="more-meta"> 预计阅读 9 分钟 </span>
         <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
       </div>
     </header>
@@ -152,6 +152,7 @@
       </ul>
     </li>
     <li><a href="#ztunnel-源码">ztunnel 源码</a></li>
+    <li><a href="#其他-cni-插件部署">其他 cni 插件部署</a></li>
     <li><a href="#参考">参考</a></li>
   </ul>
 </nav>
@@ -1343,6 +1344,51 @@ num  target     prot opt <span class="nb">source</span>               destinatio
 </span><span class="w"></span><span class="p">}</span><span class="w">
 </span></code></pre></td></tr></table>
 </div>
+</div><h1 id="其他-cni-插件部署">其他 cni 插件部署</h1>
+<p>这里使用 k3s 集群来测试，因为 k3s 集群默认的 cni 插件是 flannel，路径为<code>/var/lib/rancher/k3s/agent/etc/cni/net.d</code>，与 istio 中的默认的插件路径不一致，这里改为用 cilium cni 插件：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">rm -rf /etc/cni/net.d/*
+curl -sfL https://rancher-mirror.rancher.cn/k3s/k3s-install.sh <span class="p">|</span> <span class="nv">INSTALL_K3S_MIRROR</span><span class="o">=</span>cn <span class="se">\
+</span><span class="se"></span>  <span class="nv">INSTALL_K3S_EXEC</span><span class="o">=</span><span class="s1">&#39;--flannel-backend=none --cluster-cidr=192.168.0.0/16&#39;</span> <span class="se">\
+</span><span class="se"></span>  <span class="nv">K3S_KUBECONFIG_OUTPUT</span><span class="o">=</span>/root/.kube/config sh -s - <span class="se">\
+</span><span class="se"></span>  --disable-network-policy <span class="se">\
+</span><span class="se"></span>  --disable <span class="s2">&#34;traefik&#34;</span>
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/calico.yaml
+</code></pre></td></tr></table>
+</div>
+</div><p>等 pods 起来后，部署 istio 流程跟 cilium 的一样，这里只保留了 istio 命令部分：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">istioctl install --set <span class="nv">profile</span><span class="o">=</span>ambient --set <span class="s2">&#34;components.ingressGateways[0].enabled=true&#34;</span> <span class="se">\
+</span><span class="se"></span>--set <span class="s2">&#34;components.ingressGateways[0].name=istio-ingressgateway&#34;</span> <span class="se">\
+</span><span class="se"></span>--set <span class="s2">&#34;values.global.logging.level=default:debug&#34;</span> <span class="se">\
+</span><span class="se"></span>--set <span class="s2">&#34;components.cni.k8s.env[0].name=LOG_LEVEL&#34;</span> <span class="se">\
+</span><span class="se"></span>--set <span class="s2">&#34;components.cni.k8s.env[0].value=debug&#34;</span> <span class="se">\
+</span><span class="se"></span>--set <span class="s2">&#34;components.ztunnel.k8s.env[0].name=RUST_LOG&#34;</span> <span class="se">\
+</span><span class="se"></span>--set <span class="s2">&#34;components.ztunnel.k8s.env[0].value=debug&#34;</span> <span class="se">\
+</span><span class="se"></span>--skip-confirmation
+</code></pre></td></tr></table>
+</div>
 </div><h1 id="参考">参考</h1>
 <ul>
 <li><a href="https://istio.io/latest/zh/blog/2024/inpod-traffic-redirection-ambient/">inpod 流量重定向 ambient 模式</a></li>
@@ -1425,7 +1471,7 @@ num  target     prot opt <span class="nb">source</span>               destinatio
   <span class="copyright-year">
     &copy; 
     2022 - 
-    2024<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
+    2026<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
   </span>
 </div>
 

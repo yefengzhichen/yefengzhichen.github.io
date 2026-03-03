@@ -1,0 +1,805 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>记忆卡片翻翻乐 (Memory Matching Game)</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg-start: #f6efe6;
+        --bg-end: #f2f7ff;
+        --panel: rgba(255, 255, 255, 0.82);
+        --ink: #2b2b2b;
+        --muted: #6d6d6d;
+        --accent: #ff7a59;
+        --accent-2: #3c8dbc;
+        --card-back: #1f3b52;
+        --card-front: #fffaf0;
+        --win: #20c997;
+        --danger: #ff5252;
+        --shadow: 0 14px 40px rgba(36, 42, 54, 0.15);
+        --radius: 16px;
+        --card-size: 80px;
+        --gap: 12px;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "ZCOOL KuaiLe", "Segoe UI", sans-serif;
+        background: radial-gradient(circle at top left, #fff8e7, transparent 50%),
+          radial-gradient(circle at bottom right, #e8f0ff, transparent 55%),
+          linear-gradient(135deg, var(--bg-start), var(--bg-end));
+        color: var(--ink);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 32px 20px 48px;
+      }
+
+      .app {
+        width: min(1000px, 100%);
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      header {
+        background: var(--panel);
+        backdrop-filter: blur(10px);
+        border-radius: var(--radius);
+        padding: 18px 20px;
+        box-shadow: var(--shadow);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 18px;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .brand {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .brand h1 {
+        font-size: 1.6rem;
+        letter-spacing: 1px;
+      }
+
+      .brand span {
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+      }
+
+      select,
+      button {
+        border-radius: 999px;
+        border: none;
+        padding: 10px 16px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        background: white;
+        color: var(--ink);
+        box-shadow: 0 6px 16px rgba(23, 36, 58, 0.12);
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      select:focus,
+      button:focus {
+        outline: 2px solid rgba(255, 122, 89, 0.4);
+        outline-offset: 2px;
+      }
+
+      button.primary {
+        background: linear-gradient(135deg, var(--accent), #ffb347);
+        color: #fff;
+      }
+
+      button:active {
+        transform: translateY(1px) scale(0.98);
+      }
+
+      .stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        font-size: 0.95rem;
+        color: var(--muted);
+      }
+
+      .stat {
+        background: rgba(255, 255, 255, 0.65);
+        border-radius: 999px;
+        padding: 6px 14px;
+        min-width: 110px;
+        text-align: center;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+      }
+
+      .stat strong {
+        color: var(--ink);
+        margin-left: 4px;
+      }
+
+      .board {
+        background: var(--panel);
+        border-radius: 24px;
+        padding: 20px;
+        box-shadow: var(--shadow);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 320px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(var(--grid-size, 4), var(--card-size));
+        grid-auto-rows: var(--card-size);
+        gap: var(--gap);
+        justify-content: center;
+        width: 100%;
+      }
+
+      .card {
+        width: var(--card-size);
+        height: var(--card-size);
+        perspective: 900px;
+      }
+
+      .card button {
+        width: 100%;
+        height: 100%;
+        border-radius: 18px;
+        border: none;
+        background: transparent;
+        padding: 0;
+        cursor: pointer;
+        transform-style: preserve-3d;
+        transition: transform 0.5s ease;
+        position: relative;
+      }
+
+      .card.is-flipped button {
+        transform: rotateY(180deg);
+      }
+
+      .card-face {
+        position: absolute;
+        inset: 0;
+        border-radius: 18px;
+        display: grid;
+        place-items: center;
+        font-size: 2rem;
+        backface-visibility: hidden;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+      }
+
+      .card-front {
+        background: var(--card-front);
+        color: #1f1f1f;
+        transform: rotateY(180deg);
+      }
+
+      .card-front .icon {
+        width: 70%;
+        height: 70%;
+        display: grid;
+        place-items: center;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.7);
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+        font-size: 2rem;
+      }
+
+      .card-back {
+        background: radial-gradient(circle at top left, #3e5c76, #1b2a3a);
+        color: #fff;
+      }
+
+      .card.is-matched button {
+        cursor: default;
+        animation: matchedPulse 0.8s ease;
+      }
+
+      .card.is-matched .card-front {
+        background: linear-gradient(135deg, #d6ffed, #f5ffb7);
+        color: #107050;
+        box-shadow: 0 0 0 2px rgba(32, 201, 151, 0.4);
+      }
+
+      .card.is-wrong button {
+        animation: shake 0.4s ease;
+      }
+
+      @keyframes matchedPulse {
+        0% {
+          transform: scale(1) rotateY(180deg);
+        }
+        50% {
+          transform: scale(1.08) rotateY(180deg);
+        }
+        100% {
+          transform: scale(1) rotateY(180deg);
+        }
+      }
+
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0) rotateY(180deg);
+        }
+        25% {
+          transform: translateX(-6px) rotateY(180deg);
+        }
+        75% {
+          transform: translateX(6px) rotateY(180deg);
+        }
+      }
+
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(17, 29, 41, 0.55);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+        padding: 24px;
+      }
+
+      .overlay.active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .modal {
+        background: white;
+        border-radius: 24px;
+        padding: 28px;
+        max-width: 360px;
+        width: 100%;
+        text-align: center;
+        box-shadow: var(--shadow);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        animation: pop 0.4s ease;
+      }
+
+      .modal h2 {
+        font-size: 1.7rem;
+        color: var(--win);
+      }
+
+      .modal p {
+        font-size: 1rem;
+        color: var(--muted);
+      }
+
+      .record-badge {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 999px;
+        background: rgba(32, 201, 151, 0.15);
+        color: var(--win);
+        font-weight: 700;
+      }
+
+      @keyframes pop {
+        from {
+          transform: translateY(20px) scale(0.95);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0) scale(1);
+          opacity: 1;
+        }
+      }
+
+      .toast {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.75);
+        color: white;
+        padding: 10px 18px;
+        border-radius: 999px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-8px);
+      }
+
+      @media (max-width: 720px) {
+        :root {
+          --card-size: 60px;
+          --gap: 10px;
+        }
+
+        header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .stats {
+          width: 100%;
+        }
+      }
+
+      @media (max-width: 480px) {
+        :root {
+          --card-size: 54px;
+          --gap: 8px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <div class="brand">
+          <h1>记忆卡片翻翻乐</h1>
+          <span>翻开卡片，找出所有配对。</span>
+        </div>
+        <div class="controls">
+          <label>
+            难度
+            <select id="difficulty">
+              <option value="4">4x4</option>
+              <option value="6">6x6</option>
+              <option value="8">8x8</option>
+            </select>
+          </label>
+          <button class="primary" id="startBtn">开始 / 重玩</button>
+          <button id="soundBtn">音效：开</button>
+        </div>
+        <div class="stats">
+          <div class="stat">已匹配<strong id="matched">0</strong></div>
+          <div class="stat">步数<strong id="moves">0</strong></div>
+          <div class="stat">时间<strong id="timer">0s</strong></div>
+          <div class="stat">最佳步数<strong id="bestMoves">-</strong></div>
+          <div class="stat">最佳用时<strong id="bestTime">-</strong></div>
+        </div>
+      </header>
+
+      <section class="board">
+        <div id="grid" class="grid" aria-live="polite"></div>
+      </section>
+    </div>
+
+    <div class="overlay" id="overlay" aria-hidden="true">
+      <div class="modal">
+        <h2>胜利！</h2>
+        <p id="winText">用时 0s，步数 0</p>
+        <p id="recordText" class="record-badge" hidden>新纪录</p>
+        <button class="primary" id="shareBtn">分享成绩</button>
+        <button id="closeBtn">继续挑战</button>
+      </div>
+    </div>
+
+    <div class="toast" id="toast">已复制到剪贴板</div>
+
+    <script>
+      "use strict";
+      const imageLibrary = [
+        "🍎",
+        "🍏",
+        "🍐",
+        "🍊",
+        "🍋",
+        "🍋‍🟩",
+        "🍌",
+        "🍉",
+        "🍇",
+        "🍓",
+        "🫐",
+        "🍒",
+        "🍑",
+        "🥭",
+        "🍍",
+        "🥝",
+        "🍈",
+        "🍅",
+        "🫒",
+        "🥥",
+        "🥑",
+        "🍆",
+        "🥔",
+        "🥕",
+        "🌽",
+        "🌶️",
+        "🫑",
+        "🥒",
+        "🥦",
+        "🧄",
+        "🧅",
+        "🥬",
+        "🍠",
+        "🥜",
+        "🌰",
+        "🍄",
+        "🫘",
+        "🫛",
+        "🫚",
+        "🫜",
+      ];
+
+      const grid = document.getElementById("grid");
+      const difficultySelect = document.getElementById("difficulty");
+      const startBtn = document.getElementById("startBtn");
+      const soundBtn = document.getElementById("soundBtn");
+      const matchedEl = document.getElementById("matched");
+      const movesEl = document.getElementById("moves");
+      const timerEl = document.getElementById("timer");
+      const bestMovesEl = document.getElementById("bestMoves");
+      const bestTimeEl = document.getElementById("bestTime");
+      const overlay = document.getElementById("overlay");
+      const winText = document.getElementById("winText");
+      const recordText = document.getElementById("recordText");
+      const shareBtn = document.getElementById("shareBtn");
+      const closeBtn = document.getElementById("closeBtn");
+      const toast = document.getElementById("toast");
+
+      let cards = [];
+      let flipped = [];
+      let matchedPairs = 0;
+      let moves = 0;
+      let totalPairs = 0;
+      let timer = 0;
+      let timerId = null;
+      let lockBoard = false;
+      let audioEnabled = true;
+      let audioContext = null;
+
+      const state = {
+        bestMoves: null,
+        bestTime: null,
+        bestDate: null,
+        gridKey: "4x4",
+      };
+
+      const shuffle = (array) => {
+        const result = array.slice();
+        for (let i = result.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [result[i], result[j]] = [result[j], result[i]];
+        }
+        return result;
+      };
+
+      const formatTime = (seconds) => `${seconds}s`;
+
+      const updateStats = () => {
+        matchedEl.textContent = matchedPairs;
+        movesEl.textContent = moves;
+        timerEl.textContent = formatTime(timer);
+        bestMovesEl.textContent =
+          state.bestMoves !== null ? state.bestMoves : "-";
+        bestTimeEl.textContent =
+          state.bestTime !== null ? formatTime(state.bestTime) : "-";
+      };
+
+      // Load per-difficulty record from localStorage.
+      const loadBest = (gridKey) => {
+        try {
+          const raw = localStorage.getItem(`memoryGameHigh_${gridKey}`);
+          if (!raw) return;
+          const data = JSON.parse(raw);
+          state.bestMoves =
+            typeof data.moves === "number" ? data.moves : null;
+          state.bestTime = typeof data.time === "number" ? data.time : null;
+          state.bestDate = typeof data.date === "string" ? data.date : null;
+        } catch (error) {
+          state.bestMoves = null;
+          state.bestTime = null;
+          state.bestDate = null;
+        }
+      };
+
+      const saveBest = (gridKey) => {
+        const payload = {
+          moves: state.bestMoves,
+          time: state.bestTime,
+          date: state.bestDate,
+        };
+        try {
+          localStorage.setItem(
+            `memoryGameHigh_${gridKey}`,
+            JSON.stringify(payload)
+          );
+        } catch (error) {
+          return;
+        }
+      };
+
+      const playSound = (type) => {
+        if (!audioEnabled) return;
+        if (!audioContext) {
+          audioContext = new (window.AudioContext ||
+            window.webkitAudioContext)();
+        }
+        const ctx = audioContext;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        if (type === "match") {
+          osc.frequency.value = 880;
+          gain.gain.value = 0.08;
+        } else {
+          osc.frequency.value = 200;
+          gain.gain.value = 0.12;
+        }
+
+        osc.type = "sine";
+        osc.start();
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+        osc.stop(ctx.currentTime + 0.45);
+      };
+
+      const stopTimer = () => {
+        if (timerId) {
+          clearInterval(timerId);
+          timerId = null;
+        }
+      };
+
+      const startTimer = () => {
+        stopTimer();
+        timerId = setInterval(() => {
+          timer += 1;
+          updateStats();
+        }, 1000);
+      };
+
+      const createDeck = (size) => {
+        totalPairs = (size * size) / 2;
+        const needed = shuffle(imageLibrary).slice(0, totalPairs);
+        const paired = shuffle([...needed, ...needed]);
+        return paired.map((icon, index) => ({
+          id: index,
+          icon,
+          matched: false,
+          flipped: false,
+        }));
+      };
+
+      const renderGrid = () => {
+        grid.innerHTML = "";
+        if (!cards.length) return;
+
+        const fragment = document.createDocumentFragment();
+        cards.forEach((card, index) => {
+          const wrapper = document.createElement("div");
+          wrapper.className = "card";
+          wrapper.dataset.index = index;
+
+          const button = document.createElement("button");
+          button.setAttribute("aria-label", "卡片");
+          button.type = "button";
+
+          const front = document.createElement("div");
+          front.className = "card-face card-front";
+          const icon = document.createElement("span");
+          icon.className = "icon";
+          icon.textContent = card.icon;
+          front.append(icon);
+
+          const back = document.createElement("div");
+          back.className = "card-face card-back";
+          back.textContent = "?";
+
+          button.append(front, back);
+          wrapper.append(button);
+          fragment.append(wrapper);
+        });
+
+        grid.append(fragment);
+      };
+
+      const resetBoard = () => {
+        flipped = [];
+        matchedPairs = 0;
+        moves = 0;
+        timer = 0;
+        lockBoard = false;
+        stopTimer();
+        updateStats();
+        overlay.classList.remove("active");
+        overlay.setAttribute("aria-hidden", "true");
+        recordText.hidden = true;
+      };
+
+      const updateCardStyles = () => {
+        const cardNodes = grid.querySelectorAll(".card");
+        cardNodes.forEach((node, index) => {
+          const card = cards[index];
+          node.classList.toggle("is-flipped", card.flipped || card.matched);
+          node.classList.toggle("is-matched", card.matched);
+        });
+      };
+
+      // Determine if the current run is a new record.
+      const isNewRecord = () => {
+        if (state.bestMoves === null) return true;
+        if (moves < state.bestMoves) return true;
+        if (moves === state.bestMoves && timer < state.bestTime) return true;
+        return false;
+      };
+
+      const checkWin = () => {
+        if (matchedPairs !== totalPairs) return;
+        stopTimer();
+        lockBoard = true;
+
+        const newRecord = isNewRecord();
+        if (newRecord) {
+          state.bestMoves = moves;
+          state.bestTime = timer;
+          state.bestDate = new Date().toISOString().slice(0, 10);
+          saveBest(state.gridKey);
+        }
+        updateStats();
+
+        winText.textContent = `用时 ${timer}s，步数 ${moves}`;
+        recordText.hidden = !newRecord;
+        overlay.classList.add("active");
+        overlay.setAttribute("aria-hidden", "false");
+      };
+
+      const handleMatch = (first, second) => {
+        cards[first].matched = true;
+        cards[second].matched = true;
+        matchedPairs += 1;
+        playSound("match");
+        updateCardStyles();
+        updateStats();
+        checkWin();
+      };
+
+      const handleMismatch = (first, second) => {
+        const cardNodes = grid.querySelectorAll(".card");
+        cardNodes[first].classList.add("is-wrong");
+        cardNodes[second].classList.add("is-wrong");
+        playSound("wrong");
+        lockBoard = true;
+        setTimeout(() => {
+          cards[first].flipped = false;
+          cards[second].flipped = false;
+          cardNodes[first].classList.remove("is-wrong");
+          cardNodes[second].classList.remove("is-wrong");
+          updateCardStyles();
+          lockBoard = false;
+        }, 1000);
+      };
+
+      const flipCard = (index) => {
+        if (lockBoard) return;
+        const card = cards[index];
+        if (!card || card.matched || card.flipped) return;
+        if (flipped.length >= 2) return;
+
+        if (!timerId) startTimer();
+
+        card.flipped = true;
+        flipped.push(index);
+        updateCardStyles();
+
+        if (flipped.length === 2) {
+          const [first, second] = flipped;
+          // Count one move per two-card attempt.
+          moves += 1;
+          updateStats();
+          lockBoard = true;
+          if (cards[first].icon === cards[second].icon) {
+            setTimeout(() => {
+              handleMatch(first, second);
+              flipped = [];
+              lockBoard = false;
+            }, 300);
+          } else {
+            setTimeout(() => {
+              handleMismatch(first, second);
+              flipped = [];
+            }, 250);
+          }
+        }
+      };
+
+      const setDifficulty = () => {
+        const size = Number(difficultySelect.value);
+        state.gridKey = `${size}x${size}`;
+        cards = createDeck(size);
+        resetBoard();
+        grid.style.setProperty("--grid-size", size);
+        renderGrid();
+        loadBest(state.gridKey);
+        updateStats();
+      };
+
+      const showToast = () => {
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 1600);
+      };
+
+      grid.addEventListener("click", (event) => {
+        const card = event.target.closest(".card");
+        if (!card || lockBoard) return;
+        const index = Number(card.dataset.index);
+        flipCard(index);
+      });
+
+      grid.addEventListener(
+        "touchstart",
+        (event) => {
+          event.preventDefault();
+          const card = event.target.closest(".card");
+          if (!card || lockBoard) return;
+          const index = Number(card.dataset.index);
+          flipCard(index);
+        },
+        { passive: false }
+      );
+
+      difficultySelect.addEventListener("change", setDifficulty);
+      startBtn.addEventListener("click", setDifficulty);
+
+      soundBtn.addEventListener("click", () => {
+        audioEnabled = !audioEnabled;
+        soundBtn.textContent = audioEnabled ? "音效：开" : "音效：关";
+      });
+
+      shareBtn.addEventListener("click", async () => {
+        const shareText = `我在记忆卡片翻翻乐中用时 ${timer}s，步数 ${moves}！`;
+        try {
+          await navigator.clipboard.writeText(shareText);
+          showToast();
+        } catch (error) {
+          showToast();
+        }
+      });
+
+      closeBtn.addEventListener("click", () => {
+        overlay.classList.remove("active");
+        overlay.setAttribute("aria-hidden", "true");
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (difficultySelect.value !== "4") return;
+        const key = event.key;
+        if (!/^([1-9]|1[0-6])$/.test(key)) return;
+        const index = Number(key) - 1;
+        flipCard(index);
+      });
+
+      loadBest(state.gridKey);
+      updateStats();
+      setDifficulty();
+    </script>
+  </body>
+</html>

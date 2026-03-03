@@ -49,7 +49,7 @@
 <meta itemprop="name" content="Istio Ingress/Egress 详解">
 <meta itemprop="description" content="Gateway 介绍 Istio Gateway 描述在网格边缘运行的负载均衡器，用于接收传入或传出的 HTTP/TCP 连接。Istio Gateway 网关跟 sidecar 代理都是使用的 envoy 程序，其配置也可以用 istioctl 命令来查看。"><meta itemprop="datePublished" content="2023-05-05T18:46:11+08:00" />
 <meta itemprop="dateModified" content="2023-05-05T18:46:11+08:00" />
-<meta itemprop="wordCount" content="5104">
+<meta itemprop="wordCount" content="5269">
 <meta itemprop="keywords" content="kubernetes,istio,gateway," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Istio Ingress/Egress 详解"/>
 <meta name="twitter:description" content="Gateway 介绍 Istio Gateway 描述在网格边缘运行的负载均衡器，用于接收传入或传出的 HTTP/TCP 连接。Istio Gateway 网关跟 sidecar 代理都是使用的 envoy 程序，其配置也可以用 istioctl 命令来查看。"/>
@@ -132,7 +132,7 @@
         <div class="post-category">
             <a href="../../categories/%E4%BA%91%E5%8E%9F%E7%94%9F/"> 云原生 </a>
             </div>
-          <span class="more-meta"> 约 5104 字 </span>
+          <span class="more-meta"> 约 5269 字 </span>
           <span class="more-meta"> 预计阅读 11 分钟 </span>
         <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
       </div>
@@ -347,9 +347,18 @@ curl -s -I -HHost:httpbin.example.com <span class="s2">&#34;http://</span><span 
 </code></pre></td></tr></table>
 </div>
 </div><h3 id="流量分析">流量分析</h3>
+<p>[TODO 这里图有个错误，负载均衡方式也会通过节点的nodeport，再到svc的clusterip，然后到pod的podip]</p>
 <p>上面通过LoadBalancer和nodePort方式暴露Gateway，来访问集群内部服务，其流量走向如下图所示：
 <img src="../../image/istio_gateway/istio_ingress_gateway.png" alt="istio_ingress_gateway" title="istio_ingress_gateway"></p>
-<p>即从集群外面通过 LoadBalancer 或者 nodePort 返回请求到 ingressgateway svc，然后根据 Gateway 的配置，将请求转发到对应的 VirtualService，再根据 VirtualService 的配置，将请求转发到对应的 DestinationRule，最后将请求转发到对应的服务：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">klipper-lb 是 K3s 的一个开源负载均衡器的实现，实现很简单：使用主机端口（pod.spec.containers.ports.hostPort 与 Service 的端口号相同）来接收流量，并使用 iptables 将接收的流量转发到 Service 的 ClusterIP。
+</code></pre></td></tr></table>
+</div>
+</div><p>即从集群外面通过 LoadBalancer 或者 nodePort 返回请求到 ingressgateway svc，然后根据 Gateway 的配置，将请求转发到对应的 VirtualService，再根据 VirtualService 的配置，将请求转发到对应的 DestinationRule，最后将请求转发到对应的服务：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
@@ -1239,7 +1248,7 @@ ENDPOINT             STATUS      OUTLIER CHECK     CLUSTER
   <span class="copyright-year">
     &copy; 
     2022 - 
-    2024<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
+    2026<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
   </span>
 </div>
 

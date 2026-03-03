@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title> - yefengzhichen&#39;s blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="yefengzhichen" /><meta name="description" content="nvidia-container-runtime 相关逻辑 相关配置和内容 /etc/containerd/config.toml 中配置： 1 2 3 4 5 6 7 [plugins.&amp;#34;io.containerd.grpc.v1.cri&amp;#34;.containerd.runtimes.nvidia] privileged_without_host_devices = false runtime_engine = &amp;#34;&amp;#34; runtime_root = &amp;#34;&amp;#34; runtime_type = &amp;#34;io.containerd.runc.v1&amp;#34; [plugins.&amp;#34;io.containerd.grpc.v1.cri&amp;#34;.containerd.runtimes.nvidia.options] BinaryName = &amp;#34;/usr/bin/nvidia-container-runtime&amp;#34; 代码中读取配置文件路径：/etc/nvidia-conta" /><meta name="keywords" content="Hugo, theme, even" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.92.1 with theme even" />
+
+
+<link rel="canonical" href="https://yefengzhichen.github.io/post/nvidia-container-runtime/" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../favicon-16x16.png">
+<link rel="manifest" href="../../manifest.json">
+<link rel="mask-icon" href="../../safari-pinned-tab.svg" color="#5bbad5">
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<link href="../../sass/main.min.f92fd13721ddf72129410fd8250e73152cc6f2438082b6c0208dc24ee7c13fc4.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="" />
+<meta property="og:description" content="nvidia-container-runtime 相关逻辑 相关配置和内容 /etc/containerd/config.toml 中配置： 1 2 3 4 5 6 7 [plugins.&#34;io.containerd.grpc.v1.cri&#34;.containerd.runtimes.nvidia] privileged_without_host_devices = false runtime_engine = &#34;&#34; runtime_root = &#34;&#34; runtime_type = &#34;io.containerd.runc.v1&#34; [plugins.&#34;io.containerd.grpc.v1.cri&#34;.containerd.runtimes.nvidia.options] BinaryName = &#34;/usr/bin/nvidia-container-runtime&#34; 代码中读取配置文件路径：/etc/nvidia-conta" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yefengzhichen.github.io/post/nvidia-container-runtime/" /><meta property="article:section" content="post" />
+
+
+
+<meta itemprop="name" content="">
+<meta itemprop="description" content="nvidia-container-runtime 相关逻辑 相关配置和内容 /etc/containerd/config.toml 中配置： 1 2 3 4 5 6 7 [plugins.&#34;io.containerd.grpc.v1.cri&#34;.containerd.runtimes.nvidia] privileged_without_host_devices = false runtime_engine = &#34;&#34; runtime_root = &#34;&#34; runtime_type = &#34;io.containerd.runc.v1&#34; [plugins.&#34;io.containerd.grpc.v1.cri&#34;.containerd.runtimes.nvidia.options] BinaryName = &#34;/usr/bin/nvidia-container-runtime&#34; 代码中读取配置文件路径：/etc/nvidia-conta">
+
+<meta itemprop="wordCount" content="1631">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content=""/>
+<meta name="twitter:description" content="nvidia-container-runtime 相关逻辑 相关配置和内容 /etc/containerd/config.toml 中配置： 1 2 3 4 5 6 7 [plugins.&#34;io.containerd.grpc.v1.cri&#34;.containerd.runtimes.nvidia] privileged_without_host_devices = false runtime_engine = &#34;&#34; runtime_root = &#34;&#34; runtime_type = &#34;io.containerd.runc.v1&#34; [plugins.&#34;io.containerd.grpc.v1.cri&#34;.containerd.runtimes.nvidia.options] BinaryName = &#34;/usr/bin/nvidia-container-runtime&#34; 代码中读取配置文件路径：/etc/nvidia-conta"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="../../">
+        <li class="mobile-menu-item">首页</li>
+      </a><a href="../../post/">
+        <li class="mobile-menu-item">列表</li>
+      </a><a href="../../tags/">
+        <li class="mobile-menu-item">标签</li>
+      </a><a href="../../categories/">
+        <li class="mobile-menu-item">分类</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="../../">首页</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../post/">列表</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../tags/">标签</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../categories/">分类</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title"></h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 0001-01-01 </span>
+        
+          <span class="more-meta"> 约 1631 字 </span>
+          <span class="more-meta"> 预计阅读 4 分钟 </span>
+        <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#nvidia-container-runtime-相关逻辑">nvidia-container-runtime 相关逻辑</a>
+      <ul>
+        <li><a href="#相关配置和内容">相关配置和内容</a></li>
+        <li><a href="#nvidia-container-runtime-逻辑">nvidia-container-runtime 逻辑</a></li>
+        <li><a href="#containerd-和-device-plugin-逻辑">containerd 和 device plugin 逻辑</a></li>
+        <li><a href="#modify-逻辑">modify 逻辑</a>
+          <ul>
+            <li><a href="#graphicsmodifier">graphicsModifier</a></li>
+            <li><a href="#featuregatedmodifier">featureGatedModifier</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h1 id="nvidia-container-runtime-相关逻辑">nvidia-container-runtime 相关逻辑</h1>
+<h2 id="相关配置和内容">相关配置和内容</h2>
+<p>/etc/containerd/config.toml 中配置：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">        [plugins.&#34;io.containerd.grpc.v1.cri&#34;.containerd.runtimes.nvidia]
+          privileged_without_host_devices = false
+          runtime_engine = &#34;&#34;
+          runtime_root = &#34;&#34;
+          runtime_type = &#34;io.containerd.runc.v1&#34;
+          [plugins.&#34;io.containerd.grpc.v1.cri&#34;.containerd.runtimes.nvidia.options]
+            BinaryName = &#34;/usr/bin/nvidia-container-runtime&#34;
+</code></pre></td></tr></table>
+</div>
+</div><p>代码中读取配置文件路径：/etc/nvidia-container-runtime/config.toml，配置文件内容示例：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-toml" data-lang="toml"><span class="c">#accept-nvidia-visible-devices-as-volume-mounts = false</span>
+<span class="c">#accept-nvidia-visible-devices-envvar-when-unprivileged = true</span>
+<span class="nx">disable-require</span> <span class="p">=</span> <span class="kc">false</span>
+<span class="nx">supported-driver-capabilities</span> <span class="p">=</span> <span class="s2">&#34;compat32,compute,display,graphics,ngx,utility,video&#34;</span>
+<span class="c">#swarm-resource = &#34;DOCKER_RESOURCE_GPU&#34;</span>
+
+<span class="p">[</span><span class="nx">nvidia-container-cli</span><span class="p">]</span>
+<span class="c">#debug = &#34;/var/log/nvidia-container-toolkit.log&#34;</span>
+<span class="nx">environment</span> <span class="p">=</span> <span class="p">[]</span>
+<span class="c">#ldcache = &#34;/etc/ld.so.cache&#34;</span>
+<span class="nx">ldconfig</span> <span class="p">=</span> <span class="s2">&#34;@/sbin/ldconfig&#34;</span>
+<span class="nx">load-kmods</span> <span class="p">=</span> <span class="kc">true</span>
+<span class="c">#no-cgroups = false</span>
+<span class="c">#path = &#34;/usr/bin/nvidia-container-cli&#34;</span>
+<span class="c">#root = &#34;/run/nvidia/driver&#34;</span>
+<span class="c">#user = &#34;root:video&#34;</span>
+
+<span class="p">[</span><span class="nx">nvidia-container-runtime</span><span class="p">]</span>
+<span class="nx">debug</span> <span class="p">=</span> <span class="s2">&#34;/var/log/nvidia-container-runtime.log&#34;</span>
+<span class="nx">log-level</span> <span class="p">=</span> <span class="s2">&#34;trace&#34;</span>
+<span class="nx">mode</span> <span class="p">=</span> <span class="s2">&#34;auto&#34;</span>
+<span class="nx">runtimes</span> <span class="p">=</span> <span class="p">[</span><span class="s2">&#34;docker-runc&#34;</span><span class="p">,</span> <span class="s2">&#34;runc&#34;</span><span class="p">,</span> <span class="s2">&#34;crun&#34;</span><span class="p">]</span>
+
+<span class="p">[</span><span class="nx">nvidia-container-runtime</span><span class="p">.</span><span class="nx">modes</span><span class="p">]</span>
+
+<span class="p">[</span><span class="nx">nvidia-container-runtime</span><span class="p">.</span><span class="nx">modes</span><span class="p">.</span><span class="nx">cdi</span><span class="p">]</span>
+<span class="nx">annotation-prefixes</span> <span class="p">=</span> <span class="p">[</span><span class="s2">&#34;cdi.k8s.io/&#34;</span><span class="p">]</span>
+<span class="nx">default-kind</span> <span class="p">=</span> <span class="s2">&#34;nvidia.com/gpu&#34;</span>
+<span class="nx">spec-dirs</span> <span class="p">=</span> <span class="p">[</span><span class="s2">&#34;/etc/cdi&#34;</span><span class="p">,</span> <span class="s2">&#34;/var/run/cdi&#34;</span><span class="p">]</span>
+
+<span class="p">[</span><span class="nx">nvidia-container-runtime</span><span class="p">.</span><span class="nx">modes</span><span class="p">.</span><span class="nx">csv</span><span class="p">]</span>
+<span class="nx">mount-spec-path</span> <span class="p">=</span> <span class="s2">&#34;/etc/nvidia-container-runtime/host-files-for-container.d&#34;</span>
+
+<span class="p">[</span><span class="nx">nvidia-container-runtime-hook</span><span class="p">]</span>
+<span class="nx">path</span> <span class="p">=</span> <span class="s2">&#34;nvidia-container-runtime-hook&#34;</span>
+<span class="nx">skip-mode-detection</span> <span class="p">=</span> <span class="kc">false</span>
+
+<span class="p">[</span><span class="nx">nvidia-ctk</span><span class="p">]</span>
+<span class="nx">path</span> <span class="p">=</span> <span class="s2">&#34;nvidia-ctk&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>代码中打印的配置内容：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="p">{</span>
+  <span class="nt">&#34;DisableRequire&#34;</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+  <span class="nt">&#34;SwarmResource&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span>
+  <span class="nt">&#34;AcceptEnvvarUnprivileged&#34;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+  <span class="nt">&#34;AcceptDeviceListAsVolumeMounts&#34;</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+  <span class="nt">&#34;SupportedDriverCapabilities&#34;</span><span class="p">:</span> <span class="s2">&#34;compat32,compute,display,graphics,ngx,utility,video&#34;</span><span class="p">,</span>
+  <span class="nt">&#34;NVIDIAContainerCLIConfig&#34;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&#34;Root&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span>
+    <span class="nt">&#34;Path&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span>
+    <span class="nt">&#34;Environment&#34;</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="nt">&#34;Debug&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span>
+    <span class="nt">&#34;Ldcache&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span>
+    <span class="nt">&#34;LoadKmods&#34;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+    <span class="nt">&#34;NoPivot&#34;</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+    <span class="nt">&#34;NoCgroups&#34;</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+    <span class="nt">&#34;User&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span>
+    <span class="nt">&#34;Ldconfig&#34;</span><span class="p">:</span> <span class="s2">&#34;@/sbin/ldconfig&#34;</span>
+  <span class="p">},</span>
+  <span class="nt">&#34;NVIDIACTKConfig&#34;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&#34;Path&#34;</span><span class="p">:</span> <span class="s2">&#34;/usr/bin/nvidia-ctk&#34;</span>
+  <span class="p">},</span>
+  <span class="nt">&#34;NVIDIAContainerRuntimeConfig&#34;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&#34;DebugFilePath&#34;</span><span class="p">:</span> <span class="s2">&#34;/var/log/nvidia-container-runtime.log&#34;</span><span class="p">,</span>
+    <span class="nt">&#34;LogLevel&#34;</span><span class="p">:</span> <span class="s2">&#34;trace&#34;</span><span class="p">,</span>
+    <span class="nt">&#34;Runtimes&#34;</span><span class="p">:</span> <span class="p">[</span>
+      <span class="s2">&#34;docker-runc&#34;</span><span class="p">,</span>
+      <span class="s2">&#34;runc&#34;</span><span class="p">,</span>
+      <span class="s2">&#34;crun&#34;</span>
+    <span class="p">],</span>
+    <span class="nt">&#34;Mode&#34;</span><span class="p">:</span> <span class="s2">&#34;auto&#34;</span><span class="p">,</span>
+    <span class="nt">&#34;Modes&#34;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="nt">&#34;CSV&#34;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&#34;MountSpecPath&#34;</span><span class="p">:</span> <span class="s2">&#34;/etc/nvidia-container-runtime/host-files-for-container.d&#34;</span>
+      <span class="p">},</span>
+      <span class="nt">&#34;CDI&#34;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&#34;SpecDirs&#34;</span><span class="p">:</span> <span class="p">[</span>
+          <span class="s2">&#34;/etc/cdi&#34;</span><span class="p">,</span>
+          <span class="s2">&#34;/var/run/cdi&#34;</span>
+        <span class="p">],</span>
+        <span class="nt">&#34;DefaultKind&#34;</span><span class="p">:</span> <span class="s2">&#34;nvidia.com/gpu&#34;</span><span class="p">,</span>
+        <span class="nt">&#34;AnnotationPrefixes&#34;</span><span class="p">:</span> <span class="p">[</span>
+          <span class="s2">&#34;cdi.k8s.io/&#34;</span>
+        <span class="p">]</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">},</span>
+  <span class="nt">&#34;NVIDIAContainerRuntimeHookConfig&#34;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&#34;Path&#34;</span><span class="p">:</span> <span class="s2">&#34;/usr/bin/nvidia-container-runtime-hook&#34;</span><span class="p">,</span>
+    <span class="nt">&#34;SkipModeDetection&#34;</span><span class="p">:</span> <span class="kc">false</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>查看某个特定的容器的 containerd 日志信息：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># kubectl -ndemo get pods test-deploy0-6cdcc7659-66xlx -oyaml | grep containerID</span>
+<span class="c1">#  - containerID: containerd://4bd59051851d84523f4b16b27b32ef529ba399098fa80560e2818bdc4a2be4d7</span>
+cat /var/run/containerd/io.containerd.runtime.v2.task/k8s.io/4bd59051851d84523f4b16b27b32ef529ba399098fa80560e2818bdc4a2be4d7/log.json
+<span class="c1"># 查看其 OCI spec 信息</span>
+cat /var/run/containerd/io.containerd.runtime.v2.task/k8s.io/4bd59051851d84523f4b16b27b32ef529ba399098fa80560e2818bdc4a2be4d7/config.json
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="nvidia-container-runtime-逻辑">nvidia-container-runtime 逻辑</h2>
+<p>1、从命令行参数 bundle 获取 OCI 配置所在文件夹路径，并从文件 config.json 读取 OCI 配置。调用的命令示例如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">/usr/bin/nvidia-container-runtime --root /run/containerd/runc/k8s.io --log /var/run/containerd/io.containerd.runtime.v2.task/k8s.io/4bd59051851d84523f4b16b27b32ef529ba399098fa80560e2818bdc4a2be4d7/log.json --log-format json create --bundle /var/run/containerd/io.containerd.runtime.v2.task/k8s.io/4bd59051851d84523f4b16b27b32ef529ba399098fa80560e2818bdc4a2be4d7 --pid-file /var/run/containerd/io.containerd.runtime.v2.task/k8s.io/4bd59051851d84523f4b16b27b32ef529ba399098fa80560e2818bdc4a2be4d7/init.pid 4bd59051851d84523f4b16b27b32ef529ba399098fa80560e2818bdc4a2be4d7
+</code></pre></td></tr></table>
+</div>
+</div><p>2、里面会从环境变量 NVIDIA_VISIBLE_DEVICES 或者挂载路径中获取信息，判断是否为 CDI 模式，如果是 CDI 模式则直接返回。否则使用 go-nvlib 和 go-nvml 库获取平台信息，如果平台为 nvml 或者 wsl 则返回，否则返回 legacy 模式，如果平台为 tegra，则返回 csv 模式。</p>
+<p>3、nvidia-container-runtime：根据模式，返回对应的 Modifier，legacy 返回 NewStableRuntimeModifier，
+里面会添加：nvidiaContainerRuntimeHookPath 配置路径，最后在 OCI 配置中添加 prestart hook 路径，然后转回到底层 runtime 执行。添加的 hook 配置如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">	&#34;hooks&#34;: {
+		&#34;prestart&#34;: [{
+			&#34;path&#34;: &#34;/usr/bin/nvidia-container-runtime-hook&#34;,
+			&#34;args&#34;: [&#34;nvidia-container-runtime-hook&#34;, &#34;prestart&#34;]
+		}]
+	},
+</code></pre></td></tr></table>
+</div>
+</div><p>4、runc：底层运行时 runc 执行时，根据 OCI 规范，执行 prestart hook。
+5、nvidia-container-runtime-hook：执行 prestart 命令。里面是调用到/usr/bin/nvidia-container-cli（在 third_party/libnvidia-container 中，提供二进制文件给 hook 使用）来执行。</p>
+<h2 id="containerd-和-device-plugin-逻辑">containerd 和 device plugin 逻辑</h2>
+<p>1、<strong>请求 Device Plugin 获取 GPU 设备</strong>：Kubelet 首先会与 Device Plugin 通信，以获取可用的 GPU 设备。Device Plugin 是一个守护进程，负责向 Kubelet 报告节点上的可用设备，并管理设备的分配。</p>
+<p>2、<strong>请求 containerd 创建容器</strong>：在获取到可用的 GPU 设备后，Kubelet 会将这些设备信息包含在创建容器的请求中，并通过 CRI 向 containerd 发送请求，要求创建容器，将允许容器访问的特定设备节点设置到 OCI 配置文件的 device 字段中。</p>
+<p>3、<strong>runc 创建容器</strong>：runc 会根据 OCI 配置文件中的设备信息，将这些设备节点挂载到容器内部。</p>
+<h2 id="modify-逻辑">modify 逻辑</h2>
+<h3 id="graphicsmodifier">graphicsModifier</h3>
+<p>NVIDIA_DRIVER_CAPABILITIES：控制哪些驱动库/二进制文件将被挂载到容器内部，值可为：</p>
+<ul>
+<li>compute,video 或 graphics,utility</li>
+<li>all</li>
+<li>空或未设置</li>
+</ul>
+<p>流程：
+1、获取是否存在环境变量 NVIDIA_VISIBLE_DEVICES，否则不需要创建。
+2、从环境变量 NVIDIA_DRIVER_CAPABILITIES，获取需要的驱动能力，并判断是否含有“graphics”和“display”能力，否则不需要创建。
+3、获取nvidia-ctk 路径，然后挂载图形相关的so文件到容器内部。</p>
+<h3 id="featuregatedmodifier">featureGatedModifier</h3>
+<p>根据可选的特征创建modifier，目前支持的特征有：</p>
+<ul>
+<li>NVIDIA_GDS：GDS（GPUDirect Storage）是 NVIDIA 提供的一种技术，允许 GPU 直接访问存储设备，从而提高数据传输速度和效率。</li>
+<li>NVIDIA_MOFED：MOFED（Mellanox OpenFabrics Enterprise Distribution）是 Mellanox 提供的高性能网络驱动程序和库，通常用于高性能计算（HPC）和数据中心环境</li>
+<li>NVIDIA_NVSWITCH：NVSwitch 是 NVIDIA 提供的一种高带宽互连技术，用于连接多个 GPU，从而实现更高的计算性能和扩展性。</li>
+<li>NVIDIA_GDRCOPY：GDRCopy 是一种用于 GPU 直接内存访问（DMA）传输的库，通常用于高性能计算和数据传输场景。</li>
+</ul>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">yefengzhichen</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        0001-01-01
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      
+      <nav class="post-nav">
+        <a class="prev" href="../../post/hugo_blog/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">GitHub&#43;Hugo搭建个人博客</span>
+            <span class="prev-text nav-mobile">上一篇</span>
+          </a>
+        
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="yefengzhichen/yefengzhichen.github.io"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="zhutao_hust@foxmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/yefengzhichen" class="iconfont icon-github" title="github"></a>
+  <a href="https://yefengzhichen.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  <div class="busuanzi-footer">
+    <span id="busuanzi_container_site_pv"> 本站总访问量 <span id="busuanzi_value_site_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次 </span>
+      <span class="division">|</span>
+    <span id="busuanzi_container_site_uv"> 本站总访客数 <span id="busuanzi_value_site_uv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 人 </span>
+  </div>
+
+  <span class="copyright-year">
+    &copy; 
+    2022 - 
+    2026<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="../../js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

@@ -232,5 +232,14 @@
       <description>GitHub仓库创建 GitHub Pages 是通过 GitHub 托管和发布的公共网页，首先需要创建一个名为username.github.io的仓库， username是Gi</description>
     </item>
     
+    <item>
+      <title></title>
+      <link>https://yefengzhichen.github.io/post/nvidia-container-runtime/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/post/nvidia-container-runtime/</guid>
+      <description>nvidia-container-runtime 相关逻辑 相关配置和内容 /etc/containerd/config.toml 中配置： 1 2 3 4 5 6 7 [plugins.&amp;#34;io.containerd.grpc.v1.cri&amp;#34;.containerd.runtimes.nvidia] privileged_without_host_devices = false runtime_engine = &amp;#34;&amp;#34; runtime_root = &amp;#34;&amp;#34; runtime_type = &amp;#34;io.containerd.runc.v1&amp;#34; [plugins.&amp;#34;io.containerd.grpc.v1.cri&amp;#34;.containerd.runtimes.nvidia.options] BinaryName = &amp;#34;/usr/bin/nvidia-container-runtime&amp;#34; 代码中读取配置文件路径：/etc/nvidia-conta</description>
+    </item>
+    
   </channel>
 </rss>
