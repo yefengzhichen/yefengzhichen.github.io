@@ -6,7 +6,52 @@
     <description>Recent content in Tags on yefengzhichen&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Mon, 08 Apr 2024 10:34:40 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Wed, 04 Mar 2026 11:21:30 +0800</lastBuildDate><atom:link href="https://yefengzhichen.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>AI</title>
+      <link>https://yefengzhichen.github.io/tags/ai/</link>
+      <pubDate>Wed, 04 Mar 2026 11:21:30 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/ai/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Golang</title>
+      <link>https://yefengzhichen.github.io/tags/golang/</link>
+      <pubDate>Wed, 04 Mar 2026 11:21:30 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/golang/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>OpenCode</title>
+      <link>https://yefengzhichen.github.io/tags/opencode/</link>
+      <pubDate>Wed, 04 Mar 2026 11:21:30 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/opencode/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>OpenSpec</title>
+      <link>https://yefengzhichen.github.io/tags/openspec/</link>
+      <pubDate>Wed, 04 Mar 2026 11:21:30 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/openspec/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Spec Driven Development</title>
+      <link>https://yefengzhichen.github.io/tags/spec-driven-development/</link>
+      <pubDate>Wed, 04 Mar 2026 11:21:30 +0800</pubDate>
+      
+      <guid>https://yefengzhichen.github.io/tags/spec-driven-development/</guid>
+      <description></description>
+    </item>
+    
     <item>
       <title>ambient</title>
       <link>https://yefengzhichen.github.io/tags/ambient/</link>
@@ -157,15 +202,6 @@
       <pubDate>Wed, 30 Nov 2022 11:41:58 +0800</pubDate>
       
       <guid>https://yefengzhichen.github.io/tags/csdn/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>golang</title>
-      <link>https://yefengzhichen.github.io/tags/golang/</link>
-      <pubDate>Wed, 30 Nov 2022 11:35:39 +0800</pubDate>
-      
-      <guid>https://yefengzhichen.github.io/tags/golang/</guid>
       <description></description>
     </item>
     

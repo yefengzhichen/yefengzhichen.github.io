@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>AI 协同开发实践：使用 OpenCode &#43; OpenSpec 构建 Go 短域名服务 - yefengzhichen&#39;s blog</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="yefengzhichen" /><meta name="description" content="一、OpenCode：AI 编码执行引擎 什么是 OpenCode？ OpenCode是一个开源的、运行在终端（命令行）的AI编程助手。你可以把它想" /><meta name="keywords" content="Hugo, theme, even" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.92.1 with theme even" />
+
+
+<link rel="canonical" href="https://yefengzhichen.github.io/ai/opencode_and_openspec/" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../favicon-16x16.png">
+<link rel="manifest" href="../../manifest.json">
+<link rel="mask-icon" href="../../safari-pinned-tab.svg" color="#5bbad5">
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<link href="../../sass/main.min.f92fd13721ddf72129410fd8250e73152cc6f2438082b6c0208dc24ee7c13fc4.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="AI 协同开发实践：使用 OpenCode &#43; OpenSpec 构建 Go 短域名服务" />
+<meta property="og:description" content="一、OpenCode：AI 编码执行引擎 什么是 OpenCode？ OpenCode是一个开源的、运行在终端（命令行）的AI编程助手。你可以把它想" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yefengzhichen.github.io/ai/opencode_and_openspec/" /><meta property="article:section" content="ai" />
+<meta property="article:published_time" content="2026-03-04T11:21:30+08:00" />
+<meta property="article:modified_time" content="2026-03-04T11:21:30+08:00" />
+
+<meta itemprop="name" content="AI 协同开发实践：使用 OpenCode &#43; OpenSpec 构建 Go 短域名服务">
+<meta itemprop="description" content="一、OpenCode：AI 编码执行引擎 什么是 OpenCode？ OpenCode是一个开源的、运行在终端（命令行）的AI编程助手。你可以把它想"><meta itemprop="datePublished" content="2026-03-04T11:21:30+08:00" />
+<meta itemprop="dateModified" content="2026-03-04T11:21:30+08:00" />
+<meta itemprop="wordCount" content="5038">
+<meta itemprop="keywords" content="AI,OpenCode,OpenSpec,Golang,Spec Driven Development," /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="AI 协同开发实践：使用 OpenCode &#43; OpenSpec 构建 Go 短域名服务"/>
+<meta name="twitter:description" content="一、OpenCode：AI 编码执行引擎 什么是 OpenCode？ OpenCode是一个开源的、运行在终端（命令行）的AI编程助手。你可以把它想"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="../../">
+        <li class="mobile-menu-item">首页</li>
+      </a><a href="../../post/">
+        <li class="mobile-menu-item">列表</li>
+      </a><a href="../../tags/">
+        <li class="mobile-menu-item">标签</li>
+      </a><a href="../../categories/">
+        <li class="mobile-menu-item">分类</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="../../" class="logo">yefengzhichen&#39;s blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="../../">首页</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../post/">列表</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../tags/">标签</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="../../categories/">分类</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+  <div class="post-content">
+    <h2 id="一opencodeai-编码执行引擎">一、OpenCode：AI 编码执行引擎</h2>
+<h3 id="什么是-opencode">什么是 OpenCode？</h3>
+<p>OpenCode是一个开源的、运行在终端（命令行）的AI编程助手。你可以把它想象成一个随时待命的资深开发者，它能够理解你的项目代码，直接在终端里帮你完成一系列任务，无需在浏览器和IDE之间来回切换。</p>
+<p>它的核心作用包括：</p>
+<ul>
+<li>编写与调试代码：根据指令生成代码片段或修复Bug。</li>
+<li>理解项目：快速解释陌生模块的功能和逻辑。</li>
+<li>重构与优化：分析和改进现有代码结构。</li>
+<li>自动化任务：处理重复性的工作，如生成测试用例.</li>
+</ul>
+<p>OpenCode vs. 传统AI助手（如 Claude Code）：</p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>OpenCode</th>
+<th>Claude Code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>开源</td>
+<td>完全开源，MIT 协议</td>
+<td>闭源</td>
+</tr>
+<tr>
+<td>价格</td>
+<td>免费（需自备 API Key）</td>
+<td>需要 Claude Pro/Max 订阅</td>
+</tr>
+<tr>
+<td>模型支持</td>
+<td>支持 75+ 种模型（GPT、Claude、Gemini、DeepSeek、本地模型等）</td>
+<td>仅限 Claude 模型</td>
+</tr>
+<tr>
+<td>本地模型</td>
+<td>支持 Ollama 等</td>
+<td>不支持</td>
+</tr>
+<tr>
+<td>运行方式</td>
+<td>CLI 终端、桌面应用、VS Code 插件</td>
+<td>主要 CLI 终端</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="opencode-cli安装指南">OpenCode CLI安装指南</h3>
+<p>OpenCode的安装非常灵活，支持多种方式，你可以根据自己的操作系统选择。安装脚本（macOS/Linux，推荐）方式，这是最简洁的方式，脚本会自动完成安装：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">curl -fsSL https://opencode.ai/install | bash
+
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="opencode你的终端ai编程助手">OpenCode：你的终端AI编程助手</h2>
+<h3 id="opencode是什么有什么用">OpenCode是什么，有什么用？</h3>
+<p>OpenCode是一个开源的、运行在终端（命令行）的AI编程助手。你可以把它想象成一个随时待命的资深开发者，它能够理解你的项目代码，直接在终端里帮你完成一系列任务，无需在浏览器和IDE之间来回切换。</p>
+<p>它的核心作用包括：</p>
+<p>编写与调试代码：根据指令生成代码片段或修复Bug。</p>
+<p>理解项目：快速解释陌生模块的功能和逻辑。</p>
+<p>重构与优化：分析和改进现有代码结构。</p>
+<p>自动化任务：处理重复性的工作，如生成测试用例。</p>
+<p>OpenCode vs. 传统AI助手（如Claude Code）：</p>
+<p>特性 OpenCode Claude Code
+开源 完全开源，MIT协议 闭源
+价格 免费（需自备API Key） 需要Claude Pro/Max订阅
+模型支持 支持75+种模型（GPT、Claude、Gemini、DeepSeek、本地模型等） 仅限Claude模型
+本地模型 支持Ollama等 不支持
+运行方式 CLI终端、桌面应用、VS Code插件 主要CLI终端</p>
+<h3 id="opencode-cli安装指南-1">OpenCode CLI安装指南</h3>
+<p>OpenCode的安装非常灵活，支持多种方式，你可以根据自己的操作系统选择。</p>
+<p>安装脚本（macOS/Linux，推荐）方式，这是最简洁的方式，脚本会自动完成安装：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">curl -fsSL https://opencode.ai/install | bash
+</code></pre></td></tr></table>
+</div>
+</div><p>使用包管理器:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">npm (适用于所有平台，需先安装Node.js)：
+npm install -g opencode-ai
+
+Homebrew (macOS/Linux)：
+brew install sst/tap/opencode
+
+Go (适用于Go开发者)：
+go install github.com/sst/opencode@latest
+</code></pre></td></tr></table>
+</div>
+</div><p>安装完成后，打开终端运行以下命令，如果显示版本号，则说明安装成功：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">opencode --version
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="vs-code插件安装">VS Code插件安装</h3>
+<p>OpenCode与VS Code的集成非常自然，它让你在编辑器里就能享受到AI助手的强大功能。
+打开VS Code的扩展市场（Extensions，快捷键 Ctrl+Shift+X）。搜索“OpenCode”。点击安装。</p>
+<p>使用技巧：安装成功后，你可以使用快捷键在编辑器中快速调出OpenCode：</p>
+<ul>
+<li>Cmd+Esc (Mac) 或 Ctrl+Esc (Windows/Linux)：在当前终端分屏中打开OpenCode。</li>
+<li>Cmd+Shift+Esc (Mac) 或 Ctrl+Shift+Esc (Windows/Linux)：启动一个新的OpenCode会话。</li>
+</ul>
+<h3 id="如何链接到github-copilot账号">如何链接到GitHub Copilot账号</h3>
+<p>OpenCode的一大优势是它的“模型无关性”，它不仅可以连接OpenAI、Anthropic等厂商的API，还能直接利用你已有的GitHub Copilot订阅，让你在不增加额外成本的情况下使用OpenCode的增强功能。</p>
+<p>配置步骤如下：</p>
+<ul>
+<li>启动OpenCode：在你的项目目录下运行 opencode 命令。</li>
+<li>运行连接命令：在OpenCode的交互界面中输入 /connect 。</li>
+<li>选择提供商：在出现的提供商列表中，选择 GitHub Copilot 。</li>
+<li>完成设备授权：OpenCode会在终端显示一个设备码和一个用于授权的GitHub网址（通常是 <a href="https://github.com/login/device">https://github.com/login/device</a>）。</li>
+<li>用浏览器打开该网址，登录你的GitHub账号，并输入终端显示的那个设备码。</li>
+<li>点击“Authorize”完成授权。</li>
+</ul>
+<p>配置模型（可选）：授权成功后，你可以在OpenCode中通过 /models 命令查看并选择Copilot提供的模型（如GPT-4、Claude 3.5 Sonnet等）作为默认模型。</p>
+<p>配置完成后，OpenCode就可以通过你的GitHub Copilot订阅来驱动AI了。你的认证信息会安全地存储在本地 ~/.local/share/opencode/auth.json 文件中。</p>
+<h2 id="openspec为ai开发引入规范">OpenSpec：为AI开发引入“规范”</h2>
+<h3 id="openspec是什么有什么用">OpenSpec是什么，有什么用？</h3>
+<p>OpenSpec是一个面向AI辅助工作流的轻量级规范驱动开发（Spec-Driven Development, SDD）框架和CLI工具。它的核心目的是解决在AI编程中常见的“需求偏移”或“AI幻觉”问题，让开发过程从“凭感觉聊天（Vibe Coding）”转向“基于规范开发”。</p>
+<p>简单来说，OpenSpec定义了一套工作流，让你在和AI一起写代码之前，先就“要做什么”达成一个清晰、结构化、机器可读的共识。这个共识就是“规范”（Spec）。</p>
+<p>OpenSpec的四大核心价值：</p>
+<ul>
+<li>单一事实来源：所有需求、设计和决策都以文件形式固化在 openspec/ 目录中，告别模糊的口头沟通。</li>
+<li>可审计的变更：通过“提案-审查-实施-归档”的四阶段工作流，每一次代码变更都有迹可循。</li>
+<li>约束AI行为：AI的代码生成被严格限制在已批准的规范之内，确保输出结果与预期一致，减少无用的代码生成。</li>
+<li>棕地优先（Brownfield-first）：OpenSpec特别擅长处理现有项目的演进，而不是仅能用于新项目。它像一个“装修团队”，能在不拆掉老房子的情况下精准地改造新功能。</li>
+</ul>
+<p>OpenSpec如何工作？
+它通过一个结构化的目录来管理项目和变更：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">your-project/
+├── openspec/
+│ ├── specs/ # 【真相来源】所有已完成的、当前系统的规范
+│ │ └── [功能模块]/
+│ │ └── spec.md
+│ ├── changes/ # 【变更区】所有进行中的功能提案
+│ │ └── [变更名称]/ # 例如 add-url-shorten
+│ │ ├── proposal.md # 提案：为什么要做，做什么
+│ │ ├── tasks.md # 任务：AI实施的详细清单
+│ │ └── specs/ # 规范增量：本次变更要修改的规范文件
+│ │ └── [功能模块]/
+│ │ └── spec.md
+│ ├── project.md # 项目上下文（技术栈、架构、规则等）
+│ └── AGENTS.md # 指导AI如何与OpenSpec协同工作的指令
+</code></pre></td></tr></table>
+</div>
+</div><p>工作流就是围绕这个目录结构展开的：开发者提出变更 -&gt; AI生成提案文档 -&gt; 开发者审查 -&gt; AI实施 -&gt; 归档更新真相来源。</p>
+<h3 id="openspec-cli安装">OpenSpec CLI安装</h3>
+<p>安装OpenSpec非常简单，它本身是一个Node.js CLI工具。系统要求：Node.js &gt;= 20.19.0。
+使用npm进行全局安装，这样你就可以在任何项目中使用 openspec 命令了。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">npm install -g @fission-ai/openspec@latest
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="在项目中初始化">在项目中初始化</h3>
+<p>进入你的Go项目目录，运行初始化命令。这会创建我们上面提到的 openspec/ 目录结构，并引导你选择正在使用的AI工具（如OpenCode、Cursor、Copilot等）。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">cd your-go-project
+openspec init
+</code></pre></td></tr></table>
+</div>
+</div><p>初始化完成后，你可以编辑 openspec/project.md 文件，填入项目的技术栈（Go, Redis等）、架构风格等信息，为AI提供更精确的上下文。</p>
+<h2 id="实战开发url短域名服务">实战：开发URL短域名服务</h2>
+<p>现在，我们将结合OpenCode和OpenSpec，从零开始开发一个URL短域名服务。我们将遵循OpenSpec的“提案-审查-实施-归档”流程。</p>
+<h3 id="步骤1项目初始化与环境准备">步骤1：项目初始化与环境准备</h3>
+<p>首先，创建项目目录并初始化OpenSpec和OpenCode。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">#创建项目目录
+mkdir url-shortener
+cd url-shortener
+
+# 初始化Go模块
+go mod init github.com/yourname/url-shortener
+
+# 初始化OpenSpec (假设已全局安装)
+openspec init
+根据提示，选择你的AI助手，比如 &#39;opencode&#39;
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="接着编辑项目上下文-openspecprojectmd">接着编辑项目上下文 (openspec/project.md)</h3>
+<p>用Vim或其他编辑器打开，填入以下内容，即项目的技术栈和架构信息等，这里也可以用OpenCode来帮你生成这个文件的初始内容，再基于它进行修改得到：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"># URL Shortener Server
+
+## Overview
+This project provides a URL shortener backend service. It accepts long URLs, generates short codes, and redirects clients from short URLs to their original destinations.
+
+## Goals
+- Simple HTTP API for creating short URLs and resolving them.
+- Reliable, low-latency redirects.
+- Safe handling of invalid or expired short codes.
+
+## Core Behavior
+- Create a short code for a given URL.
+- Resolve a short code to its original URL.
+- Redirect clients to the original URL using standard HTTP redirects.
+
+## Data Model (High Level)
+- Short code
+- Original URL
+- Creation timestamp
+- Optional expiration timestamp
+- Optional metadata (e.g., creator, tags)
+
+## API Surface (High Level)
+- `POST /shorten` to create a short URL.
+- `GET /{code}` to resolve and redirect.
+- `GET /healthz` for health checks.
+
+## Storage
+- Persistent store for code-to-URL mappings.
+- Unique index on short codes.
+
+## Non-Goals
+- User authentication and billing.
+- Analytics dashboards.
+- Custom domains (unless added later).
+
+## Engineering Conventions
+- Keep handlers small and focused.
+- Validate inputs and normalize URLs.
+- Prefer explicit error responses and status codes.
+- Implementation uses Go with the Gin framework.
+- Use in-memory storage for code-to-URL mappings.
+- Add unit tests for important functions.
+</code></pre></td></tr></table>
+</div>
+</div><p>编辑完成后执行openspec update命令更新规范库，生成AI实施所需的规范文件。</p>
+<h3 id="生成提案并实施">生成提案并实施</h3>
+<p>在OpenCode的交互界面中，输入斜杠命令/opsx后可以看到OpenSpec相关的命令。输入以下来生成一个新的功能提案：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">/opsx:propose Create a URL Shortener Service in Golang.
+Details:
+- Endpoints: POST /shorten {url: string} → {short_url: string}
+- GET /{short} → 301 redirect to original
+- Storage: Redis if env REDIS_URL set, else in-memory sync.Map
+- Short code: Base62 encoded (6-8 chars, unique)
+- Validation: URL must be valid HTTP(S)
+- Rate limit: Basic (optional, 10/min per IP)
+- Errors: JSON {error: msg}
+- Tests: Cover shorten/resolve/HTTP
+Generate tasks.md with 8-12 steps: setup deps, core logic, handlers, tests, Docker.
+</code></pre></td></tr></table>
+</div>
+</div><p>OpenCode会调用AI（通过你配置的模型），分析你的 project.md，然后在 openspec/changes/ 下自动生成一个以功能命名的文件夹（如 add-url-shortening-core），并在其中生成 proposal.md（提案）、tasks.md（任务清单）和初步的 spec.md（规范增量）。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">➜  changes tree -L 4
+.
+├── archive
+└── url-shortener-service
+    ├── design.md
+    ├── proposal.md
+    ├── specs
+    │   ├── shorten-create
+    │   │   └── spec.md
+    │   ├── shorten-rate-limit
+    │   │   └── spec.md
+    │   ├── shorten-resolve
+    │   │   └── spec.md
+    │   ├── shorten-storage
+    │   │   └── spec.md
+    │   └── shorten-testing
+    │       └── spec.md
+    └── tasks.md
+</code></pre></td></tr></table>
+</div>
+</div><p>执行apply：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">/opsx:apply url-shortener-service all tasks
+</code></pre></td></tr></table>
+</div>
+</div><p>查看此时生成的代码目录：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">➜  url-shortener tree -L 4
+.
+├── Dockerfile
+├── README.md
+├── cmd
+│   └── server
+│       └── main.go
+├── docker-compose.yml
+├── go.mod
+├── go.sum
+├── internal
+│   ├── config
+│   │   └── config.go
+│   ├── httpapi
+│   │   ├── handlers.go
+│   │   ├── handlers_test.go
+│   │   └── middleware.go
+│   ├── ratelimit
+│   │   └── ratelimit.go
+│   ├── shortener
+│   │   ├── shortener.go
+│   │   └── shortener_test.go
+│   └── storage
+│       ├── memory.go
+│       ├── memory_test.go
+│       ├── redis.go
+│       └── storage.go
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="测试和验证">测试和验证</h3>
+<p>直接在opencode对话框让生成README.md，展示如何使用curl命令测试API：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">write a README.md, give some curl shell command to show how to use it. And write how to go test
+</code></pre></td></tr></table>
+</div>
+</div><p>测试：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"># 运行服务
+go run cmd/server/main.go
+# 在另一个终端测试API
+curl -X POST &#34;http://localhost:8080/shorten&#34; \
+  -H &#34;Content-Type: application/json&#34; \
+  -d &#39;{&#34;url&#34;:&#34;https://kubernetes.io/docs/concepts/overview/&#34;}&#39;
+{&#34;short_url&#34;:&#34;http://localhost:8080/kaQax2J&#34;}%
+
+curl -v &#34;http://localhost:8080/kaQax2J&#34;
+&gt; GET /kaQax2J HTTP/1.1
+&gt; Host: localhost:8080
+&gt; User-Agent: curl/7.88.1
+&gt; Accept: */*
+&gt;
+&lt; HTTP/1.1 301 Moved Permanently
+&lt; Content-Type: text/html; charset=utf-8
+&lt; Location: https://kubernetes.io/docs/concepts/overview/
+&lt; Date: Wed, 04 Mar 2026 06:32:42 GMT
+&lt; Content-Length: 80
+&lt;
+&lt;a href=&#34;https://kubernetes.io/docs/concepts/overview/&#34;&gt;Moved Permanently&lt;/a&gt;.
+
+* Connection #0 to host localhost left intact
+</code></pre></td></tr></table>
+</div>
+</div><p>执行单元测试</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">➜  url-shortener go test ./...
+?       url-shortener/cmd/server        [no test files]
+?       url-shortener/internal/config   [no test files]
+ok      url-shortener/internal/httpapi  0.011s
+?       url-shortener/internal/ratelimit        [no test files]
+ok      url-shortener/internal/shortener        0.006s
+ok      url-shortener/internal/storage  0.006s
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="归档">归档</h3>
+<p>当功能开发完成并验证无误后，执行归档命令：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">/opsx:archive url-shortener-service
+</code></pre></td></tr></table>
+</div>
+</div><p>这会将 changes/url-shortener-service/ 下的 proposal.md、tasks.md 和 specs/ 中的规范增量文件移动到 openspec/archive/ 下，并在 proposal.md 中记录实施结果和总结，形成一个完整的变更历史记录。第一次执行会出现：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">Delta specs exist for this change, but there are no corresponding main specs in `openspec/specs/`. I can sync these new specs into main now, or archive without syncing.
+1.
+Sync now (Recommended)
+Create main specs from the delta specs before archiving.
+2.
+Archive without syncing
+Archive now and leave main specs unchanged.
+3.
+Type your own answer
+</code></pre></td></tr></table>
+</div>
+</div><p>选择第一项，OpenSpec会将变更中生成的规范增量文件（如 shorten-create/spec.md）复制到 openspec/specs/ 下的对应位置，正式将这些规范纳入“真相来源”，并完成归档。归档后的目录结构如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">➜  url-shortener tree -L 4
+.
+├── Dockerfile
+├── README.md
+├── cmd
+│   └── server
+│       └── main.go
+├── docker-compose.yml
+├── go.mod
+├── go.sum
+├── internal
+│   ├── config
+│   │   └── config.go
+│   ├── httpapi
+│   │   ├── handlers.go
+│   │   ├── handlers_test.go
+│   │   └── middleware.go
+│   ├── ratelimit
+│   │   └── ratelimit.go
+│   ├── shortener
+│   │   ├── shortener.go
+│   │   └── shortener_test.go
+│   └── storage
+│       ├── memory.go
+│       ├── memory_test.go
+│       ├── redis.go
+│       └── storage.go
+└── openspec
+    ├── changes
+    │   └── archive
+    │       └── 2026-03-04-url-shortener-service
+    ├── config.yaml
+    ├── project.md
+    └── specs
+        ├── shorten-create
+        │   └── spec.md
+        ├── shorten-rate-limit
+        │   └── spec.md
+        ├── shorten-resolve
+        │   └── spec.md
+        ├── shorten-storage
+        │   └── spec.md
+        └── shorten-testing
+            └── spec.md
+</code></pre></td></tr></table>
+</div>
+</div><p>后续其他changes（如添加统计分析功能）也可以通过同样的流程进行，形成一个持续演进的AI协同开发过程。</p>
+<h3 id="总结">总结</h3>
+<p>上述代码完全是ai生成，通过opencode和openspec，实现了sdd开发，相比之前只用vscode copilot开发，多文件操作和生成更强大了，可以proposal一次提示，生成多个规范增量文件和任务清单，然后一次apply就能生成整个功能的代码骨架，极大提升了开发效率和规范性。上述生成代码demo放置在：https://github.com/yefengzhichen/url-shortener</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li>OpenCode 官方文档: <a href="https://opencode.ai/docs">https://opencode.ai/docs</a></li>
+<li>OpenCode GitHub 仓库: <a href="https://github.com/sst/opencode">https://github.com/sst/opencode</a></li>
+<li>OpenSpec 官方网站: <a href="https://openspec.dev/">https://openspec.dev/</a></li>
+<li>OpenSpec GitHub 仓库: <a href="https://github.com/Fission-AI/OpenSpec">https://github.com/Fission-AI/OpenSpec</a></li>
+<li>OpenSpec 中文社区版: <a href="https://www.npmjs.com/package/@org-hex/openspec-chinese">https://www.npmjs.com/package/@org-hex/openspec-chinese</a></li>
+</ul>
+
+  </div>
+</article>
+        </div>
+        
+
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="yefengzhichen/yefengzhichen.github.io"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="zhutao_hust@foxmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/yefengzhichen" class="iconfont icon-github" title="github"></a>
+  <a href="https://yefengzhichen.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  <div class="busuanzi-footer">
+    <span id="busuanzi_container_site_pv"> 本站总访问量 <span id="busuanzi_value_site_pv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 次 </span>
+      <span class="division">|</span>
+    <span id="busuanzi_container_site_uv"> 本站总访客数 <span id="busuanzi_value_site_uv"><img src="../../img/spinner.svg" alt="spinner.svg"/></span> 人 </span>
+  </div>
+
+  <span class="copyright-year">
+    &copy; 
+    2022 - 
+    2026<span class="heart"><i class="iconfont icon-heart"></i></span><span>yefengzhichen</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="../../js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>
